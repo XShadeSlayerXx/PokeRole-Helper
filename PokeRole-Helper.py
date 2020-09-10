@@ -234,8 +234,7 @@ async def show_lists(ctx):
         except:
             item = False
         if item:
-            print(y)
-            howMany = sum([len(word) for _,word in y[1:]])
+            howMany = len([item for _,items in y[1:] for item in items.split(',')])
         else:
             howMany = len(y)
         msg += ('\n - ' if up else ' / ') + f'{x} ({str(howMany) + (" i" if item else "")})'
@@ -252,8 +251,13 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
     try:
         #initialize pkmnstats and check if listname is a valid pokemon
         await pkmnstatshelper(listname)
-        await pkmnitemhelper(listname)
         await ctx.send('Lists may not be named after pokemon')
+        return
+    except:
+        pass
+    try:
+        await pkmnitemhelper(listname)
+        await ctx.send('Lists may not be named after items')
         return
     except:
         pass
@@ -291,6 +295,14 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
     if isItem:
         pokelist = re.findall(pokeweight, ', '.join(pokelist))
         pokelist = [(int(x), y.strip(',').split(', ')) for x,y in pokelist]
+        bad = []
+        for _,itemlist in pokelist:
+            for item in itemlist:
+                if item not in pkmnItems:
+                    bad.append(item)
+        if len(bad) > 0:
+            await ctx.send(f'These were not recognized as items:\n{str(bad)}\n(List not changed.)')
+            return
     if listname not in pkmnLists:
         pkmnLists[listname] = []
         if isItem:
