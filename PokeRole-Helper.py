@@ -18,7 +18,6 @@ bot = commands.Bot(command_prefix = '%')
 
 
 #TODO: find and implement the environment modifiers
-#TODO: fully implement dictionary for pokemon
 
 
 
@@ -309,7 +308,7 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
                 tempmsg ='Right now, you can\'t have a list inside of a list:\n'+tempmsg
             for name in range(len(bad)):
                 tempmsg += f'{bad[name]} --> {correct[name]}  |  '
-            await ctx.send(f'{tempmsg[:-4]}\nThe list {listname} was not changed.')
+            await ctx.send(f'{tempmsg[:-4]}\nThe list "{listname}" was not changed.')
             return
     if isItem:
         pokelist = re.findall(pokeweight, ', '.join(pokelist))
