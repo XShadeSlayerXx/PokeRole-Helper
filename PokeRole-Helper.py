@@ -233,7 +233,12 @@ async def show_lists(ctx):
             item = y[0] == 'i'
         except:
             item = False
-        msg += ('\n - ' if up else ' / ') + f'{x} ({str(len(y)) + (" i" if item else "")})'
+        if item:
+            print(y)
+            howMany = sum([len(word) for _,word in y[1:]])
+        else:
+            howMany = len(y)
+        msg += ('\n - ' if up else ' / ') + f'{x} ({str(howMany) + (" i" if item else "")})'
         up = not up
     await ctx.send(msg)
 
