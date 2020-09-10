@@ -234,14 +234,14 @@ async def show_lists(ctx):
         except:
             item = False
         if item:
-            howMany = len([item for _,items in y[1:] for item in items.split(',')])
+            howMany = len([0 for _,items in y[1:] for item in items])
         else:
             howMany = len(y)
         msg += ('\n - ' if up else ' / ') + f'{x} ({str(howMany) + (" i" if item else "")})'
         up = not up
     await ctx.send(msg)
 
-@bot.command(name = 'list', help = '%list <listname> (add/show/del) poke1, poke2, etc\n'
+@bot.command(name = 'list', aliases=['li'], help = '%list <listname> (add/show/del) poke1, poke2, etc\n'
                                    'or %list <listname> (add/show/del) 43% item1, item2, 10% item3, item4, etc\n'
                                    'In this case, the remaining 47% is no item, for %encounter and %random purposes.\n'
                                    'Lists are unique to people - don\'t forget everyone can see them!\n'
