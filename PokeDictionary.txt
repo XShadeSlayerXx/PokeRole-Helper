@@ -1,0 +1,1210 @@
+Bulbasaur$100
+Ivysaur$100
+Venusaur$100
+Mega-Venusaur$100
+Charmander$100
+Charmeleon$100
+Charizard$100
+Mega-Charizard Y$100
+Mega-Charizard X$100
+Squirtle$100
+Wartortle$100
+Blastoise$100
+Mega-Blastoise$100
+Caterpie$100
+Metapod$100
+Butterfree$100
+Weedle$100
+Kakuna$100
+Beedrill$100
+Mega-Beedrill$100
+Pidgey$100
+Pidgeotto$100
+Pidgeot$100
+Mega-Pidgeot$100
+Rattata$100
+Alolan Rattata$100
+Raticate$100
+Alolan Raticate$100
+Spearow$100
+Fearow$100
+Ekans$100
+Arbok$100
+Pikachu$100
+Raichu$100
+Alolan Raichu$100
+Sandshrew$100
+Alolan Sandshrew$100
+Sandslash$100
+Alolan Sandslash$100
+Nidoran F$100
+Nidorina$100
+Nidoqueen$100
+Nidoran M$100
+Nidorino$100
+Nidoking$100
+Clefairy$100
+Clefable$100
+Vulpix$100
+Alolan Vulpix$100
+Ninetales$100
+Alolan Ninetales$100
+Jigglypuff$100
+Wigglytuff$100
+Zubat$100
+Golbat$100
+Oddish$100
+Gloom$100
+Vileplume$100
+Paras$100
+Parasect$100
+Venonat$100
+Venomoth$100
+Diglett$100
+Alolan Diglett$100
+Dugtrio$100
+Alolan Dugtrio$100
+Meowth$100
+Alolan Meowth$100
+Galarian Meowth$100
+Persian$100
+Alolan Persian$100
+Psyduck$100
+Golduck$100
+Mankey$100
+Primeape$100
+Growlithe$100
+Arcanine$100
+Poliwag$100
+Poliwhirl$100
+Poliwrath$100
+Abra$100
+Kadabra$100
+Alakazam$100
+Mega-Alakazam$100
+Machop$100
+Machoke$100
+Machamp$100
+Bellsprout$100
+Weepinbell$100
+Victreebel$100
+Tentacool$100
+Tentacruel$100
+Geodude$100
+Alolan Geodude$100
+Graveler$100
+Alolan Graveler$100
+Golem$100
+Alolan Golem$100
+Ponyta$100
+Galarian Ponyta$100
+Rapidash$100
+Galarian Rapidash$100
+Slowpoke$100
+Galarian Slowpoke$100
+Slowbro$100
+Mega-Slowbro$100
+Magnemite$100
+Magneton$100
+Farfetch'd$100
+Galarian Farfetch'd$100
+Doduo$100
+Dodrio$100
+Seel$100
+Dewgong$100
+Grimer$100
+Alolan Grimer$100
+Muk$100
+Alolan Muk$100
+Shellder$100
+Cloyster$100
+Gastly$100
+Haunter$100
+Gengar$100
+Mega-Gengar$100
+Onix$100
+Drowzee$100
+Hypno$100
+Krabby$100
+Kingler$100
+Voltorb$100
+Electrode$100
+Exeggcute$100
+Exeggutor$100
+Alolan Exeggutor$100
+Cubone$100
+Marowak$100
+Alolan Marowak$100
+Hitmonlee$100
+Hitmonchan$100
+Lickitung$100
+Koffing$100
+Weezing$100
+Galarian Weezing$100
+Rhyhorn$100
+Rhydon$100
+Chansey$100
+Tangela$100
+Kangaskhan$100
+Mega-Kangaskhan$100
+Horsea$100
+Seadra$100
+Goldeen$100
+Seaking$100
+Staryu$100
+Starmie$100
+Mr. Mime$100
+Galarian Mr. Mime$100
+Scyther$100
+Jynx$100
+Electabuzz$100
+Magmar$100
+Pinsir$100
+Mega-Pinsir$100
+Tauros$100
+Magikarp$100
+Gyarados$100
+Mega-Gyarados$100
+Lapras$100
+Ditto$100
+Eevee$100
+Vaporeon$100
+Jolteon$100
+Flareon$100
+Porygon$100
+Omanyte$100
+Omastar$100
+Kabuto$100
+Kabutops$100
+Aerodactyl$100
+Mega-Aerodactyl$100
+Snorlax$100
+Articuno$100
+Zapdos$100
+Moltres$100
+Dratini$100
+Dragonair$100
+Dragonite$100
+Mewtwo$100
+Mega-Mewtwo X$100
+Mega-Mewtwo Y$100
+Mew$100
+Chikorita$100
+Bayleef$100
+Meganium$100
+Cyndaquil$100
+Quilava$100
+Typhlosion$100
+Totodile$100
+Croconaw$100
+Feraligatr$100
+Sentret$100
+Furret$100
+Hoothoot$100
+Noctowl$100
+Ledyba$100
+Ledian$100
+Spinarak$100
+Ariados$100
+Crobat$100
+Chinchou$100
+Lanturn$100
+Pichu$100
+Cleffa$100
+Igglybuff$100
+Togepi$100
+Togetic$100
+Natu$100
+Xatu$100
+Mareep$100
+Flaaffy$100
+Ampharos$100
+Mega-Ampharos$100
+Bellossom$100
+Marill$100
+Azumarill$100
+Sudowoodo$100
+Politoed$100
+Hoppip$100
+Skiploom$100
+Jumpluff$100
+Aipom$100
+Sunkern$100
+Sunflora$100
+Yanma$100
+Wooper$100
+Quagsire$100
+Espeon$100
+Umbreon$100
+Murkrow$100
+Slowking$100
+Misdreavus$100
+Unown$100
+Wobbuffet$100
+Girafarig$100
+Pineco$100
+Forretress$100
+Dunsparce$100
+Gligar$100
+Steelix$100
+Mega-Steelix$100
+Snubbull$100
+Granbull$100
+Qwilfish$100
+Scizor$100
+Mega-Scizor$100
+Shuckle$100
+Heracross$100
+Mega-Heracross$100
+Sneasel$100
+Teddiursa$100
+Ursaring$100
+Slugma$100
+Magcargo$100
+Swinub$100
+Piloswine$100
+Corsola$100
+Galarian Corsola$100
+Remoraid$100
+Octillery$100
+Delibird$100
+Mantine$100
+Skarmory$100
+Houndour$100
+Houndoom$100
+Mega-Houndoom$100
+Kingdra$100
+Phanpy$100
+Donphan$100
+Porygon2$100
+Stantler$100
+Smeargle$100
+Tyrogue$100
+Hitmontop$100
+Smoochum$100
+Elekid$100
+Magby$100
+Miltank$100
+Blissey$100
+Raikou$100
+Entei$100
+Suicune$100
+Larvitar$100
+Pupitar$100
+Tyranitar$100
+Mega-Tyranitar$100
+Lugia$100
+Ho-oh$100
+Celebi$100
+Treecko$100
+Grovyle$100
+Sceptile$100
+Mega-Sceptile$100
+Torchic$100
+Combusken$100
+Blaziken$100
+Mega-Blaziken$100
+Mudkip$100
+Marshtomp$100
+Swampert$100
+Mega-Swampert$100
+Poochyena$100
+Mightyena$100
+Zigzagoon$100
+Galarian Zigzagoon$100
+Linoone$100
+Galarian Linoone$100
+Wurmple$100
+Silcoon$100
+Beautifly$100
+Cascoon$100
+Dustox$100
+Lotad$100
+Lombre$100
+Ludicolo$100
+Seedot$100
+Nuzleaf$100
+Shiftry$100
+Taillow$100
+Swellow$100
+Wingull$100
+Pelipper$100
+Ralts$100
+Kirlia$100
+Gardevoir$100
+Mega-Gardevoir$100
+Surskit$100
+Masquerain$100
+Shroomish$100
+Breloom$100
+Slakoth$100
+Vigoroth$100
+Slaking$100
+Nincada$100
+Ninjask$100
+Shedinja$100
+Whismur$100
+Loudred$100
+Exploud$100
+Makuhita$100
+Hariyama$100
+Azurill$100
+Nosepass$100
+Skitty$100
+Delcatty$100
+Sableye$100
+Mega-Sableye$100
+Mawile$100
+Mega-Mawile$100
+Aron$100
+Lairon$100
+Aggron$100
+Mega-Aggron$100
+Meditite$100
+Medicham$100
+Mega-Medicham$100
+Electrike$100
+Manectric$100
+Mega-Manectric$100
+Plusle$100
+Minun$100
+Volbeat$100
+Illumise$100
+Roselia$100
+Gulpin$100
+Swalot$100
+Carvanha$100
+Sharpedo$100
+Mega-Sharpedo$100
+Wailmer$100
+Wailord$100
+Numel$100
+Camerupt$100
+Mega-Camerupt$100
+Torkoal$100
+Spoink$100
+Grumpig$100
+Spinda$100
+Trapinch$100
+Vibrava$100
+Flygon$100
+Cacnea$100
+Cacturne$100
+Swablu$100
+Altaria$100
+Mega-Altaria$100
+Zangoose$100
+Seviper$100
+Lunatone$100
+Solrock$100
+Barboach$100
+Whiscash$100
+Corphish$100
+Crawdaunt$100
+Baltoy$100
+Claydol$100
+Lileep$100
+Cradily$100
+Anorith$100
+Armaldo$100
+Feebas$100
+Milotic$100
+Castform$100
+Kecleon$100
+Shuppet$100
+Banette$100
+Mega-Banette$100
+Duskull$100
+Dusclops$100
+Tropius$100
+Chimecho$100
+Absol$100
+Mega-Absol$100
+Wynaut$100
+Snorunt$100
+Glalie$100
+Mega-Glalie$100
+Spheal$100
+Sealeo$100
+Walrein$100
+Clamperl$100
+Huntail$100
+Gorebyss$100
+Relicanth$100
+Luvdisc$100
+Bagon$100
+Shelgon$100
+Salamence$100
+Mega-Salamence$100
+Beldum$100
+Metang$100
+Metagross$100
+Mega-Metagross$100
+Regirock$100
+Regice$100
+Registeel$100
+Latias$100
+Mega-Latias$100
+Latios$100
+Mega-Latios$100
+Kyogre$100
+Primal Kyogre$100
+Groudon$100
+Primal Groudon$100
+Rayquaza$100
+Mega-Rayquaza$100
+Jirachi$100
+Deoxys$100
+Attack Deoxys$100
+Defense Deoxys$100
+Speed Deoxys$100
+Turtwig$100
+Grotle$100
+Torterra$100
+Chimchar$100
+Monferno$100
+Infernape$100
+Piplup$100
+Prinplup$100
+Empoleon$100
+Starly$100
+Staravia$100
+Staraptor$100
+Bidoof$100
+Bibarel$100
+Kricketot$100
+Kricketune$100
+Shinx$100
+Luxio$100
+Luxray$100
+Budew$100
+Roserade$100
+Cranidos$100
+Rampardos$100
+Shieldon$100
+Bastiodon$100
+Burmy$100
+Grass Wormadam$100
+Steel Wormadam$100
+Ground Wormadam$100
+Mothim$100
+Combee$100
+Vespiquen$100
+Pachirisu$100
+Buizel$100
+Floatzel$100
+Cherubi$100
+Cherrim$100
+Shellos$100
+Gastrodon$100
+Ambipom$100
+Drifloon$100
+Drifblim$100
+Buneary$100
+Lopunny$100
+Mega-Lopunny$100
+Mismagius$100
+Honchkrow$100
+Glameow$100
+Purugly$100
+Chingling$100
+Stunky$100
+Skuntank$100
+Bronzor$100
+Bronzong$100
+Bonsly$100
+Mime Jr.$100
+Happiny$100
+Chatot$100
+Spiritomb$100
+Gible$100
+Gabite$100
+Garchomp$100
+Mega-Garchomp$100
+Munchlax$100
+Riolu$100
+Lucario$100
+Mega-Lucario$100
+Hippopotas$100
+Hippowdon$100
+Skorupi$100
+Drapion$100
+Croagunk$100
+Toxicroak$100
+Carnivine$100
+Finneon$100
+Lumineon$100
+Mantyke$100
+Snover$100
+Abomasnow$100
+Mega-Abomasnow$100
+Weavile$100
+Magnezone$100
+Lickilicky$100
+Rhyperior$100
+Tangrowth$100
+Electivire$100
+Magmortar$100
+Togekiss$100
+Yanmega$100
+Leafeon$100
+Glaceon$100
+Gliscor$100
+Mamoswine$100
+Porygon-Z$100
+Gallade$100
+Mega-Gallade$100
+Probopass$100
+Dusknoir$100
+Froslass$100
+Rotom$100
+Rotom Heat$100
+Rotom Fan$100
+Rotom Mow$100
+Rotom Frost$100
+Rotom Wash$100
+Rotom Dex$100
+Uxie$100
+Mesprit$100
+Azelf$100
+Dialga$100
+Palkia$100
+Heatran$100
+Regigigas$100
+Giratina$100
+Cresselia$100
+Phione$100
+Manaphy$100
+Darkrai$100
+Shaymin$100
+Sky Shaymin$100
+Arceus$100
+Victini$100
+Snivy$100
+Servine$100
+Serperior$100
+Tepig$100
+Pignite$100
+Emboar$100
+Oshawott$100
+Dewott$100
+Samurott$100
+Patrat$100
+Watchog$100
+Lillipup$100
+Herdier$100
+Stoutland$100
+Purrloin$100
+Liepard$100
+Pansage$100
+Simisage$100
+Pansear$100
+Simisear$100
+Panpour$100
+Simipour$100
+Munna$100
+Musharna$100
+Pidove$100
+Tranquill$100
+Unfezant$100
+Blitzle$100
+Zebstrika$100
+Roggenrola$100
+Boldore$100
+Gigalith$100
+Woobat$100
+Swoobat$100
+Drilbur$100
+Excadrill$100
+Audino$100
+Mega-Audino$100
+Timburr$100
+Gurdurr$100
+Conkeldurr$100
+Tympole$100
+Palpitoad$100
+Seismitoad$100
+Throh$100
+Sawk$100
+Sewaddle$100
+Swadloon$100
+Leavanny$100
+Venipede$100
+Whirlipede$100
+Scolipede$100
+Cottonee$100
+Whimsicott$100
+Petilil$100
+Lilligant$100
+Basculin$100
+Sandile$100
+Krokorok$100
+Krookodile$100
+Darumaka$100
+Galarian Darumaka$100
+Darmanitan$100
+Galarian Darmanitan$100
+Zen Darmanitan$100
+Galarian Zen Darmanitan$100
+Maractus$100
+Dwebble$100
+Crustle$100
+Scraggy$100
+Scrafty$100
+Sigilyph$100
+Yamask$100
+Galarian Yamask$100
+Cofagrigus$100
+Tirtouga$100
+Carracosta$100
+Archen$100
+Archeops$100
+Trubbish$100
+Garbodor$100
+Zorua$100
+Zoroark$100
+Minccino$100
+Cinccino$100
+Gothita$100
+Gothorita$100
+Gothitelle$100
+Solosis$100
+Duosion$100
+Reuniclus$100
+Ducklett$100
+Swanna$100
+Vanillite$100
+Vanillish$100
+Vanilluxe$100
+Deerling$100
+Sawsbuck$100
+Emolga$100
+Karrablast$100
+Escavalier$100
+Foongus$100
+Amoonguss$100
+Frillish$100
+Jellicent$100
+Alomomola$100
+Joltik$100
+Galvantula$100
+Ferroseed$100
+Ferrothorn$100
+Klink$100
+Klang$100
+Klinklang$100
+Tynamo$100
+Eelektrik$100
+Eelektross$100
+Elgyem$100
+Beheeyem$100
+Litwick$100
+Lampent$100
+Chandelure$100
+Axew$100
+Fraxure$100
+Haxorus$100
+Cubchoo$100
+Beartic$100
+Cryogonal$100
+Shelmet$100
+Accelgor$100
+Stunfisk$100
+Galarian Stunfisk$100
+Mienfoo$100
+Mienshao$100
+Druddigon$100
+Golett$100
+Golurk$100
+Pawniard$100
+Bisharp$100
+Bouffalant$100
+Rufflet$100
+Braviary$100
+Vullaby$100
+Mandibuzz$100
+Heatmor$100
+Durant$100
+Deino$100
+Zweilous$100
+Hydreigon$100
+Larvesta$100
+Volcarona$100
+Cobalion$100
+Terrakion$100
+Virizion$100
+Tornadus$100
+Form Tornadus$100
+Thundurus$100
+Form Thundurus$100
+Reshiram$100
+Zekrom$100
+Landorus$100
+Form Landorus$100
+Kyurem$100
+Black Kyurem$100
+White Kyurem$100
+Keldeo$100
+Form Keldeo$100
+Meloetta$100
+Form Meloetta$100
+Genesect$100
+Chespin$100
+Quilladin$100
+Chesnaught$100
+Fennekin$100
+Braixen$100
+Delphox$100
+Froakie$100
+Frogadier$100
+Greninja$100
+BBF Greninja$100
+Bunnelby$100
+Diggersby$100
+Fletchling$100
+Fletchinder$100
+Talonflame$100
+Scatterbug$100
+Spewpa$100
+Vivillon$100
+Litleo$100
+Pyroar$100
+Flabebe$100
+Floette$100
+Florges$100
+Skiddo$100
+Gogoat$100
+Pancham$100
+Pangoro$100
+Furfrou$100
+Espurr$100
+Meowstic$100
+Honedge$100
+Doublade$100
+Aegislash$100
+Form Aegislash$100
+Spritzee$100
+Aromatisse$100
+Swirlix$100
+Slurpuff$100
+Inkay$100
+Malamar$100
+Binacle$100
+Barbaracle$100
+Skrelp$100
+Dragalge$100
+Clauncher$100
+Clawitzer$100
+Helioptile$100
+Heliolisk$100
+Tyrunt$100
+Tyrantrum$100
+Amaura$100
+Aurorus$100
+Sylveon$100
+Hawlucha$100
+Dedenne$100
+Carbink$100
+Goomy$100
+Sliggoo$100
+Goodra$100
+Klefki$100
+Phantump$100
+Trevenant$100
+Pumpkaboo$100
+Gourgeist$100
+Bergmite$100
+Avalugg$100
+Noibat$100
+Noivern$100
+Xerneas$100
+Yveltal$100
+Zygarde Cell$100
+Zygarde 10%$100
+Zygarde 50%$100
+Zygarde 100%$100
+Diancie$100
+Mega-Diancie$100
+Hoopa$100
+Hoopa Unbound$100
+Volcanion$100
+Rowlet$100
+Dartrix$100
+Decidueye$100
+Litten$100
+Torracat$100
+Incineroar$100
+Popplio$100
+Brionne$100
+Primarina$100
+Pikipek$100
+Trumbeak$100
+Toucannon$100
+Yungoos$100
+Gumshoos$100
+Grubbin$100
+Charjabug$100
+Vikavolt$100
+Crabrawler$100
+Crabominable$100
+Oricorio Fire$100
+Oricorio Electric$100
+Oricorio Psychic$100
+Oricorio Ghost$100
+Cutiefly$100
+Ribombee$100
+Rockruff$100
+Lycanroc Midday$100
+Lycanroc Dusk$100
+Lycanroc Midnight$100
+Wishiwashi$100
+Wishiwashi Swarm$100
+Mareanie$100
+Toxapex$100
+Mudbray$100
+Mudsdale$100
+Dewpider$100
+Araquanid$100
+Fomantis$100
+Lurantis$100
+Morelull$100
+Shiinotic$100
+Salandit$100
+Salazzle$100
+Stufful$100
+Bewear$100
+Bounsweet$100
+Steenee$100
+Tsareena$100
+Comfey$100
+Oranguru$100
+Passimian$100
+Wimpod$100
+Golisopod$100
+Sandygast$100
+Palossand$100
+Pyukumuku$100
+Type: Null$100
+Silvally$100
+Minior$100
+Minior Core$100
+Komala$100
+Turtonator$100
+Togedemaru$100
+Mimikyu$100
+Bruxish$100
+Drampa$100
+Dhelmise$100
+Jangmo-o$100
+Hakamo-o$100
+Kommo-o$100
+Tapu Koko$100
+Tapu Lele$100
+Tapu Bulu$100
+Tapu Fini$100
+Cosmog$100
+Cosmoem$100
+Solgaleo$100
+Lunala$100
+Nihilego$100
+Buzzwole$100
+Pheromosa$100
+Xurkitree$100
+Celesteela$100
+Kartana$100
+Guzzlord$100
+Necrozma$100
+Necrozma Dusk Mane$100
+Necrozma Dark Wings$100
+Necrozma Ultra Burst$100
+Magearna$100
+Marshadow$100
+Poipole$100
+Naganadel$100
+Stakataka$100
+Blacephalon$100
+Zeraora$100
+Meltan$100
+Melmetal$100
+Grookey$100
+Thwackey$100
+Rillaboom$100
+Scorbunny$100
+Raboot$100
+Cinderace$100
+Sobble$100
+Drizzile$100
+Inteleon$100
+Skwovet$100
+Greedent$100
+Rookidee$100
+Corvisquire$100
+Corviknight$100
+Blipbug$100
+Dottler$100
+Orbeetle$100
+Nickit$100
+Thievul$100
+Gossifleur$100
+Eldegoss$100
+Wooloo$100
+Dubwool$100
+Chewtle$100
+Drednaw$100
+Yamper$100
+Boltund$100
+Rolycoly$100
+Carkol$100
+Coalossal$100
+Applin$100
+Flapple$100
+Appletun$100
+Silicobra$100
+Sandaconda$100
+Cramorant$100
+Arrokuda$100
+Barraskewda$100
+Toxel$100
+Toxtricity Amped$100
+Toxtricity Low Key$100
+Sizzlipede$100
+Centiskorch$100
+Clobbopus$100
+Grapploct$100
+Sinistea$100
+Polteageist$100
+Hatenna$100
+Hattrem$100
+Hatterene$100
+Impidimp$100
+Morgrem$100
+Grimmsnarl$100
+Obstagoon$100
+Perrserker$100
+Cursola$100
+Sirfetch'd$100
+Mr. Rime$100
+Runerigus$100
+Milcery$100
+Alcremie$100
+Falinks$100
+Pincurchin$100
+Snom$100
+Frosmoth$100
+Stonjourner$100
+Eiscue$100
+Indeedee$100
+Morpeko$100
+Cufant$100
+Copperajah$100
+Dracozolt$100
+Arctozolt$100
+Dracovish$100
+Arctovish$100
+Duraludon$100
+Dreepy$100
+Drakloak$100
+Dragapult$100
+Zacian$100
+Form Zacian$100
+Zamazenta$100
+Form Zamazenta$100
+Eternatus$100
+Delta Bulbasaur$100
+Delta Ivysaur$100
+Delta Venusaur$100
+Delta Charmander$100
+Delta Charmeleon$100
+Delta Charizard$100
+Delta Squirtle$100
+Delta Wartortle$100
+Delta Blastoise$100
+Delta Pawniard$100
+Delta Bisharp$100
+Delta Ralts$100
+Delta Kirlia$100
+Delta Gardevoir$100
+Delta Gallade$100
+Delta Sunkern$100
+Delta Sunflora$100
+Delta Bergmite$100
+Delta Avalugg$100
+Delta Scyther$100
+Delta Scizor$100
+Delta Scraggy$100
+Delta Scrafty$100
+Delta Combee$100
+Delta Vespiquen$100
+Delta Koffing$100
+Delta Weezing$100
+Delta Purrloin$100
+Delta Liepard$100
+Delta Phantump$100
+Delta Trevenant$100
+Delta Snorunt$100
+Delta Glalie$100
+Delta Froslass$100
+Delta Shinx$100
+Delta Luxio$100
+Delta Luxray$100
+Delta Noibat$100
+Delta Noivern$100
+Delta Budew$100
+Delta Roselia$100
+Delta Roserade$100
+Delta Drifloon$100
+Delta Drifblim$100
+Delta Grimer$100
+Delta Muk$100
+Delta Wooper$100
+Delta Quagsire$100
+Delta Munchlax$100
+Delta Snorlax$100
+Delta Misdreavus$100
+Delta Mismagius$100
+Delta Cyndaquil$100
+Delta Quilava$100
+Delta Typhlosion$100
+Delta Treecko$100
+Delta Grovyle$100
+Delta Sceptile$100
+Delta Torchic$100
+Delta Combusken$100
+Delta Blaziken$100
+Delta Turtwig$100
+Delta Grotle$100
+Delta Torterra$100
+Delta Snivy$100
+Delta Servine$100
+Delta Serperior$100
+Delta Froakie$100
+Delta Frogadier$100
+Delta Greninja$100
+Delta Pidgey$100
+Delta Pidgeotto$100
+Delta Pidgeot$100
+Delta Diglett$100
+Delta Dugtrio$100
+Delta Growlithe$100
+Delta Arcanine$100
+Delta Geodude$100
+Delta Graveler$100
+Delta Golem$100
+Delta Tentacool$100
+Delta Tentacruel$100
+Delta Doduo$100
+Delta Dodrio$100
+Delta Tangela$100
+Delta Tangrowth$100
+Delta Ditto$100
+Delta Kabuto$100
+Delta Kabutops$100
+Delta Dratini$100
+Delta Dragonair$100
+Delta Dragonite$100
+Delta Hoothoot$100
+Delta Noctowl$100
+Delta Chinchou$100
+Delta Lanturn$100
+Delta Pichu$100
+Delta Pikachu$100
+Delta Raichu$100
+Delta Aipom$100
+Delta Ambipom$100
+Delta Yanma$100
+Delta Yanmega$100
+Delta Girafarig$100
+Delta Dunsparce$100
+Delta Shuckle$100
+Delta Remoraid$100
+Delta Octillery$100
+Delta Elekid$100
+Delta Electabuzz$100
+Delta Electivire$100
+Delta Magby$100
+Delta Magmar$100
+Delta Magmortar$100
+Delta Lotad$100
+Delta Lombre$100
+Delta Ludicolo$100
+Delta Seedot$100
+Delta Nuzleaf$100
+Delta Shiftry$100
+Delta Sableye$100
+Delta Mawile$100
+Delta Aron$100
+Delta Lairon$100
+Delta Aggron$100
+Delta Meditite$100
+Delta Medicham$100
+Delta Numel$100
+Delta Camerupt$100
+Delta Plusle$100
+Delta Minun$100
+Delta Wailmer$100
+Delta Wailord$100
+Delta Feebas$100
+Delta Milotic$100
+Delta Clamperl$100
+Delta Huntail$100
+Delta Gorebyss$100
+Delta Beldum (Spider)$100
+Delta Metang (Spider)$100
+Delta Metagross (Spider)$100
+Delta Beldum (Ruin)$100
+Delta Metang (Ruin)$100
+Delta Metagross (Ruin)$100
+Delta Buneary$100
+Delta Lopunny$100
+Delta Riolu$100
+Delta Lucario$100
+Delta Croagunk$100
+Delta Toxicroak$100
+Delta Venipede$100
+Delta Whirlipede$100
+Delta Scolipede$100
+Delta Petilil (Water)$100
+Delta Lilligant (Water)$100
+Delta Petilil (Fairy)$100
+Delta Lilligant (Fairy)$100
+Delta Solosis$100
+Delta Duosion$100
+Delta Reuniclus$100
+Delta Darumaka$100
+Delta Darmanitan$100
+Delta Maractus$100
+Delta Dwebble (Berry)$100
+Delta Crustle (Berry)$100
+Delta Dwebble (Cake)$100
+Delta Crustle (Cake)$100
+Delta Yamask$100
+Delta Cofagrigus$100
+Delta Emolga$100
+Delta Karrablast$100
+Delta Escavalier$100
+Delta Foongus$100
+Delta Amoonguss$100
+Delta Litwick$100
+Delta Lampent$100
+Delta Chandelure$100
+Delta Axew$100
+Delta Fraxure$100
+Delta Haxorus$100
+Delta Golett$100
+Delta Golurk$100
+Delta Heatmor$100
+Delta Deino$100
+Delta Zweilous$100
+Delta Hydreigon$100
+Delta Larvesta$100
+Delta Volcarona$100
+Delta Amaura$100
+Delta Aurorus$100
+Delta Goomy$100
+Delta Sliggoo$100
+Delta Goodra$100
+Delta Regirock$100
+Delta Regice$100
+Delta Registeel$100
+Delta Meloetta$100
+Delta Hoopa$100

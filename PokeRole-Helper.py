@@ -8,6 +8,7 @@ import typing
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
+from symspellpy import SymSpell, Verbosity
 
 load_dotenv()
 token = os.getenv('POKEROLE_TOKEN')
@@ -17,6 +18,7 @@ bot = commands.Bot(command_prefix = '%')
 
 
 #TODO: find and implement the environment modifiers
+#TODO: fully implement dictionary for pokemon
 
 
 
@@ -51,6 +53,10 @@ pokeweight = re.compile(r'(\d+)%?,? ([\-\',\sA-z]+)(?= \d|$)')
 #...but need access privileges
 #{user : [listName list] }
 pkmnListsPriv = dict()
+
+#add the dictionaries
+poke_dict = SymSpell()
+poke_dict.load_dictionary('PokeDictionary.txt', 0, 1, separator = '$')
 
 # save and load functions
 def save_obj(obj: object, name: str):
@@ -108,6 +114,14 @@ def ensure_rank(arg : str) -> str:
 
 def pkmn_cap(arg : str) -> str:
     return re.sub(pokecap , lambda p: p.group(0).upper(), arg)
+
+#######
+#helper functions.... yeah I know
+
+def lookup_poke(arg : str) -> str:
+    suggestion =  poke_dict.lookup(arg, Verbosity.CLOSEST, max_edit_distance = 2,
+                     include_unknown = True)[0]
+    return suggestion.term
 
 #######
 
@@ -665,11 +679,16 @@ async def pkmnstatshelper(poke : str):
         await instantiatePkmnStatList()
     return pkmnStats[poke]
 
+
 @bot.command(name = 'stats', aliases = ['s'], help = 'List a pokemon\'s stats')
 async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
     #try:
     #deep[:] copy of coroutine, otherwise it kindly creates a shallow copy which breaks everything
-    found = (await pkmnstatshelper(pokemon))[:]
+    try:
+        found = (await pkmnstatshelper(pokemon))[:]
+    except:
+        pokemon = lookup_poke(pokemon)
+        found = (await pkmnstatshelper(pokemon))[:]
     for x in range(4, 14, 2):
         found[x+1] = "⭘"*(int(found[x+1])-int(found[x]))
         found[x] = "⬤"*int(found[x])
@@ -739,8 +758,12 @@ async def pkmnlearnshelper(poke : str, rank : ensure_rank = 'Master'):
 async def pkmn_search_learns(ctx, *, pokemon : pkmn_cap):
     #known moves is insight + 2
     try:
+        try:
+            moves = await pkmnlearnshelper(pokemon)
+        except:
+            pokemon = lookup_poke(pokemon)
+            moves = await pkmnlearnshelper(pokemon)
         output = f'__{pokemon.title()}__\n'
-        moves = await pkmnlearnshelper(pokemon)
 
         for x in moves.keys():
             output += f'**{x}**\n' + '  |  '.join(moves[x]) + '\n'
@@ -815,7 +838,11 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
         #get a poke from the list
         nextpoke = random.choice(pokelist)
         #get the attributes
-        statlist = await pkmnstatshelper(nextpoke)
+        try:
+            statlist = await pkmnstatshelper(nextpoke)
+        except:
+            nextpoke = lookup_poke(nextpoke)
+            statlist = await pkmnstatshelper(nextpoke)
         if rankbase:
             #20 is suggested rank
             rank = statlist[20].title()
@@ -840,7 +867,11 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
 
         #distribute socials
         x = 0
-        while x < attributeAmount[rankIndex] and sanity > 0:
+        if rank == 'Master':
+            extraSocial = 6
+        else:
+            extraSocial = 0
+        while x < attributeAmount[rankIndex] + extraSocial and sanity > 0:
             temp = random.randint(1,len(socials))-1
             if socials[temp][1] < limit[rankIndex]:
                 socials[temp] = (socials[temp][0], socials[temp][1] + 1)
