@@ -255,7 +255,7 @@ async def show_lists(ctx):
         up = not up
     await ctx.send(msg)
 
-@bot.command(name = 'list', aliases=['li'], help = '%list <listname> (add/show/del) poke1, poke2, etc\n'
+@bot.command(name = 'list', aliases=['l'], help = '%list <listname> (add/show/del) poke1, poke2, etc\n'
                                    'or %list <listname> (add/show/del) 43% item1, item2, 10% item3, item4, etc\n'
                                    'In this case, the remaining 47% is no item, for %encounter and %random purposes.\n'
                                    'Lists are unique to people - don\'t forget everyone can see them!\n'
@@ -288,6 +288,7 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
         if len(pokelist)==1:
             pokelist = [pkmn_cap(x.strip()) for x in pokelist[0].split(' ')]
         bad = []
+        correct = []
         tempmsg = ''
         #check for misspelled pokemon
         for x in pokelist:
@@ -300,11 +301,15 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
             if x not in pkmnStats:
                 bad.append(x)
                 if x in pkmnLists:
-                    tempmsg+=', '.join(pkmnLists[x])+'\n'
+                    tempmsg+=f'{x} : '+', '.join(pkmnLists[x])+'\n'
+                else:
+                    correct.append(lookup_poke(x))
         if not isItem and len(bad) > 0 and which == 'add':
             if tempmsg != '':
-                tempmsg = 'Did you mean any of these? '+tempmsg
-            await ctx.send(f'{bad}\nWere not recognized as pokemon. List {listname} not changed.\n{tempmsg}')
+                tempmsg ='Right now, you can\'t have a list inside of a list:\n'+tempmsg
+            for name in range(len(bad)):
+                tempmsg += f'{bad[name]} --> {correct[name]}  |  '
+            await ctx.send(f'{tempmsg[:-4]}\nThe list {listname} was not changed.')
             return
     if isItem:
         pokelist = re.findall(pokeweight, ', '.join(pokelist))
