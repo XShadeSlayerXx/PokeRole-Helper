@@ -46,7 +46,7 @@ natures = ['Hardy (9)','Lonely (5)','Brave (9)','Adamant (4)','Naughty (6)',
 pkmnLists = dict()
 
 pokecap = re.compile(r'(^|[-( ])\s*([a-zA-Z])')
-pokeweight = re.compile(r'(\d+)%?,? ([,\sA-z]+)(?= \d|$)')
+pokeweight = re.compile(r'(\d+)%?,? ([\-\',\sA-z]+)(?= \d|$)')
 
 #...but need access privileges
 #{user : [listName list] }
@@ -311,10 +311,7 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
     elif listname in pkmnListsPriv[ctx.author.id]:
         if which == 'add':
             for x in pokelist:
-                if isItem:
-                    pkmnLists[listname].append(x)
-                else:
-                    pkmnLists[listname].append(x)
+                pkmnLists[listname].append(x)
             await ctx.send(f'Successfully added.')
         elif which in ['del', 'delete', 'remove']:
             if not pokelist or pokelist == ['']:
@@ -694,7 +691,7 @@ async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
 #####
 
 async def instantiatePkmnLearnsList():
-    with open('PokeLearnMovesFull.csv', 'r', newline = '', encoding = "WINDOWS-1252") as infile:
+    with open('PokeLearnMovesFull.csv', 'r', newline = '', encoding = "UTF-8") as infile:
         reader = csv.reader(infile)
         for row in reader:
             pkmnLearns.update({row[0][4:]: row[1:]})
@@ -763,11 +760,11 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
             for x in pkmnLists[name]:
                 tempList.append(x)
         except:
-            tempList.append(pkmn_cap(name))
+            tempList.append(name)
             #pokelist = [x.strip().title() for x in pokelist.split(',')]
             #if len(pokelist)==1:
             #    pokelist = [x.strip().title() for x in pokelist[0].split(' ')]
-    pokelist = [item for item in tempList]
+    pokelist = [pkmn_cap(item) for item in tempList]
 
     if number > 6:
         msg+='Can only create up to 6 pokes at once due to size\n'
@@ -1092,6 +1089,10 @@ async def weighted_pkmn_search(ctx, number : typing.Optional[int] = 1,
     for x in msglist:
         await ctx.send(x)
 
+@bot.command()
+async def test(ctx):
+    ctx.send('test')
+
 #error handling:
 
 @weighted_pkmn_search.error
@@ -1101,7 +1102,7 @@ async def info_error(ctx, error):
 
 @bot.event
 async def on_command_error(ctx, error):
-   await ctx.send(f"Error:\n{str(error)}\n*(This message self-destructs in 15 seconds)*", delete_after=15)
+  await ctx.send(f"Error:\n{str(error)}\n*(This message self-destructs in 15 seconds)*", delete_after=15)
 
 #####
 
