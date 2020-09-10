@@ -367,7 +367,9 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
     elif listname not in pkmnListsPriv[ctx.author.id]:
         users = [str(bot.get_user(x)) for x in pkmnListsPriv if listname in pkmnListsPriv[x]]
         if len(users) > 0:
-            await ctx.send(f'{", ".join(users)} have edit access to this. Please ask one of them to "%list {listname} access @mention" if you want access')
+            await ctx.send(f'{", ".join(users)} {"have" if len(users)>1 else "has"} '
+                           f'edit access to this. Please ask {"one of" if len(users)>1 else ""} '
+                           f'them to "%list {listname} access @mention" if you want access')
         else:
             pkmnListsPriv[ctx.author.id].append(listname)
             await ctx.send(f'No users linked to this list. You now have permission, please try again.')
