@@ -18,6 +18,10 @@ bot = commands.Bot(command_prefix = '%')
 
 
 #TODO: find and implement the environment modifiers
+#TODO: compress more of the data in working memory
+#   ++PokeLearns ranks complete
+#   Need:
+#   --PokeLearns moves (probably index the movelist and change all moves in pokelearns to an index?)
 
 
 
@@ -123,6 +127,12 @@ def lookup_poke(arg : str) -> str:
     return suggestion.term
 
 #######
+
+@commands.is_owner()
+@bot.command(name = 'restart', hidden = True)
+async def restart(ctx):
+    await ctx.message.add_reaction('\N{HIBISCUS}')
+    await bot.logout()
 
 @commands.is_owner()
 @bot.command(name = 'reload', hidden = True)
