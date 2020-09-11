@@ -731,16 +731,20 @@ async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
 #####
 
 async def instantiatePkmnLearnsList():
+    ranks = {'Starter': 0, 'Beginner': 1, 'Amateur': 2, 'Ace': 3, 'Pro': 4, 'Master': 5, 'Champion': 6}
     with open('PokeLearnMovesFull.csv', 'r', newline = '', encoding = "UTF-8") as infile:
         reader = csv.reader(infile)
         for row in reader:
-            pkmnLearns.update({row[0][4:]: row[1:]})
+            value = row[1:]
+            value[1::2] = [ranks[x] for x in value[1::2]]
+            pkmnLearns.update({row[0][4:]: value})
 
 async def pkmnlearnshelper(poke : str, rank : ensure_rank = 'Master'):
     if len(pkmnLearns.keys()) == 0:
         await instantiatePkmnLearnsList()
-    rankorder = ['Starter','Beginner','Amateur','Ace','Pro','Master']
+    rankorder = ['Starter', 'Beginner', 'Amateur', 'Ace', 'Pro', 'Master', 'Champion']
     found = pkmnLearns[poke]
+    found[1::2] = [rankorder[x] for x in found[1::2]]
     done = False
     moves = dict()
     for x in range(0, len(found), 2):
