@@ -719,6 +719,9 @@ async def pkmn_filter_habitat(ctx, listname : str, rank : typing.Optional[ensure
         for x in poketuples[1]:
             if x not in pkmnLists[listname]:
                 pokes.append(x)
+            else:
+                # for wormadam and all them
+                pokes.append(random.choice(pkmnLists[listname]))
     await pkmn_list(ctx, listname, 'add', ', '.join(pokes))
 
 #######
