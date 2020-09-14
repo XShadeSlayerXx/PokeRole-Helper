@@ -149,6 +149,13 @@ async def reload(ctx, what):
     except:
         await ctx.send('ItemList, PkmnStatList, PkmnMoveList, PkmnLearnsList')
 
+@commands.is_owner()
+@bot.command(name = 'guilds', hidden = True)
+async def guildcheck(ctx):
+    # once the bot hits 75 servers I want to verify it
+    # I'm curious of the growth
+    await ctx.send(f'Currently in {len(bot.guilds)} guilds.')
+
 #######
 
 @bot.command(name = 'docs',
