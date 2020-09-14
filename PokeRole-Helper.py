@@ -35,6 +35,7 @@ pkmnStats = dict()
 pkmnLearns = dict()
 pkmnItems = dict()
 pkmnAbilities = dict()
+pkmnHabitats = dict()
 
 ranks = ['Starter', 'Beginner', 'Amateur', 'Ace', 'Pro', 'Master', 'Champion']
 natures = ['Hardy (9)','Lonely (5)','Brave (9)','Adamant (4)','Naughty (6)',
@@ -82,6 +83,9 @@ async def on_ready():
     print(f'{bot.user} has connected to Discord! A part of {len(bot.guilds)} servers!')
 
     await bot.change_presence(activity = discord.Game(name = 'with wild pokemon!'))
+
+    if not hasattr(bot, 'appinfo'):
+        bot.appinfo = await bot.application_info()
 
     random.seed()
 
@@ -271,6 +275,7 @@ async def show_lists(ctx):
                                    'Use "%list <listname> access @mention" to give edit permissions to someone\n'
                                    'Their user id will also work (right click their profile --> copy id)')
 async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
+    areListsBroken = [x for x in list(pkmnLists.keys())]
     try:
         #initialize pkmnstats and check if listname is a valid pokemon
         await pkmnstatshelper(listname)
@@ -423,6 +428,8 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
     await ctx.message.add_reaction('\N{CYCLONE}')
     save_obj(pkmnListsPriv, 'pkmnListsPriv')
     save_obj(pkmnLists, 'pkmnLists')
+    if len(pkmnLists.keys()) < len(areListsBroken) - 1:
+        await bot.appinfo.owner.send(f'{listname} {which} {pokelist}')
 
 ###
 
@@ -616,6 +623,106 @@ async def pkmn_search_item(ctx, *, itemname = ''):
 
 #######
 
+async def instantiateHabitatsList():
+    with open('habitats.csv', 'r', encoding = 'UTF-8') as file:
+        reader = csv.reader(file)
+        head = ''
+        for row in reader:
+            if row[1] == '':
+                head = row[0]
+                continue
+            if head not in pkmnHabitats:
+                pkmnHabitats[head] = ['biome']
+            pkmnHabitats[head].append(row[0])
+        pkmnHabitats[row[0]] = row[1:]
+
+async def pkmnhabitatshelper(habitat):
+    if len(pkmnHabitats.keys()) == 0:
+        await instantiateHabitatsList()
+    return pkmnHabitats[habitat]
+
+async def pkmnhabitatranks(pokemon : list) -> dict:
+    level = dict()
+    for poke in pokemon:
+        rank = (await pkmnstatshelper(poke))[20]
+        if rank not in level:
+            level[rank] = []
+        level[rank].append(poke)
+    return level
+
+@bot.command(name = 'habitat', aliases = ['biome'],
+             help = 'List the pokemon for a biome that theworldofpokemon.com suggests.',
+             hidden=True)
+async def pkmn_search_habitat(ctx, *, habitat : str = ''):
+    try:
+        habitat = habitat.title()
+        found = await pkmnhabitatshelper(habitat)
+    except:
+        pass
+    if habitat != '':
+        try:
+            output = f'__{habitat}__\n'
+
+            if found[0] != 'biome':
+                # this is a biome with pokebois
+                level = await pkmnhabitatranks(found)
+                for rank, pokes in list(level.items()):
+                    output += f'**{rank}**\n'
+                    output += '  |  '.join(pokes) + '\n'
+                await ctx.send(output)
+            else:
+                # this is an overarching theme
+                output += ' - '
+                wbool = False
+                for x in found[1:]:
+                    output += x + ('\n - ' if wbool else ' / ')
+                    wbool = not wbool
+                await ctx.send(output)
+        except:
+            await ctx.send(f'{habitat} wasn\'t found in the habitat list.')
+    else:
+        temp = []
+        for key in list(pkmnHabitats.keys()):
+            if pkmnHabitats[key][1] == 'biome':
+                temp.append(key)
+        msg = ' - '
+        wbool = False
+        for x in temp:
+            msg += x + ('\n - ' if wbool else ' / ')
+            wbool = not wbool
+        await ctx.send(msg)
+
+@bot.command(name = 'filterhabitat', aliases = ['fh'],
+             help = '%filterhabitat <list> <rank=All> <includeLowerRanks=True> <habitat>\n'
+                    'Transcribe pokemon from a habitat into a list (optionally by rank)',
+             hidden = True)
+async def pkmn_filter_habitat(ctx, listname : str, rank : typing.Optional[ensure_rank] = 'Master',
+                              includeLowerRanks : typing.Optional[bool] = True, *, habitat : str):
+    habitat = habitat.title()
+    try:
+        found = await pkmnhabitatshelper(habitat)
+    except:
+        await ctx.send(f'{habitat} wasn\'t recognized as a habitat.')
+        return
+
+    ranklist = await pkmnhabitatranks(found)
+    ranklist = list(ranklist.items())
+    if ranks[rank] < ranks['Master']:
+        for i, key in enumerate(ranklist):
+            if not includeLowerRanks and ranks[rank] == ranks[key[0]]:
+                ranklist = ranklist[i]
+                break
+            elif ranks[key] > ranks[rank]:
+                ranklist = ranklist[:i]
+    pokes = []
+    for poketuples in ranklist:
+        for x in poketuples[1]:
+            if x not in pkmnLists[listname]:
+                pokes.append(x)
+    await pkmn_list(ctx, listname, 'add', ', '.join(pokes))
+
+#######
+
 async def instantiateAbilitiesList():
     with open('PokeRoleAbilities.csv', 'r', encoding = "UTF-8") as file:
         reader = csv.reader(file)
@@ -692,7 +799,6 @@ async def pkmnstatshelper(poke : str):
     if len(pkmnStats.keys()) == 0:
         await instantiatePkmnStatList()
     return pkmnStats[poke]
-
 
 @bot.command(name = 'stats', aliases = ['s'], help = 'List a pokemon\'s stats')
 async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
