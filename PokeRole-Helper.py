@@ -4,6 +4,7 @@ import pickle
 import random
 import re
 import typing
+import sys
 
 import discord
 from discord.ext import commands
@@ -13,11 +14,16 @@ from symspellpy import SymSpell, Verbosity
 load_dotenv()
 token = os.getenv('POKEROLE_TOKEN')
 
-bot = commands.Bot(command_prefix = '%')
+#for my testing environment
+if len(sys.argv) > 1:
+    cmd_prefix = '*'
+else:
+    cmd_prefix = '%'
+
+bot = commands.Bot(command_prefix = cmd_prefix)
 
 
 
-#TODO: find and implement the environment modifiers
 #TODO: compress more of the data in working memory
 #   ++PokeLearns ranks complete
 #   Need:
@@ -159,7 +165,7 @@ async def guildcheck(ctx):
 @commands.is_owner()
 @bot.command(name = 'checkdata', hidden = True)
 async def integrityChecks(ctx, which : typing.Optional[int] = 0):
-    #0 is all, 1 is stats, 2 is moves, 3 is learnables
+    #0 is all, 1 is stats, 2 is moves, 3 is learnables, 4 is habitats
 
     #stats first
     errors = []
@@ -210,8 +216,11 @@ async def integrityChecks(ctx, which : typing.Optional[int] = 0):
 
     msg = '\n'.join([f'{x} {y}' for x,y in errors if not x.startswith('Delta')])
     #print(msg)
-    for x in range(0,len(msg),1995):
-       await ctx.send(msg[x:x+1995])
+    if ctx is not None:
+        for x in range(0,len(msg),1995):
+           await ctx.send(msg[x:x+1995])
+    else:
+        print(msg)
 
 #######
 
@@ -721,6 +730,7 @@ async def pkmn_search_habitat(ctx, *, habitat : str = ''):
             output = f'__{habitat}__\n'
 
             if not habitat.endswith('Biomes'):
+                #sort by rank... for x in ranks, if x in level then append level[x] to output?
                 # this is a biome with pokebois
                 level = await pkmnhabitatranks(found)
                 for rank, pokes in list(level.items()):
@@ -734,7 +744,7 @@ async def pkmn_search_habitat(ctx, *, habitat : str = ''):
                 for x in found:
                     output += x + ('\n - ' if wbool else ' / ')
                     wbool = not wbool
-                await ctx.send(output)
+                await ctx.send(output[:-3])
         except:
             await ctx.send(f'{habitat} wasn\'t recognized in the habitat list.')
     else:
