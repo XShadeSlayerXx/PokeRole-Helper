@@ -733,9 +733,9 @@ async def pkmn_search_habitat(ctx, *, habitat : str = ''):
                 #sort by rank... for x in ranks, if x in level then append level[x] to output?
                 # this is a biome with pokebois
                 level = await pkmnhabitatranks(found)
-                for rank, pokes in list(level.items()):
-                    output += f'**{rank}**\n'
-                    output += '  |  '.join(pokes) + '\n'
+                for rank in ranks:
+                    if rank in level:
+                        output += f'**{rank}**\n{"  |  ".join(level[rank])}\n'
                 await ctx.send(output)
             else:
                 # this is an overarching theme
