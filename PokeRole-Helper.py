@@ -85,7 +85,7 @@ async def on_ready():
     await bot.change_presence(activity = discord.Game(name = 'with wild pokemon!'))
 
     if not hasattr(bot, 'appinfo'):
-        bot.appinfo = await bot.application_info()
+       bot.appinfo = await bot.application_info()
 
     random.seed()
 
@@ -155,6 +155,63 @@ async def guildcheck(ctx):
     # once the bot hits 75 servers I want to verify it
     # I'm curious of the growth
     await ctx.send(f'Currently in {len(bot.guilds)} guilds.')
+
+@commands.is_owner()
+@bot.command(name = 'checkdata', hidden = True)
+async def integrityChecks(ctx, which : typing.Optional[int] = 0):
+    #0 is all, 1 is stats, 2 is moves, 3 is learnables
+
+    #stats first
+    errors = []
+    if which in [0,1]:
+        if len(pkmnStats) == 0:
+            await instantiatePkmnStatList()
+        for pokemon, stats in list(pkmnStats.items()):
+            newName = pkmn_cap(pokemon)
+            if pokemon != newName:
+                errors.append((pokemon, ' stats name mismatch'))
+            try:
+                await pkmnlearnshelper(newName)
+            except:
+                errors.append((newName, ' not found stats -> learnables'))
+            #check abilities
+            for x in range(15,18):
+                if stats[x] != '':
+                    try:
+                        await pkmnabilitieshelper(stats[x])
+                    except:
+                        errors.append((pokemon, f' ability{stats[x]}'))
+
+    #moves next
+    if which in [0,2]:
+        if len(pkmnMoves) == 0:
+            await instantiatePkmnMoveList()
+        for move, info in list(pkmnMoves.items()):
+            if move.title() != move:
+                errors.append((move, ' move name mismatch'))
+
+    #learnables now
+    if which in [0,3]:
+        if len(pkmnLearns) == 0:
+            await instantiatePkmnLearnsList()
+        for pokemon, stats in list(pkmnLearns.items()):
+            newName = pkmn_cap(pokemon)
+            if pokemon != newName:
+                errors.append((pokemon, ' learn name mismatch'))
+            try:
+                await pkmnstatshelper(newName)
+            except:
+                errors.append((newName, ' not found learnables -> stats'))
+            for move in stats[::2]:
+                try:
+                    await pkmnmovehelper(move)
+                except:
+                    errors.append((pokemon, f' move {move} not found'))
+
+    msg = '\n'.join([f'{x} {y}' for x,y in errors if not x.startswith('Delta')])
+    #print(msg)
+    for x in range(0,len(msg),1995):
+       await ctx.send(msg[x:x+1995])
 
 #######
 
@@ -633,15 +690,8 @@ async def pkmn_search_item(ctx, *, itemname = ''):
 async def instantiateHabitatsList():
     with open('habitats.csv', 'r', encoding = 'UTF-8') as file:
         reader = csv.reader(file)
-        head = ''
         for row in reader:
-            if row[1] == '':
-                head = row[0]
-                continue
-            if head not in pkmnHabitats:
-                pkmnHabitats[head] = ['biome']
-            pkmnHabitats[head].append(row[0])
-        pkmnHabitats[row[0]] = row[1:]
+            pkmnHabitats[row[0]] = [x for x in row[1:]]
 
 async def pkmnhabitatshelper(habitat):
     if len(pkmnHabitats.keys()) == 0:
@@ -657,7 +707,7 @@ async def pkmnhabitatranks(pokemon : list) -> dict:
         level[rank].append(poke)
     return level
 
-@bot.command(name = 'habitat', aliases = ['biome'],
+@bot.command(name = 'habitat', aliases = ['biome', 'h', 'habitats'],
              help = 'List the pokemon for a biome that theworldofpokemon.com suggests.',
              hidden=True)
 async def pkmn_search_habitat(ctx, *, habitat : str = ''):
@@ -670,7 +720,7 @@ async def pkmn_search_habitat(ctx, *, habitat : str = ''):
         try:
             output = f'__{habitat}__\n'
 
-            if found[0] != 'biome':
+            if not habitat.endswith('Biomes'):
                 # this is a biome with pokebois
                 level = await pkmnhabitatranks(found)
                 for rank, pokes in list(level.items()):
@@ -681,23 +731,23 @@ async def pkmn_search_habitat(ctx, *, habitat : str = ''):
                 # this is an overarching theme
                 output += ' - '
                 wbool = False
-                for x in found[1:]:
+                for x in found:
                     output += x + ('\n - ' if wbool else ' / ')
                     wbool = not wbool
                 await ctx.send(output)
         except:
-            await ctx.send(f'{habitat} wasn\'t found in the habitat list.')
+            await ctx.send(f'{habitat} wasn\'t recognized in the habitat list.')
     else:
         temp = []
         for key in list(pkmnHabitats.keys()):
-            if pkmnHabitats[key][1] == 'biome':
+            if key.endswith('Biomes'):
                 temp.append(key)
-        msg = ' - '
+        msg = '__Biome Supersets:__\n - '
         wbool = False
         for x in temp:
             msg += x + ('\n - ' if wbool else ' / ')
             wbool = not wbool
-        await ctx.send(msg)
+        await ctx.send(msg[:-3])
 
 @bot.command(name = 'filterhabitat', aliases = ['fh'],
              help = '%filterhabitat <list> <rank=All> <includeLowerRanks=True> <habitat>\n'
@@ -1271,10 +1321,6 @@ async def weighted_pkmn_search(ctx, number : typing.Optional[int] = 1,
     for x in msglist:
         await ctx.send(x)
 
-@bot.command()
-async def test(ctx):
-    ctx.send('test')
-
 #error handling:
 
 @weighted_pkmn_search.error
@@ -1282,9 +1328,9 @@ async def info_error(ctx, error):
     if 'IndexError' in str(error):
         await ctx.send('Don\'t forget the percentages.\nFor example "40% bulbasaur, charmander 60% squirtle"')
 
-@bot.event
-async def on_command_error(ctx, error):
-  await ctx.send(f"Error:\n{str(error)}\n*(This message self-destructs in 15 seconds)*", delete_after=15)
+# @bot.event
+# async def on_command_error(ctx, error):
+#   await ctx.send(f"Error:\n{str(error)}\n*(This message self-destructs in 15 seconds)*", delete_after=15)
 
 #####
 
