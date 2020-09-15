@@ -943,16 +943,20 @@ async def instantiatePkmnLearnsList():
 async def pkmnlearnshelper(poke : str, rank : ensure_rank = 'Master'):
     if len(pkmnLearns.keys()) == 0:
         await instantiatePkmnLearnsList()
-    rankorder = ['Starter', 'Beginner', 'Amateur', 'Ace', 'Pro', 'Master', 'Champion']
+
     found = pkmnLearns[poke]
-    found[1::2] = [rankorder[x] for x in found[1::2]]
+    #works if the ranks are 'starter', etc, or numbers
+    try:
+        found[1::2] = [ranks[x] for x in found[1::2]]
+    except:
+        pass
     done = False
     moves = dict()
     for x in range(0, len(found), 2):
         if done:
             break
         if found[x + 1] not in moves:
-            if rank == 'Master' or rankorder.index(found[x+1]) <= rankorder.index(rank):
+            if rank == 'Master' or ranks.index(found[x+1]) <= ranks.index(rank):
                 moves[found[x + 1]] = [found[x]]
             else:
                 done = True
