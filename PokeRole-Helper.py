@@ -730,7 +730,6 @@ async def pkmn_search_habitat(ctx, *, habitat : str = ''):
             output = f'__{habitat}__\n'
 
             if not habitat.endswith('Biomes'):
-                #sort by rank... for x in ranks, if x in level then append level[x] to output?
                 # this is a biome with pokebois
                 level = await pkmnhabitatranks(found)
                 for rank in ranks:
@@ -763,33 +762,49 @@ async def pkmn_search_habitat(ctx, *, habitat : str = ''):
              help = '%filterhabitat <list> <rank=All> <includeLowerRanks=True> <habitat>\n'
                     'Transcribe pokemon from a habitat into a list (optionally by rank)',
              hidden = True)
-async def pkmn_filter_habitat(ctx, listname : str, rank : typing.Optional[ensure_rank] = 'Master',
+async def pkmn_filter_habitat(ctx, listname : str, rank : typing.Optional[ensure_rank] = 'Champion',
                               includeLowerRanks : typing.Optional[bool] = True, *, habitat : str):
     habitat = habitat.title()
+    if listname not in pkmnLists:
+        await pkmn_list(ctx, listname, 'create')
     try:
+        #get a list of pokemon in the habitat
         found = await pkmnhabitatshelper(habitat)
     except:
         await ctx.send(f'{habitat} wasn\'t recognized as a habitat.')
         return
 
+    #get the pokemon's ranks
     ranklist = await pkmnhabitatranks(found)
-    ranklist = list(ranklist.items())
-    if ranks[rank] < ranks['Master']:
+    #convert it into a list of tuples... for each, [0] is the rank, [1] is the poke list
+    temp = []
+    for ranking in ranks:
+        if ranking in ranklist:
+            temp.append((ranking, ranklist[rank]))
+    ranklist = temp
+    #if rank is less than Champion...
+    upperRank = ranks.index(rank)
+    if upperRank < 6:
         for i, key in enumerate(ranklist):
-            if not includeLowerRanks and ranks[rank] == ranks[key[0]]:
-                ranklist = ranklist[i]
+            if not includeLowerRanks and upperRank == ranks.index(key[0]):
+                ranklist = [ranklist[i]]
                 break
-            elif ranks[key] > ranks[rank]:
+            elif ranks.index(key[0]) > upperRank:
                 ranklist = ranklist[:i]
+                break
     pokes = []
     for poketuples in ranklist:
         for x in poketuples[1]:
+            #for wormadam, lycanroc, etc
+            if x in pkmnLists:
+                x = random.choice(pkmnLists[x])
+            #check if pokemon or list
             if x not in pkmnLists[listname]:
                 pokes.append(x)
-            else:
-                # for wormadam and all them
-                pokes.append(random.choice(pkmnLists[listname]))
-    await pkmn_list(ctx, listname, 'add', ', '.join(pokes))
+    if pokes:
+        await pkmn_list(ctx = ctx, listname = listname, which = 'add', pokelist = ', '.join(pokes))
+    else:
+        await ctx.send(f'All these pokemon are already in the list \'{listname}\'!')
 
 #######
 
