@@ -5,6 +5,7 @@ import random
 import re
 import typing
 import sys
+import traceback
 
 import discord
 from discord.ext import commands
@@ -15,10 +16,9 @@ load_dotenv()
 token = os.getenv('POKEROLE_TOKEN')
 
 #for my testing environment
-if len(sys.argv) > 1:
-    cmd_prefix = '*'
-else:
-    cmd_prefix = '%'
+dev_env = (True if len(sys.argv) > 1 else False)
+
+cmd_prefix = ('*' if dev_env else '%')
 
 bot = commands.Bot(command_prefix = cmd_prefix)
 
@@ -137,6 +137,14 @@ def lookup_poke(arg : str) -> str:
     return suggestion.term
 
 #######
+#decorators
+
+def dev():
+    def predicate(ctx):
+        return dev_env
+    return commands.check(predicate)
+
+#######
 
 @commands.is_owner()
 @bot.command(name = 'restart', hidden = True)
@@ -221,6 +229,44 @@ async def integrityChecks(ctx, which : typing.Optional[int] = 0):
            await ctx.send(msg[x:x+1995])
     else:
         print(msg)
+
+@commands.is_owner()
+@bot.command(name = 'checkfuncs', hidden = True)
+async def functionChecks(ctx, which : typing.Optional[int] = 0):
+    funcs = [[pkmn_search_ability, {'abilityname':'Static'}, 'ability'],
+             [pkmn_search_stats, {'pokemon':'Bulbasaur'}, 'stats'],
+             [pkmn_search_move, {'movename':'Tackle'}, 'move'],
+             [pkmn_search_learns, {'pokemon':'Bulbasaur'}, 'learns'],
+             [pkmn_search_item, {'itemname':'Pokeball'}, 'items'],
+             [pkmn_search_habitat, {'habitat':'Tide Pools'}, 'habitat'],
+             [pkmn_search_encounter, {'pokelist':['Bulbasaur,', 'Charmander,', 'Squirtle']}, 'enc'],
+             [weighted_pkmn_search, {'pokelist': [(100, 'Bulbasaur, Charmander, Squirtle')]}, 'w enc']]
+
+    errors = []
+
+    oldV1, oldV2 = pokebotsettings[ctx.author.id][4], pokebotsettings[ctx.author.id][5]
+    pokebotsettings[ctx.author.id][4], pokebotsettings[ctx.author.id][5] = False, False
+
+    for x in range(2):
+        if which == 0:
+            for y in funcs:
+                try:
+                    await y[0](ctx, **y[1])
+                except:
+                    errors.append(y[2])
+        else:
+            try:
+                func = funcs[which-1]
+                await func[0](ctx, **func[1])
+            except:
+                print(traceback.print_exc())
+                errors.append(func[2])
+
+    pokebotsettings[ctx.author.id][4], pokebotsettings[ctx.author.id][5] = oldV1, oldV2
+    if errors:
+        await ctx.send('Errors:\n'+'\n'.join([error for error in errors]))
+    else:
+        await ctx.send('**Passed!**')
 
 #######
 
@@ -1357,9 +1403,10 @@ async def info_error(ctx, error):
     if 'IndexError' in str(error):
         await ctx.send('Don\'t forget the percentages.\nFor example "40% bulbasaur, charmander 60% squirtle"')
 
-# @bot.event
-# async def on_command_error(ctx, error):
-#   await ctx.send(f"Error:\n{str(error)}\n*(This message self-destructs in 15 seconds)*", delete_after=15)
+if not dev_env:
+    @bot.event
+    async def on_command_error(ctx, error):
+      await ctx.send(f"Error:\n{str(error)}\n*(This message self-destructs in 15 seconds)*", delete_after=15)
 
 #####
 
