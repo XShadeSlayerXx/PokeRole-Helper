@@ -5,7 +5,7 @@ import random
 import re
 import typing
 import sys
-import traceback
+import PokeRoleClasses
 
 import discord
 from discord.ext import commands
@@ -259,7 +259,6 @@ async def functionChecks(ctx, which : typing.Optional[int] = 0):
                 func = funcs[which-1]
                 await func[0](ctx, **func[1])
             except:
-                print(traceback.print_exc())
                 errors.append(func[2])
 
     pokebotsettings[ctx.author.id][4], pokebotsettings[ctx.author.id][5] = oldV1, oldV2
