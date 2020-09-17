@@ -393,168 +393,168 @@ async def show_lists(ctx):
     await ctx.send(msg)
 
 #old
-@bot.command(name = 'list', aliases=['l'], help = '%list <listname> (add/show/del) poke1, poke2, etc\n'
-                                   'or %list <listname> (add/show/del) 43% item1, item2, 10% item3, item4, etc\n'
-                                   'In this case, the remaining 47% is no item, for %encounter and %random purposes.\n'
-                                   'Lists are unique to people - don\'t forget everyone can see them!\n'
-                                   'Use "%list <listname> access @mention" to give edit permissions to someone\n'
-                                   'Their user id will also work (right click their profile --> copy id)')
-async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
-    areListsBroken = [x for x in list(pkmnLists.keys())]
-    try:
-        #initialize pkmnstats and check if listname is a valid pokemon
-        await pkmnstatshelper(listname)
-        await ctx.send('Lists may not be named after pokemon')
-        return
-    except:
-        pass
-    try:
-        await pkmnitemhelper(listname)
-        await ctx.send('Lists may not be named after items')
-        return
-    except:
-        pass
-    isItem = False
-    try:
-        if listname in pkmnLists and pkmnLists[listname][0] == 'i':
-            isItem = True
-    except:
-        pass
-    if ctx.author.id not in pkmnListsPriv:
-        pkmnListsPriv[ctx.author.id] = []
-    if which != 'access':
-        pokelist = [pkmn_cap(x.strip()) for x in pokelist.split(',')]
-        if len(pokelist)==1:
-            pokelist = [pkmn_cap(x.strip()) for x in pokelist[0].split(' ')]
-        bad = []
-        correct = []
-        tempmsg = ''
-        #check for misspelled pokemon
-        for x in pokelist:
-            try:
-                int(x[0])
-                isItem = True
-                break
-            except:
-                pass
-            if x not in pkmnStats:
-                bad.append(x)
-                if x in pkmnLists:
-                    tempmsg+=f'{x} : '+', '.join(pkmnLists[x])+'\n'
-                else:
-                    correct.append(lookup_poke(x))
-        if not isItem and len(bad) > 0 and which == 'add':
-            if tempmsg != '':
-                tempmsg ='Right now, you can\'t have a list inside of a list:\n'+tempmsg
-            for name in range(len(bad)):
-                tempmsg += f'{bad[name]} --> {correct[name]}  |  '
-            await ctx.send(f'{tempmsg[:-4]}\nThe list "{listname}" was not changed.')
-            return
-    if isItem:
-        pokelist = re.findall(pokeweight, ', '.join(pokelist))
-        pokelist = [(int(x), y.strip(',').split(', ')) for x,y in pokelist]
-        bad = []
-        for _,itemlist in pokelist:
-            for item in itemlist:
-                if item not in pkmnItems:
-                    bad.append(item)
-        if len(bad) > 0:
-            await ctx.send(f'These were not recognized as items:\n{str(bad)}\n(List not changed.)')
-            return
-    if listname not in pkmnLists:
-        pkmnLists[listname] = []
-        if isItem:
-            pkmnLists[listname].append('i')
-        if ctx.author.id in pkmnListsPriv:
-            pkmnListsPriv[ctx.author.id].append(listname)
-        else:
-            pkmnListsPriv[ctx.author.id] = [listname]
-    if which == 'show':
-        if len(pkmnLists[listname]) > 0:
-            if isItem:
-                msg = ''
-                temp = pkmnLists[listname][1:]
-                for item in temp:
-                    msg += f'{str(item[0])}% - '
-                    msg += ', '.join([a for b in item[1:] for a in b])
-                    msg += ' | '
-                await ctx.send(msg[:-3])
-            else:
-                await ctx.send(', '.join(pkmnLists[listname]))
-        else:
-            await ctx.send(f'List {listname} is empty')
-    elif listname in pkmnListsPriv[ctx.author.id]:
-        if which == 'add':
-            for x in pokelist:
-                pkmnLists[listname].append(x)
-            await ctx.send(f'Successfully added.')
-        elif which in ['del', 'delete', 'remove']:
-            if not pokelist or pokelist == ['']:
-                try:
-                    msg = ', '.join(pkmnLists[listname])
-                except:
-                    msg = str(pkmnLists[listname])
-                del pkmnLists[listname]
-                await ctx.send(f'Everything ({msg}) was removed from list "{listname}"')
-            else:
-                msg = []
-                if not isItem:
-                    for x in pokelist:
-                        try:
-                            pkmnLists[listname].remove(x)
-                        except:
-                            msg.append(x)
-                    if len(msg) > 0:
-                        await ctx.send(f'Could not remove {", ".join(msg)}')
-                    else:
-                        await ctx.send(f'Successfully removed the pokemon.')
-                else:
-                    templist = [item for sublist in pkmnLists[listname][1:] for item in sublist]
-                    for x in templist:
-                        try:
-                            templist.remove(x)
-                        except:
-                            msg.append(x)
-                    if len(msg) > 0:
-                        await ctx.send(f'Could not remove {", ".join(msg)}')
-                    else:
-                        await ctx.send(f'Successfully removed the items.')
-                    templist = re.findall(pokeweight, ', '.join(templist))
-                    pkmnLists[listname] = ['i'] + [[int(x), y] for x,y in templist]
-        elif which == 'access':
-            if pokelist[0] == '<':
-                #remove the <@! at the start and the > at the end
-                temp = int(pokelist.strip()[3:-1])
-            else:
-                temp = int(pokelist.strip())
-            if temp in pkmnListsPriv and listname in pkmnListsPriv[temp]:
-                pkmnListsPriv[temp].remove(listname)
-                await ctx.send(f'Access removed from {bot.get_user(temp)}')
-            else:
-                try:
-                    pkmnListsPriv[temp].append(listname)
-                except:
-                    pkmnListsPriv[temp] = [listname]
-                await ctx.send(f'Access given to {bot.get_user(temp)}')
-    elif listname not in pkmnListsPriv[ctx.author.id]:
-        users = [str(bot.get_user(x)) for x in pkmnListsPriv if listname in pkmnListsPriv[x]]
-        if len(users) > 0:
-            await ctx.send(f'{", ".join(users)} {"have" if len(users)>1 else "has"} '
-                           f'edit access to this. Please ask {"one of" if len(users)>1 else ""} '
-                           f'them to "%list {listname} access @mention" if you want access')
-        else:
-            pkmnListsPriv[ctx.author.id].append(listname)
-            await ctx.send(f'No users linked to this list. You now have permission, please try again.')
-    try:
-        if isItem and pkmnLists[listname][0] != 'i':
-            pkmnLists[listname].insert(0, 'i')
-    except:
-        pass
-    await ctx.message.add_reaction('\N{CYCLONE}')
-    save_obj(pkmnListsPriv, 'pkmnListsPriv')
-    save_obj(pkmnLists, 'pkmnLists')
-    if len(pkmnLists.keys()) < len(areListsBroken) - 1:
-        await bot.appinfo.owner.send(f'{listname} {which} {pokelist}')
+# @bot.command(name = 'list', aliases=['l'], help = '%list <listname> (add/show/del) poke1, poke2, etc\n'
+#                                    'or %list <listname> (add/show/del) 43% item1, item2, 10% item3, item4, etc\n'
+#                                    'In this case, the remaining 47% is no item, for %encounter and %random purposes.\n'
+#                                    'Lists are unique to people - don\'t forget everyone can see them!\n'
+#                                    'Use "%list <listname> access @mention" to give edit permissions to someone\n'
+#                                    'Their user id will also work (right click their profile --> copy id)')
+# async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
+#     areListsBroken = [x for x in list(pkmnLists.keys())]
+#     try:
+#         #initialize pkmnstats and check if listname is a valid pokemon
+#         await pkmnstatshelper(listname)
+#         await ctx.send('Lists may not be named after pokemon')
+#         return
+#     except:
+#         pass
+#     try:
+#         await pkmnitemhelper(listname)
+#         await ctx.send('Lists may not be named after items')
+#         return
+#     except:
+#         pass
+#     isItem = False
+#     try:
+#         if listname in pkmnLists and pkmnLists[listname][0] == 'i':
+#             isItem = True
+#     except:
+#         pass
+#     if ctx.author.id not in pkmnListsPriv:
+#         pkmnListsPriv[ctx.author.id] = []
+#     if which != 'access':
+#         pokelist = [pkmn_cap(x.strip()) for x in pokelist.split(',')]
+#         if len(pokelist)==1:
+#             pokelist = [pkmn_cap(x.strip()) for x in pokelist[0].split(' ')]
+#         bad = []
+#         correct = []
+#         tempmsg = ''
+#         #check for misspelled pokemon
+#         for x in pokelist:
+#             try:
+#                 int(x[0])
+#                 isItem = True
+#                 break
+#             except:
+#                 pass
+#             if x not in pkmnStats:
+#                 bad.append(x)
+#                 if x in pkmnLists:
+#                     tempmsg+=f'{x} : '+', '.join(pkmnLists[x])+'\n'
+#                 else:
+#                     correct.append(lookup_poke(x))
+#         if not isItem and len(bad) > 0 and which == 'add':
+#             if tempmsg != '':
+#                 tempmsg ='Right now, you can\'t have a list inside of a list:\n'+tempmsg
+#             for name in range(len(bad)):
+#                 tempmsg += f'{bad[name]} --> {correct[name]}  |  '
+#             await ctx.send(f'{tempmsg[:-4]}\nThe list "{listname}" was not changed.')
+#             return
+#     if isItem:
+#         pokelist = re.findall(pokeweight, ', '.join(pokelist))
+#         pokelist = [(int(x), y.strip(',').split(', ')) for x,y in pokelist]
+#         bad = []
+#         for _,itemlist in pokelist:
+#             for item in itemlist:
+#                 if item not in pkmnItems:
+#                     bad.append(item)
+#         if len(bad) > 0:
+#             await ctx.send(f'These were not recognized as items:\n{str(bad)}\n(List not changed.)')
+#             return
+#     if listname not in pkmnLists:
+#         pkmnLists[listname] = []
+#         if isItem:
+#             pkmnLists[listname].append('i')
+#         if ctx.author.id in pkmnListsPriv:
+#             pkmnListsPriv[ctx.author.id].append(listname)
+#         else:
+#             pkmnListsPriv[ctx.author.id] = [listname]
+#     if which == 'show':
+#         if len(pkmnLists[listname]) > 0:
+#             if isItem:
+#                 msg = ''
+#                 temp = pkmnLists[listname][1:]
+#                 for item in temp:
+#                     msg += f'{str(item[0])}% - '
+#                     msg += ', '.join([a for b in item[1:] for a in b])
+#                     msg += ' | '
+#                 await ctx.send(msg[:-3])
+#             else:
+#                 await ctx.send(', '.join(pkmnLists[listname]))
+#         else:
+#             await ctx.send(f'List {listname} is empty')
+#     elif listname in pkmnListsPriv[ctx.author.id]:
+#         if which == 'add':
+#             for x in pokelist:
+#                 pkmnLists[listname].append(x)
+#             await ctx.send(f'Successfully added.')
+#         elif which in ['del', 'delete', 'remove']:
+#             if not pokelist or pokelist == ['']:
+#                 try:
+#                     msg = ', '.join(pkmnLists[listname])
+#                 except:
+#                     msg = str(pkmnLists[listname])
+#                 del pkmnLists[listname]
+#                 await ctx.send(f'Everything ({msg}) was removed from list "{listname}"')
+#             else:
+#                 msg = []
+#                 if not isItem:
+#                     for x in pokelist:
+#                         try:
+#                             pkmnLists[listname].remove(x)
+#                         except:
+#                             msg.append(x)
+#                     if len(msg) > 0:
+#                         await ctx.send(f'Could not remove {", ".join(msg)}')
+#                     else:
+#                         await ctx.send(f'Successfully removed the pokemon.')
+#                 else:
+#                     templist = [item for sublist in pkmnLists[listname][1:] for item in sublist]
+#                     for x in templist:
+#                         try:
+#                             templist.remove(x)
+#                         except:
+#                             msg.append(x)
+#                     if len(msg) > 0:
+#                         await ctx.send(f'Could not remove {", ".join(msg)}')
+#                     else:
+#                         await ctx.send(f'Successfully removed the items.')
+#                     templist = re.findall(pokeweight, ', '.join(templist))
+#                     pkmnLists[listname] = ['i'] + [[int(x), y] for x,y in templist]
+#         elif which == 'access':
+#             if pokelist[0] == '<':
+#                 #remove the <@! at the start and the > at the end
+#                 temp = int(pokelist.strip()[3:-1])
+#             else:
+#                 temp = int(pokelist.strip())
+#             if temp in pkmnListsPriv and listname in pkmnListsPriv[temp]:
+#                 pkmnListsPriv[temp].remove(listname)
+#                 await ctx.send(f'Access removed from {bot.get_user(temp)}')
+#             else:
+#                 try:
+#                     pkmnListsPriv[temp].append(listname)
+#                 except:
+#                     pkmnListsPriv[temp] = [listname]
+#                 await ctx.send(f'Access given to {bot.get_user(temp)}')
+#     elif listname not in pkmnListsPriv[ctx.author.id]:
+#         users = [str(bot.get_user(x)) for x in pkmnListsPriv if listname in pkmnListsPriv[x]]
+#         if len(users) > 0:
+#             await ctx.send(f'{", ".join(users)} {"have" if len(users)>1 else "has"} '
+#                            f'edit access to this. Please ask {"one of" if len(users)>1 else ""} '
+#                            f'them to "%list {listname} access @mention" if you want access')
+#         else:
+#             pkmnListsPriv[ctx.author.id].append(listname)
+#             await ctx.send(f'No users linked to this list. You now have permission, please try again.')
+#     try:
+#         if isItem and pkmnLists[listname][0] != 'i':
+#             pkmnLists[listname].insert(0, 'i')
+#     except:
+#         pass
+#     await ctx.message.add_reaction('\N{CYCLONE}')
+#     save_obj(pkmnListsPriv, 'pkmnListsPriv')
+#     save_obj(pkmnLists, 'pkmnLists')
+#     if len(pkmnLists.keys()) < len(areListsBroken) - 1:
+#         await bot.appinfo.owner.send(f'{listname} {which} {pokelist}')
 
 #new
 @bot.command(name = 'newlist', aliases=['nl'], help = '%list <listname> (add/show/del) poke1, poke2, etc\n'
