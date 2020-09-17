@@ -5,7 +5,7 @@ import random
 import re
 import typing
 import sys
-import PokeRoleClasses
+from PokeRoleClasses import PokeList
 
 import discord
 from discord.ext import commands
@@ -118,6 +118,12 @@ async def on_ready():
 
 def sep_weights(arg) -> str:
     return re.findall(pokeweight, arg)
+
+def pokelist(arg : str) -> PokeList:
+    return PokeList(pokestr = pkmn_cap(arg))
+
+def pokelist(odds : list, pokemon : list, isItem = False) -> PokeList:
+    return PokeList(weights = odds, pokemon = pokemon, isItem = isItem)
 
 def ensure_rank(arg : str) -> str:
     arg = arg.title()
@@ -386,6 +392,7 @@ async def show_lists(ctx):
         up = not up
     await ctx.send(msg)
 
+#old
 @bot.command(name = 'list', aliases=['l'], help = '%list <listname> (add/show/del) poke1, poke2, etc\n'
                                    'or %list <listname> (add/show/del) 43% item1, item2, 10% item3, item4, etc\n'
                                    'In this case, the remaining 47% is no item, for %encounter and %random purposes.\n'
@@ -548,6 +555,147 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
     save_obj(pkmnLists, 'pkmnLists')
     if len(pkmnLists.keys()) < len(areListsBroken) - 1:
         await bot.appinfo.owner.send(f'{listname} {which} {pokelist}')
+
+#new
+@bot.command(name = 'newlist', aliases=['nl'], help = '%list <listname> (add/show/del) poke1, poke2, etc\n'
+                                   'or %list <listname> (add/show/del) 43% item1, item2, 10% item3, item4, etc\n'
+                                   'In this case, the remaining 47% is no item, for %encounter and %random purposes.\n'
+                                   'Lists are unique to people - don\'t forget everyone can see them!\n'
+                                   'Use "%list <listname> access @mention" to give edit permissions to someone\n'
+                                   'Their user id will also work (right click their profile --> copy id)')
+async def pkmn_list_new(ctx, listname : str, which = 'show', *, pokemonlist = None):
+
+    #.....why...... f*ck this, why don't you just give me a clean instance???????
+    #PokeList().clear()
+
+    if pokemonlist is not None:
+        try:
+            #initialize pkmnstats and check if listname is a valid pokemon
+            await pkmnstatshelper(listname)
+            await ctx.send('Lists may not be named after pokemon')
+            return
+        except:
+            pass
+        try:
+            #same for items
+            await pkmnitemhelper(listname)
+            await ctx.send('Lists may not be named after items')
+            return
+        except:
+            pass
+
+        pokemonlist = PokeList(pokemonlist)
+        temp = pokemonlist.first()
+
+        #pokemon should be an instance of PokeList by now
+        #is it an itemlist? is it a valid pokemon list?
+        if lookup_poke(temp) in pkmnStats:
+            #valid check
+            pass
+        elif temp in pkmnItems:
+            pokemonlist.setItem(True)
+        else:
+            await ctx.send(f'{temp} was not recognized as a pokemon or item.')
+            return
+    else:
+        pokemonlist = PokeList(pokestr = None)
+
+    print("poke..", pokemonlist)
+
+    if ctx.author.id not in pkmnListsPriv:
+        pkmnListsPriv[ctx.author.id] = []
+
+    #check spelling and validity of the lists
+    if which != 'access':
+        if not pokemonlist.isItem:
+            pkmnlist = pokemonlist.getPokemon()
+            templist = []
+            badlist = []
+            for i,x in enumerate(pkmnlist):
+                templist.append([])
+                for poke in x:
+                    if poke not in pkmnStats:
+                        if poke in pkmnLists:
+                            templist[i].append(pkmnLists[poke].random())
+                        else:
+                            correct = lookup_poke(poke)
+                            if correct in pkmnStats:
+                                templist[i].append(correct)
+                            else:
+                                badlist.append(poke)
+                    else:
+                        templist[i].append(poke)
+            if badlist:
+                await ctx.send(f'{", ".join(badlist)} were not recognized as pokemon.')
+                return
+        elif pokemonlist.isItem:
+            badlist = []
+            for x in pokemonlist.getPokemon():
+                for item in x:
+                    if item not in pkmnItems:
+                        badlist.append(item)
+            if badlist:
+                await ctx.send(f'{", ".join(badlist)} were not recognized as items.')
+
+    if listname not in pkmnLists:
+        pkmnLists[listname] = PokeList()
+        if ctx.author.id in pkmnListsPriv:
+            pkmnListsPriv[ctx.author.id].append(listname)
+        else:
+            pkmnListsPriv[ctx.author.id] = [listname]
+
+    if which == 'show':
+        if pokemonlist.getSize() > 0:
+            await ctx.send(pokemonlist)
+        else:
+            await ctx.send(f'List {listname} is empty.')
+
+    elif listname in pkmnListsPriv[ctx.author.id]:
+        if which == 'add':
+            pkmnLists[listname] += pokemonlist
+            await ctx.send(f'Successfully added them! Full list:\n{pokemonlist}')
+
+        elif which in ['del', 'delete', 'remove']:
+            if pokemonlist.isEmpty():
+                await ctx.send(f'Everything ({pkmnLists[listname]}) was removed from the list "{listname}"')
+                del pkmnLists[listname]
+            else:
+                pkmnLists[listname] -= pokemonlist
+                await ctx.send(f'Successfully removed them.')
+
+        elif which == 'access':
+            if pokelist[0] == '<':
+                #remove the <@! at the start and the > at the end
+                temp = int(pokelist.strip()[3:-1])
+            else:
+                temp = int(pokelist.strip())
+            if temp in pkmnListsPriv and listname in pkmnListsPriv[temp]:
+                pkmnListsPriv[temp].remove(listname)
+                await ctx.send(f'Access removed from {bot.get_user(temp)}')
+            else:
+                try:
+                    pkmnListsPriv[temp].append(listname)
+                except:
+                    pkmnListsPriv[temp] = [listname]
+                await ctx.send(f'Access given to {bot.get_user(temp)}')
+
+    #the person doesn't have permissions
+    elif listname not in pkmnListsPriv[ctx.author.id]:
+        users = [str(bot.get_user(x)) for x in pkmnListsPriv if listname in pkmnListsPriv[x]]
+        if len(users) > 0:
+            await ctx.send(f'{", ".join(users)} {"have" if len(users) > 1 else "has"} '
+                           f'edit access to this. Please ask {"one of" if len(users) > 1 else ""} '
+                           f'them to "%list {listname} access @mention" if you want access')
+        else:
+            pkmnListsPriv[ctx.author.id].append(listname)
+            await ctx.send(f'No users linked to this list. You now have permission, please try again.')
+
+    await ctx.message.add_reaction('\N{CYCLONE}')
+    save_obj(pkmnListsPriv, 'pkmnListsPriv')
+    save_obj(pkmnLists, 'pkmnLists')
+    #del pokemonlist
+
+    #remember to store the list at the end
 
 ###
 
