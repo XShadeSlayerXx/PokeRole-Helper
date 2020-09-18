@@ -22,7 +22,8 @@ class PokeList:
         #check isItem here or when calling?
         self.isItem = isItem
         #weights is a list of ints, pokemon is a list of lists of strings correlated to weights
-        self.weights, self.pokemon = [weights, pokemon]
+        self.weights = weights
+        self.pokemon = pokemon
         print('initial print: ',self.weights, self.pokemon)
         if pokestr is not None:
             for x in returnWeights(pokestr):
