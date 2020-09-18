@@ -826,7 +826,7 @@ async def pkmn_filter_habitat(ctx, listname : str, rank : typing.Optional[ensure
     temp = []
     for ranking in ranks:
         if ranking in ranklist:
-            temp.append((ranking, ranklist[rank]))
+            temp.append((ranking, ranklist[ranking]))
     ranklist = temp
     #if rank is less than Champion...
     upperRank = ranks.index(rank)
