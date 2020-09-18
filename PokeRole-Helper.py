@@ -481,7 +481,9 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
         if which == 'add':
             for x in pokelist:
                 pkmnLists[listname].append(x)
-            await ctx.send(f'Successfully added.')
+            #remove duplicates
+            pkmnLists[listname] = list(set(pkmnLists[listname]))
+            await pkmn_list(ctx = ctx, listname = listname, which = 'show')
         elif which in ['del', 'delete', 'remove']:
             if not pokelist or pokelist == ['']:
                 try:
