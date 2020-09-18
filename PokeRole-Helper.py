@@ -474,7 +474,7 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
                     msg += ' | '
                 await ctx.send(msg[:-3])
             else:
-                await ctx.send(', '.join(pkmnLists[listname]))
+                await ctx.send(await pkmnRankDisplay(f'__{listname}__',pkmnLists[listname]))
         else:
             await ctx.send(f'List {listname} is empty')
     elif listname in pkmnListsPriv[ctx.author.id]:
@@ -753,7 +753,7 @@ async def pkmnhabitatshelper(habitat):
         await instantiateHabitatsList()
     return pkmnHabitats[habitat]
 
-async def pkmnhabitatranks(pokemon : list) -> dict:
+async def pkmnDictRanks(pokemon : list) -> dict:
     level = dict()
     for poke in pokemon:
         rank = (await pkmnstatshelper(poke))[20]
@@ -761,6 +761,14 @@ async def pkmnhabitatranks(pokemon : list) -> dict:
             level[rank] = []
         level[rank].append(poke)
     return level
+
+async def pkmnRankDisplay(title : str, pokemon : list) -> str:
+    pokemon = await pkmnDictRanks(pokemon)
+    output = title + '\n'
+    for rank in ranks:
+        if rank in pokemon:
+            output += f'**{rank}**\n{"  |  ".join(pokemon[rank])}\n'
+    return output
 
 @bot.command(name = 'habitat', aliases = ['biome', 'h', 'habitats'],
              help = 'List the pokemon for a biome that theworldofpokemon.com suggests.',
@@ -773,18 +781,13 @@ async def pkmn_search_habitat(ctx, *, habitat : str = ''):
         pass
     if habitat != '':
         try:
-            output = f'__{habitat}__\n'
-
             if not habitat.endswith('Biomes'):
                 # this is a biome with pokebois
-                level = await pkmnhabitatranks(found)
-                for rank in ranks:
-                    if rank in level:
-                        output += f'**{rank}**\n{"  |  ".join(level[rank])}\n'
+                output = await pkmnRankDisplay(f'__habitat__',found)
                 await ctx.send(output)
             else:
+                output = f'__{habitat}__\n - '
                 # this is an overarching theme
-                output += ' - '
                 wbool = False
                 for x in found:
                     output += x + ('\n - ' if wbool else ' / ')
@@ -851,6 +854,7 @@ async def pkmn_filter_habitat(ctx, listname : str, rank : typing.Optional[ensure
         await pkmn_list(ctx = ctx, listname = listname, which = 'add', pokelist = ', '.join(pokes))
     else:
         await ctx.send(f'All these pokemon are already in the list \'{listname}\'!')
+    await pkmn_list(ctx = ctx, listname = listname, which = 'show')
 
 #######
 
