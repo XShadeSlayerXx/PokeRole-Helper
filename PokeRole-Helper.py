@@ -18,7 +18,7 @@ token = os.getenv('POKEROLE_TOKEN')
 #for my testing environment
 dev_env = (True if len(sys.argv) > 1 else False)
 
-cmd_prefix = ('*' if dev_env else '%')
+cmd_prefix = ('**' if dev_env else '%')
 
 bot = commands.Bot(command_prefix = cmd_prefix)
 
@@ -803,7 +803,7 @@ async def pkmn_search_habitat(ctx, *, habitat : str = ''):
                 # this is an overarching theme
                 wbool = False
                 for x in found:
-                    output += x + ('\n - ' if wbool else ' / ')
+                    output += x + f' ({len(pkmnHabitats[x])})' + ('\n - ' if wbool else ' / ')
                     wbool = not wbool
                 await ctx.send(output[:-3])
         except:
@@ -816,7 +816,7 @@ async def pkmn_search_habitat(ctx, *, habitat : str = ''):
         msg = '__Biome Supersets:__\n - '
         wbool = False
         for x in temp:
-            msg += x + ('\n - ' if wbool else ' / ')
+            msg += x + f' ({len(pkmnHabitats[x])})' + ('\n - ' if wbool else ' / ')
             wbool = not wbool
         await ctx.send(msg[:-3])
 
