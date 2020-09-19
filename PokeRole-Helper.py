@@ -775,8 +775,9 @@ async def pkmnDictRanks(pokemon : list) -> dict:
         level[rank].append(poke)
     return level
 
-async def pkmnRankDisplay(title : str, pokemon : list) -> str:
-    pokemon = await pkmnDictRanks(pokemon)
+async def pkmnRankDisplay(title : str, pokemon : typing.Union[list, dict]) -> str:
+    if isinstance(pokemon, list):
+        pokemon = await pkmnDictRanks(pokemon)
     output = title + '\n'
     for rank in ranks:
         if rank in pokemon:
