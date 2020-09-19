@@ -416,7 +416,7 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
         pass
     if ctx.author.id not in pkmnListsPriv:
         pkmnListsPriv[ctx.author.id] = []
-    if which != 'access':
+    if which not in ['access', 'show']:
         pokelist = [pkmn_cap(x.strip()) for x in pokelist.split(',')]
         if len(pokelist)==1:
             pokelist = [pkmn_cap(x.strip()) for x in pokelist[0].split(' ')]
@@ -455,7 +455,7 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
         if len(bad) > 0:
             await ctx.send(f'These were not recognized as items:\n{str(bad)}\n(List not changed.)')
             return
-    if listname not in pkmnLists:
+    if listname not in pkmnLists and pokelist != '':
         pkmnLists[listname] = []
         if isItem:
             pkmnLists[listname].append('i')
@@ -464,7 +464,7 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
         else:
             pkmnListsPriv[ctx.author.id] = [listname]
     if which == 'show':
-        if len(pkmnLists[listname]) > 0:
+        if listname in pkmnLists and len(pkmnLists[listname]) > 0:
             if isItem:
                 msg = ''
                 temp = pkmnLists[listname][1:]
