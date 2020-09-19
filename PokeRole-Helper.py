@@ -827,7 +827,7 @@ async def pkmn_filter_habitat(ctx, listname : str, rank : typing.Optional[ensure
         return
 
     #get the pokemon's ranks
-    ranklist = await pkmnhabitatranks(found)
+    ranklist = await pkmnDictRanks(found)
     #convert it into a list of tuples... for each, [0] is the rank, [1] is the poke list
     temp = []
     for ranking in ranks:
