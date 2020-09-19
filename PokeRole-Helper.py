@@ -136,6 +136,12 @@ def lookup_poke(arg : str) -> str:
                      include_unknown = True)[0]
     return suggestion.term
 
+async def send_big_msg(ctx, arg : str):
+    while len(arg) > 0:
+        last_newline = arg.rindex('\n', 0, 1996)
+        await ctx.send(arg[:last_newline])
+        arg = arg[last_newline:]
+
 #######
 #decorators
 
@@ -787,7 +793,7 @@ async def pkmn_search_habitat(ctx, *, habitat : str = ''):
             if not habitat.endswith('Biomes'):
                 # this is a biome with pokebois
                 output = await pkmnRankDisplay(f'__habitat__',found)
-                await ctx.send(output)
+                await send_big_msg(ctx, output)
             else:
                 output = f'__{habitat}__\n - '
                 # this is an overarching theme
