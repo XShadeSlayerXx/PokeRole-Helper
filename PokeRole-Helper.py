@@ -857,7 +857,6 @@ async def pkmn_filter_habitat(ctx, listname : str, rank : typing.Optional[ensure
         await pkmn_list(ctx = ctx, listname = listname, which = 'add', pokelist = ', '.join(pokes))
     else:
         await ctx.send(f'All these pokemon are already in the list \'{listname}\'!')
-    await pkmn_list(ctx = ctx, listname = listname, which = 'show')
 
 #######
 
