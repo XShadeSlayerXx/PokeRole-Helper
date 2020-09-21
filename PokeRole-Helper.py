@@ -653,7 +653,7 @@ async def which_generation(gen : int) -> tuple:
 @bot.command(name = 'filter', aliases = ['f'],
              help = '%filter <listname> <rank> <type1> <type2> [includeLowerRanks T/F]'
                                      ' <generation>\n'
-                                     'type2 - can also be Any or None\n'
+                                     'type1 & type2 - can be Any or None\n'
                                      'includeLowerRanks - if <rank> is ace, do you want starter/beginner/amateur/ace?\n'
                                      'generation - any number between 1 and 8 (kanto through galar)\n'
                                      '%filter forest beginner grass None\n'
@@ -681,7 +681,7 @@ async def pkmn_filter_list(ctx, listname : str, rank : ensure_rank,
         gen = (0, len(pkmnStats))
     filtered = []
     for x in list(pkmnStats.items())[gen[0]:gen[1]]:
-        if x[1][-2] in rank and x[1][1] == type1:
+        if x[1][-2] in rank and (x[1][1] == type1 or type1 == 'Any'):
             if type2 == 'Any' or type2 == x[1][2] or type2 == 'None' and x[1][2] == '':
                 filtered.append(pkmn_cap(x[0]))
 
