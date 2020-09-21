@@ -684,8 +684,8 @@ async def pkmn_filter_list(ctx, listname : str, rank : ensure_rank,
 
     #send the filtered list to %list then print it
     await pkmn_list(ctx = ctx, listname = listname, which = 'add', pokelist = ', '.join(filtered))
-    await ctx.send(f'Pokemon in {listname}:')
-    await pkmn_list(ctx = ctx, listname = listname, which = 'show')
+    #await ctx.send(f'Pokemon in {listname}:')
+    #await pkmn_list(ctx = ctx, listname = listname, which = 'show')
 
 #######
 
