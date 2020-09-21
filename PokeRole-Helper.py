@@ -442,6 +442,9 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
             except:
                 pass
             if x not in pkmnStats:
+                if x == '':
+                    pokelist.remove('')
+                    continue
                 bad.append(x)
                 if x in pkmnLists:
                     tempmsg+=f'{x} : '+', '.join(pkmnLists[x])+'\n'
