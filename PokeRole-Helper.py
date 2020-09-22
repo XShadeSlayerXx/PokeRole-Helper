@@ -129,7 +129,7 @@ def pkmn_cap(arg : str) -> str:
     return re.sub(pokecap , lambda p: p.group(0).upper(), arg)
 
 #######
-#helper functions.... yeah I know
+#helper functions
 
 def lookup_poke(arg : str) -> str:
     suggestion =  poke_dict.lookup(arg, Verbosity.CLOSEST, max_edit_distance = 2,
@@ -145,6 +145,58 @@ async def send_big_msg(ctx, arg : str):
         await ctx.send(arg[:last_newline])
         #plus 1 to go over the '\n'
         arg = arg[last_newline+1:]
+
+def returnWeights(pokestr : str) -> list:
+    try:
+        int(pokestr[0])
+    except:
+        pokestr = '100 '+pokestr
+    temp = re.findall(pokeweight, pokestr)
+    temp = [(x[0], x[1].replace(',','').split(' ')) for x in temp]
+    return temp
+
+def modifyList(which : bool, pokeToAddDel : list, listname : str):
+    #which True is 'add', False, is 'del'
+    newOdds = [elem[0] for elem in pokeToAddDel]
+    listOdds = [elem[0] for elem in pkmnLists[listname]]
+    bad = []
+    for index, odds in enumerate(newOdds):
+        if which: #add elements
+            if odds in listOdds:
+                for elem in pokeToAddDel[index][1:]:
+                    pkmnLists[listname][index].append(elem)
+            else:
+                pkmnLists[listname].append(pokeToAddDel[index][1:])
+        else: #remove elements
+            if len(pokeToAddDel[index][1:]) == 0:
+                del pkmnLists[listname][index]
+            elif odds in listOdds:
+                for elem in pokeToAddDel[index][1:]:
+                    try:
+                        pkmnLists[listname][index].remove(elem)
+                    except:
+                        bad.append(elem)
+            else:
+                bad.append(odds)
+    #remove duplicates
+    for i, _ in enumerate(pkmnLists[listname]):
+        pkmnLists[listname][i] = list(set(pkmnLists[listname][i]))
+    return bad
+
+def displayList(listname : str) -> str:
+    output = ''
+    for elemList in pkmnLists[listname]:
+        output += str(elemList[0]) + '% ' + ', '.join(elemList[1:]) + ' '
+    return output[:-1] #remove the trailing space
+
+async def getGuilds(ctx):
+    try:
+        guild = ctx.guild.id
+    except:
+        guild = ctx.author.id
+    if guild not in pokebotsettings:
+        await instantiateSettings(guild)
+    return guild
 
 #######
 #decorators
@@ -287,17 +339,19 @@ async def docs(ctx):
 
 #######
 
-#[ability1, ability2, ability3, shiny, show_move_desc, show ability desc, the item list used in encounter]
+#[ability1, ability2, ability3, shiny, show_move_desc, show ability desc, the item list used in encounter,
+# display lists pokemon by rank or odds]
 async def instantiateSettings(where : str):
-    pokebotsettings[where] = [50,49,1,.00012, True, True, False]
+    pokebotsettings[where] = [50,49,1,.00012, True, True, False, True]
 
 @bot.command(name = 'settings',
              help = '%settings <setting_name> [value]\n'
                     'e.g. %settings ability_one_chance 50\n'
                     'List: (ability_one_chance value) (ability_two_chance value)\n'
                     '(ability_hidden_chance value) (shiny_chance value)\n'
-                    '(show_move_description True/False)'
-                    '(encounter_item <listname>)')
+                    '(show_move_description True/False)\n'
+                    '(encounter_item <listname>)\n'
+                    '(display_list <Rank/Odds>)')
 async def settings(ctx, setting='', value=''):
     msg = ''
     try:
@@ -326,20 +380,25 @@ async def settings(ctx, setting='', value=''):
             pokebotsettings[guild][4] = False
         else:
             await ctx.send('Setting "show_move_description" may only be True or False')
-    if setting == 'show_ability_description' or setting == 'show_ability':
+    elif setting == 'show_ability_description' or setting == 'show_ability':
         if value[0].lower() == 't':
             pokebotsettings[guild][5] = True
         elif value[0].lower() == 'f':
             pokebotsettings[guild][5] = False
         else:
             await ctx.send('Setting "show_ability_description" may only be True or False')
-    if setting == 'encounter_item' or setting == 'item':
+    elif setting == 'encounter_item' or setting == 'item':
         if value in pkmnLists and pkmnLists[value][0] == 'i':
             pokebotsettings[guild][6] = value
         else:
             pokebotsettings[guild][6] = False
             msg += f'{value} not found in the custom item list. Capitalization matters, is it misspelled?\n' \
                    f'Default set to False (no items).\n'
+    elif setting == 'display_list':
+        if not value[0].lower() == 'r': # set it to show odds
+            pokebotsettings[guild][7] = False
+        else: #set it to show rank
+            pokebotsettings[guild][7] = True
     temp = pokebotsettings[guild]
     await ctx.send(f'{msg}'
                    f'Current settings:\n(Ability1/Ability2/AbilityHidden)\n**{temp[0],temp[1],temp[2]}**\n'
@@ -361,6 +420,19 @@ async def update_settings(ctx):
             pokebotsettings[key][value] = val[value]
     save_obj(pokebotsettings, 'pokebotsettings')
     await ctx.send('Good to go')
+
+def reformatList(listname):
+    #the first element should be either 'i' or 'p'
+    if pkmnLists[listname][0] not in ['i', 'p']:
+        temp = pkmnLists[listname]
+        pkmnLists[listname][0] = ('p' if lookup_poke(temp[0]) in pkmnStats else 'i')
+        pkmnLists[listname][1] = [100] + [x for x in temp]
+
+@commands.is_owner()
+@bot.command(name = 'update_lists', hidden = True)
+async def update_lists(ctx):
+    for key, val in pkmnLists:
+        reformatList(key)
 
 @commands.is_owner()
 @bot.command(name = 'listoverride', hidden = True)
@@ -429,115 +501,91 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
         pkmnListsPriv[ctx.author.id] = []
     #is this a task that looks at the pokelist parameter?
     if which not in ['access', 'show']:
-        #split ono commas...
-        pokelist = [pkmn_cap(x.strip()) for x in pokelist.split(',')]
-        #...or on spaces
-        if len(pokelist)==1:
-            pokelist = [pkmn_cap(x.strip()) for x in pokelist[0].split(' ')]
+        #split up the pokelist argument into separate bits... 'bulbasaur' --> [(100, 'bulbasaur')]
+        pokelist = returnWeights(pokelist)
+        #pokelist = [pkmn_cap(x.strip()) for x in pokelist.replace(',','').split(' ')]
         bad = []
         correct = []
         tempmsg = ''
-        #check for misspelled pokemon
-        for x in pokelist:
-            try:
-                int(x[0])
-                isItem = True
-                break
-            except:
-                pass
-            if x not in pkmnStats:
-                if x == '':
-                    #sometimes an empty string gets through
-                    pokelist.remove('')
-                    continue
-                bad.append(x)
-                if x in pkmnLists:
-                    tempmsg+=f'{x} : '+', '.join(pkmnLists[x])+'\n'
-                else:
-                    correct.append(lookup_poke(x))
-        if not isItem and len(bad) > 0 and which == 'add':
+        #item or pokemon?
+        if not lookup_poke(pokelist[0][1]) in pkmnStats:
+            isItem = True
+
+        if not isItem:
+            #check for misspelled pokemon...
+            whichList = pkmnStats
+        else:
+            #...or misspelled items
+            whichList = pkmnItems
+
+        #for pokelist in the passed in str
+        for y in pokelist:
+            #remove the percentage amount
+            y = y[1:]
+            #for pokemon in the list
+            for x in y:
+                if x not in whichList:
+                    if x == '':
+                        #sometimes an empty string gets through
+                        pokelist.remove('')
+                        continue
+                    bad.append(x)
+                    if x in pkmnLists:
+                        tempmsg+=f'{x} : '+', '.join(pkmnLists[x])+'\n'
+                    elif not isItem:
+                        correct.append(lookup_poke(x))
+        if len(bad) > 0 and which in ['add', 'remove', 'del']:
             if tempmsg != '':
                 tempmsg ='Right now, you can\'t have a list inside of a list:\n'+tempmsg
             for name in range(len(bad)):
                 #this doesnt always work, especially if the word is too far from the real one
-                tempmsg += f'{bad[name]} --> {correct[name]}  |  '
+                tempmsg += (f'bad[name]' if isItem else f'{bad[name]} --> {correct[name]}') + '  |  '
             await ctx.send(f'{tempmsg[:-4]}\n(Pokemon with multiple forms may not show correctly)\n'
                            f'The list "{listname}" was not changed.')
-            return
-    if isItem:
-        pokelist = re.findall(pokeweight, ', '.join(pokelist))
-        pokelist = [(int(x), y.strip(',').split(', ')) for x,y in pokelist]
-        bad = []
-        for _,itemlist in pokelist:
-            for item in itemlist:
-                if item not in pkmnItems:
-                    bad.append(item)
-        if len(bad) > 0:
-            await ctx.send(f'These were not recognized as items:\n{str(bad)}\n(List not changed.)')
             return
     if listname not in pkmnLists and pokelist != '':
         pkmnLists[listname] = []
         if isItem:
             pkmnLists[listname].append('i')
+        else:
+            pkmnLists[listname].append('p')
         if ctx.author.id in pkmnListsPriv:
             pkmnListsPriv[ctx.author.id].append(listname)
         else:
             pkmnListsPriv[ctx.author.id] = [listname]
     if which == 'show':
         if listname in pkmnLists and len(pkmnLists[listname]) > 0:
-            if isItem:
-                msg = ''
-                temp = pkmnLists[listname][1:]
-                for item in temp:
-                    msg += f'{str(item[0])}% - '
-                    msg += ', '.join([a for b in item[1:] for a in b])
-                    msg += ' | '
-                await ctx.send(msg[:-3])
+            #is it an item?
+            if pkmnLists[listname][0] == 'i':
+                msg = displayList(listname)
+                await ctx.send(msg)
             else:
-                await ctx.send(await pkmnRankDisplay(f'__{listname}__',pkmnLists[listname]))
+                #...not an item
+                guild = await getGuilds(ctx)
+                if pokebotsettings[guild][7]:
+                    await ctx.send(await pkmnRankListDisplay(f'__{listname}__',pkmnLists[listname]))
+                else:
+                    await ctx.send(f'__{listname}__\n',displayList(listname))
         else:
             await ctx.send(f'List {listname} is empty')
     elif listname in pkmnListsPriv[ctx.author.id]:
+        #need permissions for these commands
         if which == 'add':
-            for x in pokelist:
-                pkmnLists[listname].append(x)
-            #remove duplicates
-            pkmnLists[listname] = list(set(pkmnLists[listname]))
+            modifyList(True, pokelist, listname)
             await pkmn_list(ctx = ctx, listname = listname, which = 'show')
         elif which in ['del', 'delete', 'remove']:
             if not pokelist or pokelist == ['']:
-                try:
-                    msg = ', '.join(pkmnLists[listname])
-                except:
-                    msg = str(pkmnLists[listname])
+                #if there are no pokemon delete the list
+                msg = displayList(listname)
                 del pkmnLists[listname]
                 await ctx.send(f'Everything ({msg}) was removed from list "{listname}"')
             else:
-                msg = []
-                if not isItem:
-                    for x in pokelist:
-                        try:
-                            pkmnLists[listname].remove(x)
-                        except:
-                            msg.append(x)
-                    if len(msg) > 0:
-                        await ctx.send(f'Could not remove {", ".join(msg)}')
-                    else:
-                        await ctx.send(f'Successfully removed the pokemon.')
-                else:
-                    templist = [item for sublist in pkmnLists[listname][1:] for item in sublist]
-                    for x in templist:
-                        try:
-                            templist.remove(x)
-                        except:
-                            msg.append(x)
-                    if len(msg) > 0:
-                        await ctx.send(f'Could not remove {", ".join(msg)}')
-                    else:
-                        await ctx.send(f'Successfully removed the items.')
-                    templist = re.findall(pokeweight, ', '.join(templist))
-                    pkmnLists[listname] = ['i'] + [[int(x), y] for x,y in templist]
+                msg = modifyList(False, pokelist, listname)
+                if len(msg) > 0:
+                    await ctx.send(f'There was a problem removing: {", ".join(msg)}.\nPokemon still in list:')
+            await pkmn_list(ctx, listname, 'show')
         elif which == 'access':
+            #i could probably use the User converter but ehh
             if pokelist[0] == '<':
                 #remove the <@! at the start and the > at the end
                 temp = int(pokelist.strip()[3:-1])
@@ -591,56 +639,50 @@ async def pkmn_listsub(ctx, list1 : str, list2 : str):
     if bad:
         await ctx.send(msg)
         return
-    bad = []
-    if pkmnLists[list2][0] == 'i':
-        skip = 1
-    else:
-        skip = 0
-    for x in pkmnLists[list2][skip:]:
-        try:
-            pkmnLists[list1].remove(x)
-            bad.append(x)
-        except:
-            pass
-    await ctx.send(f'{", ".join(bad)}\n{"were" if len(bad) > 1 else "was"} removed from {list1}')
+    removed = []
+    list1odds = [elem[0] for elem in pkmnLists[list1]]
+    for index, elementlist in enumerate(pkmnLists[list2]):
+        if elementlist[0] in list1odds:
+            where = list1odds.index(elementlist[0])
+            for x in elementlist[1:]:
+                try:
+                    pkmnLists[list1][where].remove(x)
+                    removed.append(x)
+                except:
+                    pass
+    await ctx.send(f'{", ".join(bad)}\n{"were" if len(removed) > 1 else "was"} removed from {list1}')
 
 #######
 
 #returns a random pokemon or item from given list
-def pkmn_random_driver(listname : str) -> str:
-    itemList = False
+def pkmn_random_driver(listname : str, giveList = False) -> str:
     if listname not in pkmnLists:
         return 'There was not a list with this name.\n'
-    if pkmnLists[listname][0] == 'i':
-        itemList = True
-    if itemList:
-        #remove the leading 'i'
-        temp = pkmnLists[listname][1:]
-        which = 0
-        choice = True
-        rand = random.randrange(1,101) - int(temp[0][0])
-        while rand > 0 and which < len(temp):
-            which += 1
-            if which == len(temp):
-                choice = False
-                break
-            rand -= int(temp[which][0])
-        if choice:
-            return random.choice(temp[which][1])
-        else:
+    #remove the leading 'i' or 'p'
+    temp = pkmnLists[listname][1:]
+    which = 0
+    rand = random.randrange(1,101) - int(temp[0][0])
+    while rand > 0 and which < len(temp):
+        which += 1
+        if which == len(temp):
+            #if the list is 80% pokemon/items, 20% nothing
             return 'None'
+        rand -= int(temp[which][0])
+    if giveList:
+        return temp[which][1:] #remove the percentage
     else:
-        return random.choice(pkmnLists[listname])
-    return 'None'
+        return random.choice(temp[which][1:])
 
 @bot.command(name = 'random', aliases = ['rl'],
              help = 'Get a random item/poke from a list.')
 async def pkmn_randomitem_driver(ctx, listname : str):
+    #calling the other function is an artifact, but /shrug
     await ctx.send(pkmn_random_driver(listname))
 
 #######
 
 async def which_generation(gen : int) -> tuple:
+    #do dictionaries keep order in python 3.6? I'm pretty sure they do
     starters = ['Bulbasaur', 'Chikorita', 'Treecko', 'Turtwig', 'Snivy', 'Chespin', 'Rowlet', 'Grookey']
     start = 0
     end = 0
@@ -792,6 +834,15 @@ async def pkmnRankDisplay(title : str, pokemon : typing.Union[list, dict]) -> st
         if rank in pokemon:
             output += f'**{rank}**\n{"  |  ".join(pokemon[rank])}\n'
     return output
+
+async def pkmnRankListDisplay(title : str, listname : str) -> str:
+    pokelist = []
+    #for tuple in the list
+    for x in pkmnLists[listname]:
+        #for poke in the tuple, skipping over the percent
+        for y in x[1:]:
+            pokelist.append(y)
+    return await pkmnRankDisplay(title, pokelist)
 
 @bot.command(name = 'habitat', aliases = ['biome', 'h', 'habitats'],
              help = 'List the pokemon for a biome that theworldofpokemon.com suggests.',
@@ -1063,12 +1114,7 @@ async def pkmn_search_learns(ctx, *, pokemon : pkmn_cap):
 #####
 
 async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
-    try:
-        guild = ctx.guild.id
-    except:
-        guild = ctx.author.id
-    if guild not in pokebotsettings:
-        await instantiateSettings(guild)
+    guild = await getGuilds(ctx)
     msg = ''
     rankrandom = False
     rankbase = False
@@ -1081,10 +1127,11 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
     tempList = []
     for name in pokelist:
         name = name.strip()
-        try:
-            for x in pkmnLists[name]:
-                tempList.append(x)
-        except:
+        if name in pkmnLists:
+            y = pkmn_random_driver(name, giveList = True)
+            for poke in y:
+                tempList.append(poke)
+        else:
             tempList.append(name)
             #pokelist = [x.strip().title() for x in pokelist.split(',')]
             #if len(pokelist)==1:
