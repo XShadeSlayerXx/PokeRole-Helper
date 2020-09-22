@@ -424,10 +424,14 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
             isItem = True
     except:
         pass
+    #make sure the author is registered, regardless of what they do
     if ctx.author.id not in pkmnListsPriv:
         pkmnListsPriv[ctx.author.id] = []
+    #is this a task that looks at the pokelist parameter?
     if which not in ['access', 'show']:
+        #split ono commas...
         pokelist = [pkmn_cap(x.strip()) for x in pokelist.split(',')]
+        #...or on spaces
         if len(pokelist)==1:
             pokelist = [pkmn_cap(x.strip()) for x in pokelist[0].split(' ')]
         bad = []
@@ -443,6 +447,7 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
                 pass
             if x not in pkmnStats:
                 if x == '':
+                    #sometimes an empty string gets through
                     pokelist.remove('')
                     continue
                 bad.append(x)
@@ -454,6 +459,7 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
             if tempmsg != '':
                 tempmsg ='Right now, you can\'t have a list inside of a list:\n'+tempmsg
             for name in range(len(bad)):
+                #this doesnt always work, especially if the word is too far from the real one
                 tempmsg += f'{bad[name]} --> {correct[name]}  |  '
             await ctx.send(f'{tempmsg[:-4]}\n(Pokemon with multiple forms may not show correctly)\n'
                            f'The list "{listname}" was not changed.')
