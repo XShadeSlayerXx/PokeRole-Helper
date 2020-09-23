@@ -165,33 +165,63 @@ def modifyList(which : bool, pokeToAddDel : list, listname : str):
     newOdds = [elem[0] for elem in pokeToAddDel]
     listOdds = [elem[0] for elem in pkmnLists[listname][1:]]
     bad = []
-    for index, odds in enumerate(newOdds):
+    for i, odds in enumerate(newOdds):
+        try:
+            index = listOdds.index(odds) + 1
+        except:
+            index = None
         if which: #add elements
-            if odds in listOdds:
-                for elem in pokeToAddDel[index][1:]:
-                    pkmnLists[listname][index+1].append(elem)
+            if index != None and pokeToAddDel[i][1] != 'None':
+                for elem in pokeToAddDel[i][1:]:
+                    pkmnLists[listname][index].append(elem)
             else:
                 #append everything, guarantee the percent first
-                pkmnLists[listname].append(pokeToAddDel[index])
+                pkmnLists[listname].append(pokeToAddDel[i])
         else: #remove elements
-            if len(pokeToAddDel[index][1:]) == 0:
-                del pkmnLists[listname][index+1]
-            elif odds in listOdds:
-                for elem in pokeToAddDel[index][1:]:
+            if pokeToAddDel[i][1] == 'None' and index != None:
+                del pkmnLists[listname][index]
+            elif index != None:
+                for elem in pokeToAddDel[i][1:]:
                     try:
-                        pkmnLists[listname][index+1].remove(elem)
+                        pkmnLists[listname][index].remove(elem)
                     except:
                         bad.append(elem)
             else:
-                bad.append(odds)
-    #remove duplicates
+                bad.append(str(odds)+'%')
+    #remove duplicates and balance percentages
     percent_total = 0
+    none_index = -1
+    none_amt = 0
     for i in range(1,len(pkmnLists[listname])):
         percent_total += pkmnLists[listname][i][0]
-        pkmnLists[listname][i][1:] = list(set(pkmnLists[listname][i][1:]))
+        if pkmnLists[listname][i][0] == 'None':
+            none_index = i
+            none_amt = pkmnLists[listname][i][0]
+        else:
+            pkmnLists[listname][i][1:] = list(set(pkmnLists[listname][i][1:]))
     if percent_total > 100:
-        for i in range(1,len(pkmnLists[listname])):
-            pkmnLists[listname][i][0] = int(round(pkmnLists[listname][i][0]/percent_total)*100)
+        #theres 'None' in the list
+        if none_index != -1:
+            none_sub = percent_total - 100
+            none_amt -= none_sub
+            #more percent added than none amount left
+            if none_amt <= 0:
+                percent_total = -none_amt + 100
+                del pkmnLists[listname][none_index]
+                #spread the cost above 100
+                for i in range(1,len(pkmnLists[listname])):
+                    pkmnLists[listname][i][0] = int(round(pkmnLists[listname][i][0]/percent_total*100))
+            else:
+                #theres enough 'None' to eat the cost
+                pkmnLists[listname][none_index][0] -= none_sub
+        else:
+            for i in range(1,len(pkmnLists[listname])):
+                pkmnLists[listname][i][0] = int(round(pkmnLists[listname][i][0]/percent_total*100))
+    elif percent_total < 100:
+        if none_index != -1:
+            pkmnLists[listname][none_index][0] += 100-percent_total
+        else:
+            pkmnLists[listname].append([100-percent_total, 'None'])
     return bad
 
 def displayList(listname : str) -> str:
@@ -450,13 +480,17 @@ def reformatList(listname):
     #the first element should be either 'i' or 'p'
     if pkmnLists[listname][0] not in ['i', 'p']:
         temp = pkmnLists[listname][:]
-        pkmnLists[listname] = [None, None]
-        # print(temp[0])
-        # print(lookup_poke(temp[0]))
-        # print(temp[0] in pkmnStats)
-        # print(lookup_poke(temp[0]) in pkmnStats)
+        pkmnLists[listname] = [None, None] #two slots
         pkmnLists[listname][0] = ('p' if lookup_poke(temp[0]) in pkmnStats else 'i')
         pkmnLists[listname][1] = [100] + [x for x in temp]
+    #fix directly for item lists, such that
+    #['i', [40, (i1, i2, i3)], [60, (i4, i5, i6)]] --> ['i', [40, i1, i2, i3], ...]
+    if pkmnLists[listname][0] == 'i':
+        for i in range(1,len(pkmnLists[listname][1:])+1):
+            if isinstance(pkmnLists[listname][i][1], str):
+                continue
+            pkmnLists[listname][i] = [pkmnLists[listname][i][0]] + [x for x in pkmnLists[listname][i][1]]
+
 
 @commands.is_owner()
 @bot.command(name = 'update_lists', hidden = True)
@@ -494,15 +528,8 @@ async def show_lists(ctx):
     msg = ''
     up = True
     for x, y in pkmnLists.items():
-        try:
-            item = y[0] == 'i'
-        except:
-            item = False
-        if item:
-            howMany = len([0 for _,items in y[1:] for item in items])
-        else:
-            howMany = len(y)
-        msg += ('\n - ' if up else ' / ') + f'{x} ({str(howMany) + (" i" if item else "")})'
+        howMany = sum([len(z)-1 for z in y[1:]])
+        msg += ('\n - ' if up else ' / ') + f'{x} ({str(howMany)}{" "+y[0] if y[0] == "i" else ""})'
         up = not up
     await ctx.send(msg)
 
@@ -539,51 +566,54 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
     #is this a task that looks at the pokelist parameter?
     if which not in ['access', 'show']:
         #split up the pokelist argument into separate bits... 'bulbasaur' --> [(100, 'bulbasaur')]
-        pokelist = returnWeights(pokelist)
-        #pokelist = [pkmn_cap(x.strip()) for x in pokelist.replace(',','').split(' ')]
-        bad = []
-        correct = []
-        tempmsg = ''
-        #item or pokemon?
         try:
-            if lookup_poke(pokelist[0][1]) not in pkmnStats:
-                isItem = True
+            pokelist = [[int(pokelist), 'None']]
         except:
-            #hopefully empty bc 'del', 'show', etc
-            pass
+            pokelist = returnWeights(pokelist)
+            #pokelist = [pkmn_cap(x.strip()) for x in pokelist.replace(',','').split(' ')]
+            bad = []
+            correct = []
+            tempmsg = ''
+            #item or pokemon?
+            try:
+                if lookup_poke(pokelist[0][1]) not in pkmnStats:
+                    isItem = True
+            except:
+                #hopefully empty bc 'del', 'show', etc
+                pass
 
-        if not isItem:
-            #check for misspelled pokemon...
-            whichList = pkmnStats
-        else:
-            #...or misspelled items
-            whichList = pkmnItems
+            if not isItem:
+                #check for misspelled pokemon...
+                whichList = pkmnStats
+            else:
+                #...or misspelled items
+                whichList = pkmnItems
 
-        #for pokelist in the passed in str
-        for y in pokelist:
-            #remove the percentage amount
-            y = y[1:]
-            #for pokemon in the list
-            for x in y:
-                if x not in whichList:
-                    if x == '':
-                        #sometimes an empty string gets through
-                        pokelist.remove('')
-                        continue
-                    bad.append(x)
-                    if x in pkmnLists:
-                        tempmsg+=f'{x} : '+', '.join(pkmnLists[x])+'\n'
-                    elif not isItem:
-                        correct.append(lookup_poke(x))
-        if len(bad) > 0 and which in ['add', 'remove', 'del']:
-            if tempmsg != '':
-                tempmsg ='Right now, you can\'t have a list inside of a list:\n'+tempmsg
-            for name in range(len(bad)):
-                #this doesnt always work, especially if the word is too far from the real one
-                tempmsg += (f'{bad[name]}' if isItem else f'{bad[name]} --> {correct[name]}') + '  |  '
-            await ctx.send(f'{tempmsg[:-4]}\n(Pokemon with multiple forms may not show correctly)\n'
-                           f'The list "{listname}" was not changed.')
-            return
+            #for pokelist in the passed in str
+            for y in pokelist:
+                #remove the percentage amount
+                y = y[1:]
+                #for pokemon in the list
+                for x in y:
+                    if x not in whichList:
+                        if x == '':
+                            #sometimes an empty string gets through
+                            pokelist.remove('')
+                            continue
+                        bad.append(x)
+                        if x in pkmnLists:
+                            tempmsg+=f'{x} : '+', '.join(pkmnLists[x])+'\n'
+                        elif not isItem:
+                            correct.append(lookup_poke(x))
+            if len(bad) > 0 and which in ['add', 'remove', 'del']:
+                if tempmsg != '':
+                    tempmsg ='Right now, you can\'t have a list inside of a list:\n'+tempmsg
+                for name in range(len(bad)):
+                    #this doesnt always work, especially if the word is too far from the real one
+                    tempmsg += (f'{bad[name]}' if isItem else f'{bad[name]} --> {correct[name]}') + '  |  '
+                await ctx.send(f'{tempmsg[:-4]}\n(Pokemon with multiple forms may not show correctly)\n'
+                               f'The list "{listname}" was not changed.')
+                return
     if listname not in pkmnLists and pokelist != '':
         pkmnLists[listname] = []
         if isItem:
@@ -1170,6 +1200,8 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
         name = name.strip()
         if name in pkmnLists:
             y = pkmn_random_driver(name, giveList = True)
+            if y == 'None' or y == ['None']:
+                return '...but nothing was there. *(Rolled an empty %)*\n'
             for poke in y:
                 tempList.append(poke)
         else:
