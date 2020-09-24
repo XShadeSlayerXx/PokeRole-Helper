@@ -171,16 +171,16 @@ def modifyList(which : bool, pokeToAddDel : list, listname : str):
         except:
             index = None
         if which: #add elements
-            if index != None and pokeToAddDel[i][1] != 'None':
+            if index is not None and pokeToAddDel[i][1] != 'None':
                 for elem in pokeToAddDel[i][1:]:
                     pkmnLists[listname][index].append(elem)
             else:
                 #append everything, guarantee the percent first
                 pkmnLists[listname].append(pokeToAddDel[i])
         else: #remove elements
-            if pokeToAddDel[i][1] == 'None' and index != None:
+            if pokeToAddDel[i][1] == 'None' and index is not None:
                 del pkmnLists[listname][index]
-            elif index != None:
+            elif index is not None:
                 for elem in pokeToAddDel[i][1:]:
                     try:
                         pkmnLists[listname][index].remove(elem)
@@ -398,8 +398,10 @@ async def instantiateSettings(where : str):
 @bot.command(name = 'settings',
              help = '%settings <setting_name> [value]\n'
                     'e.g. %settings ability_one_chance 50\n'
-                    'List: (ability_one_chance value) (ability_two_chance value)\n'
-                    '(ability_hidden_chance value) (shiny_chance value)\n'
+                    'List: (ability_one_chance value)\n'
+                    '(ability_two_chance value)\n'
+                    '(ability_hidden_chance value)\n'
+                    '(shiny_chance value)\n'
                     '(show_move_description True/False)\n'
                     '(encounter_item <listname>)\n'
                     '(display_list <Rank/Odds>)')
@@ -746,9 +748,9 @@ def pkmn_random_driver(listname : str, giveList = False) -> str:
 
 @bot.command(name = 'random', aliases = ['rl'],
              help = 'Get a random item/poke from a list.')
-async def pkmn_randomitem_driver(ctx, listname : str):
-    #calling the other function is an artifact, but /shrug
-    await ctx.send(pkmn_random_driver(listname))
+async def pkmn_randomitem_driver(ctx, listname : str, howMany : int = 1):
+    msg = [pkmn_random_driver(listname) for x in range(howMany)]
+    await ctx.send('\n'.join(msg))
 
 #######
 
@@ -804,10 +806,8 @@ async def pkmn_filter_list(ctx, listname : str, rank : ensure_rank,
             if type2 == 'Any' or type2 == x[1][2] or type2 == 'None' and x[1][2] == '':
                 filtered.append(pkmn_cap(x[0]))
 
-    #send the filtered list to %list then print it
+    #send the filtered list to %list, which will print it
     await pkmn_list(ctx = ctx, listname = listname, which = 'add', pokelist = ', '.join(filtered))
-    #await ctx.send(f'Pokemon in {listname}:')
-    #await pkmn_list(ctx = ctx, listname = listname, which = 'show')
 
 #######
 
@@ -991,7 +991,6 @@ async def pkmn_filter_habitat(ctx, listname : str, rank : typing.Optional[ensure
             #for wormadam, lycanroc, etc
             if x in pkmnLists:
                 x = pkmn_random_driver(x)
-                #x = random.choice(pkmnLists[x])
             #check if pokemon or list
             if x not in pokeCheck:
                 pokes.append(x)
@@ -1398,21 +1397,6 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
         msg += ('**Spe:** '+fullattr[4]).ljust(just)+f' -- **{socials[3][0]}:**  {socials[3][1]}\n'
         msg += ('**Ins:** '+fullattr[5]).ljust(just)+f' -- **{socials[4][0]}:**  {socials[4][1]}\n'
 
-
-
-        #add the attributes + socials
-        # msg += f'**Total HP:** {attributes[0]}\n'
-        # msg += f'**Str `({baseattr[1]}-{maxattr[1]}):`** {attributes[1]}  | '
-        # msg += f'**{socials[0][0]}:**  {socials[0][1]}\n'
-        # msg += f'**Dex `({baseattr[2]}-{maxattr[2]}):`** {attributes[2]}  | '
-        # msg += f'**{socials[1][0]}:**  {socials[1][1]}\n'
-        # msg += f'**Vit `({baseattr[3]}-{maxattr[3]}):`** {attributes[3]}  | '
-        # msg += f'**{socials[2][0]}:**  {socials[2][1]}\n'
-        # msg += f'**Spe `({baseattr[4]}-{maxattr[4]}):`** {attributes[4]}  | '
-        # msg += f'**{socials[3][0]}:**  {socials[3][1]}\n'
-        # msg += f'**Ins `({baseattr[5]}-{maxattr[5]}):`** {attributes[5]}  | '
-        # msg += f'**{socials[4][0]}:**  {socials[4][1]}\n'
-
         msg+= '\n'
 
         #add the socials (4 rows, 3 per line)
@@ -1464,15 +1448,6 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
             for x in movelist:
                 msg += f'{x.title()}\n'
 
-
-#    msglist = [msg]
-#    while len(msglist[-1]) > 1995:
-#        tempmsg = msglist[-1]
-#        temp = tempmsg.rindex('\n',1500,1995)
-#        msglist[-1] = tempmsg[:temp]
-#        msglist.append(tempmsg[temp:])
-#    for x in msglist:
-#        await ctx.send(x)
     return msg
 
 #####
