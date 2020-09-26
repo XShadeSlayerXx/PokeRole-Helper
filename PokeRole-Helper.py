@@ -747,9 +747,10 @@ def pkmn_random_driver(listname : str, giveList = False) -> str:
         return random.choice(temp[which][1:])
 
 @bot.command(name = 'random', aliases = ['rl'],
-             help = 'Get a random item/poke from a list.')
+             help = 'Get a random item/poke from a list.\n'
+                    '%random <list> [howMany]')
 async def pkmn_randomitem_driver(ctx, listname : str, howMany : int = 1):
-    msg = [pkmn_random_driver(listname) for x in range(howMany)]
+    msg = [str(x+1)+". "+pkmn_random_driver(listname) for x in range(howMany)]
     await ctx.send('\n'.join(msg))
 
 #######
