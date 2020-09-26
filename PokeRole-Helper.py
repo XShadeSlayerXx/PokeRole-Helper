@@ -1457,7 +1457,7 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
 @bot.command(name = 'encounter', aliases = ['e'],
              brief = 'Gets # poke at listed rank from a given list',
              help = 'Simple: %e poke(, poke2, list)\n'
-                    '%encounter [1-6] (rank/base/random) <list of pokemon>\n'
+                    '%encounter [1-6] [1-6 upper bound] [rank/base/random] <list of pokemon>\n'
                     '"base" means pokemon generated are at suggested ranks\n'
                     'e.g. %encounter 2 random eevee, squirtle, pidgey, list1')
 async def pkmn_search_encounter(ctx, number : typing.Optional[int] = 1,
@@ -1480,7 +1480,7 @@ async def pkmn_search_encounter(ctx, number : typing.Optional[int] = 1,
 @bot.command(name = 'wEncounter', aliases = ['we'],
              brief = 'Weighted encounter. %help wEncounter',
              help = 'Simple: %we 95% poke1 5% poke2, list\n'
-                    '%encounter [1-6] (rank/base/random) <True/False> [num]% list [num]% poke1, poke2, list2 [num]% etc\n'
+                    '%encounter [1-6] [1-6] (rank/base/random) <True/False> [num]% list [num]% poke1, poke2, list2 [num]% etc\n'
                     'Same as %encounter, but the lists are weighted. Have a common and rare encounter in'
                     'the same area? This is the command you want.\n'
                     'separatePools: True sticks to the list you draw first. False does not.\n'
