@@ -1461,9 +1461,12 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
                     '"base" means pokemon generated are at suggested ranks\n'
                     'e.g. %encounter 2 random eevee, squirtle, pidgey, list1')
 async def pkmn_search_encounter(ctx, number : typing.Optional[int] = 1,
+                                numberMax : typing.Optional[int] = None,
                                 rank : typing.Optional[ensure_rank] = 'Base',
                                 *, pokelist : (lambda x : x.split(', '))):
     #pokelist = pokelist.split(', ')
+    if numberMax is not None:
+        number = random.randint(number, numberMax)
     msg = await pkmn_encounter(ctx, number, rank, pokelist)
     msglist = [msg]
     while len(msglist[-1]) > 1995:
@@ -1484,11 +1487,14 @@ async def pkmn_search_encounter(ctx, number : typing.Optional[int] = 1,
                     '(x% chance for the list vs x% chance per pokemon)\n'
                     'e.g. %wEncounter 2 base False 95% eevee, squirtle 5% list1, porygon\n')
 async def weighted_pkmn_search(ctx, number : typing.Optional[int] = 1,
+                                numberMax : typing.Optional[int] = None,
                                 rank : typing.Optional[ensure_rank] = 'Base',
                                separatePools : typing.Optional[bool] = False, *, pokelist : sep_weights):
     #separate the pokelist string into a list of tuples (int(chance), str(pokemon, pokemon))
     #pokelist = re.findall(pokeweight, pokelist)
     #make the values useable
+    if numberMax is not None:
+        number = random.randint(number, numberMax)
     odds = [int(x) for x,y in pokelist]
     pokelist = [y.strip(',').split(', ') for x,y in pokelist]
     if separatePools:
