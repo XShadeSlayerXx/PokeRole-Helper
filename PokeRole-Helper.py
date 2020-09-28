@@ -307,7 +307,7 @@ async def integrityChecks(ctx, which : typing.Optional[int] = 0):
                     try:
                         await pkmnabilitieshelper(stats[x])
                     except:
-                        errors.append((pokemon, f' ability{stats[x]}'))
+                        errors.append((pokemon, f' ability {stats[x]}'))
 
     #moves next
     if which in [0,2]:
@@ -338,8 +338,7 @@ async def integrityChecks(ctx, which : typing.Optional[int] = 0):
     msg = '\n'.join([f'{x} {y}' for x,y in errors if not x.startswith('Delta')])
     #print(msg)
     if ctx is not None:
-        for x in range(0,len(msg),1995):
-           await ctx.send(msg[x:x+1995])
+        await send_big_msg(ctx, msg)
     else:
         print(msg)
 
@@ -393,7 +392,7 @@ async def docs(ctx):
 #[ability1, ability2, ability3, shiny, show_move_desc, show ability desc, the item list used in encounter,
 # display lists pokemon by rank or odds]
 async def instantiateSettings(where : str):
-    pokebotsettings[where] = [50,49,1,.00012, True, True, False, True]
+    pokebotsettings[where] = [50,49,1,.00012, True, True, False, True, False]
 
 @bot.command(name = 'settings',
              help = '%settings <setting_name> [value]\n'
@@ -404,7 +403,8 @@ async def instantiateSettings(where : str):
                     '(shiny_chance value)\n'
                     '(show_move_description True/False)\n'
                     '(encounter_item <listname>)\n'
-                    '(display_list <Rank/Odds>)')
+                    '(display_list <Rank/Odds>)\n'
+                    '(random_rolls True/False')
 async def settings(ctx, setting='', value=''):
     msg = ''
     try:
@@ -452,6 +452,11 @@ async def settings(ctx, setting='', value=''):
             pokebotsettings[guild][7] = False
         else: #set it to show rank
             pokebotsettings[guild][7] = True
+    elif setting == 'random_rolls':
+        if value[0].lower() == 't':
+            pokebotsettings[guild][8] = True
+        elif value[0].lower() == 'f':
+            pokebotsettings[guild][8] = False
     temp = pokebotsettings[guild]
     await ctx.send(f'{msg}'
                    f'Current settings:\n(Ability1/Ability2/AbilityHidden)\n**{temp[0],temp[1],temp[2]}**\n'
@@ -460,6 +465,7 @@ async def settings(ctx, setting='', value=''):
                    f'Show ability description in %encounter: **{temp[5]}**\n'
                    f'Items in %encounter? {temp[6]}\n'
                    f'display_list by odds or rank? {temp[7]}\n'
+                   f'arbitrary encounter random_rolls? {temp[8]}\n'
                    f'"%help settings" for help')
     save_obj(pokebotsettings, 'pokebotsettings')
 
@@ -1435,13 +1441,21 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
                     msg += f' -- **{found[1].capitalize()}**\n'
                     msg += f'**Target**: {found[7]}'
                     msg += f' -- **Power**: {found[2]}\n'
+                    numRolls = 4
+                    totalDmg = (allAttr[found[3]] or 0) + (allAttr[found[4]] or 0) + int(found[2])
+                    dmgArray = [sum([random.randint(0,1) for _ in range(totalDmg)]) for _ in range(numRolls)]
+                    totalAcc = (allAttr[found[5]] or 0) + (allAttr[found[6]] or 0)
+                    accArray = [sum([random.randint(0,1)-accMod for _ in range(totalAcc)]) for _ in range(numRolls)]
                     msg += f'**Dmg Mods**: {(found[3] or "None")} + {(found[4] or "None")} ' \
-                           f'+ {found[2]} = ' \
-                           f'({(allAttr[found[3]] or 0)+(allAttr[found[4]] or 0)+int(found[2])}'
+                           f'+ {found[2]} = ({totalDmg}'
                     msg += f'{" STAB" if found[0].capitalize() in (statlist[1],statlist[2]) else ""})\n'
+                    if pokebotsettings[guild][8]:
+                        msg += f'{dmgArray}\n'
                     msg += f'**Acc Mods**: {(found[5] or "None")} + {(found[6] or "None")} = '
                     msg += f'({(allAttr[found[5]] or 0)+(allAttr[found[6]] or 0)}'
                     msg += f" - {accMod} Successes)\n" if accMod != 0 else ")\n"
+                    if pokebotsettings[guild][8]:
+                        msg += f'{accArray}\n'
                     msg += f'**Effect**: {found[8]}\n\n'
                 except:
                     msg += f'__{x.title()}__\n\n'
