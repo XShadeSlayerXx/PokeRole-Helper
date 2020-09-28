@@ -403,8 +403,8 @@ async def instantiateSettings(where : str):
                     '(shiny_chance value)\n'
                     '(show_move_description True/False)\n'
                     '(encounter_item <listname>)\n'
-                    '(display_list <Rank/Odds>)\n'
-                    '(random_rolls True/False')
+                    '(display_list Rank/Odds)\n'
+                    '(random_rolls True/False)')
 async def settings(ctx, setting='', value=''):
     msg = ''
     try:
