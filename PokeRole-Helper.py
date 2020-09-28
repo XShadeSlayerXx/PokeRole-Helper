@@ -1448,14 +1448,12 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
                     accArray = [sum([random.randint(0,1)-accMod for _ in range(totalAcc)]) for _ in range(numRolls)]
                     msg += f'**Dmg Mods**: {(found[3] or "None")} + {(found[4] or "None")} ' \
                            f'+ {found[2]} = ({totalDmg}'
-                    msg += f'{" STAB" if found[0].capitalize() in (statlist[1],statlist[2]) else ""})\n'
-                    if pokebotsettings[guild][8]:
-                        msg += f'{dmgArray}\n'
+                    msg += f'{" STAB" if found[0].capitalize() in (statlist[1],statlist[2]) else ""})'
+                    msg += f' {dmgArray}\n' if pokebotsettings[guild][8] else '\n'
                     msg += f'**Acc Mods**: {(found[5] or "None")} + {(found[6] or "None")} = '
                     msg += f'({(allAttr[found[5]] or 0)+(allAttr[found[6]] or 0)}'
-                    msg += f" - {accMod} Successes)\n" if accMod != 0 else ")\n"
-                    if pokebotsettings[guild][8]:
-                        msg += f'{accArray}\n'
+                    msg += f" - {accMod} Successes)" if accMod != 0 else ")"
+                    msg += f' {accArray}\n' if pokebotsettings[guild][8] else '\n'
                     msg += f'**Effect**: {found[8]}\n\n'
                 except:
                     msg += f'__{x.title()}__\n\n'
