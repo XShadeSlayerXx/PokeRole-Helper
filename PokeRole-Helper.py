@@ -1436,6 +1436,7 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
                             accMod = 0
                     else:
                         accMod = 0
+                    #todo: differentiate between damaging STAB, non-damaging STAB, and add + after the STAB dmg array
                     msg += f'__{x.title()}__\n'
                     msg += f'**Type**: {found[0].capitalize()}'
                     msg += f' -- **{found[1].capitalize()}**\n'
