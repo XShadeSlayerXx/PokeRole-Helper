@@ -35,6 +35,9 @@ bot = commands.Bot(command_prefix = cmd_prefix)
 # (show_encounter_move_desc, 0)]}
 pokebotsettings = dict()
 
+#status list
+pokeStatus = dict()
+
 #pokemon moves
 pkmnMoves = dict()
 pkmnStats = dict()
@@ -78,7 +81,8 @@ def load_obj(name):
         return pickle.load(f)
 
 # list of dictionary files
-files = [('pkmnLists', pkmnLists), ('pokebotsettings', pokebotsettings), ('pkmnListsPriv', pkmnListsPriv)]
+files = [('pkmnLists', pkmnLists), ('pokebotsettings', pokebotsettings), ('pkmnListsPriv', pkmnListsPriv),
+         ('pokeStatus', pokeStatus)]
 
 @bot.event
 async def on_ready():
@@ -248,6 +252,24 @@ def pokesFromList(listname : str) -> list:
         for poke in lists[1:]:
             output.append(poke)
     return output
+
+def getStatus(statustype : str) -> str:
+    statustype = statustype.split()[0].lower()
+    if statustype in ['burn','burned']:
+        return '🔥'#'\N{FIRE}'
+    elif statustype in ['badly','poison','poisoned']:
+        return '🟢'#'\N{GREEN_CIRCLE}'
+    elif statustype in ['love','infatuation']:
+        return '❤️'#'\N{HEART}'
+    elif statustype == 'paralyzed':
+        return '⚡'#'\N{ZAP}'
+    elif statustype == 'frozen':
+        return '❄️'#'\N{SNOWFLAKE}'
+    elif statustype == 'confused':
+        return '💫'#'\N{SPARKLES}'
+    elif statustype == 'leech':
+        return '🌱'#'\N{SEEDLING}'
+    return '🗡️'#'\N{DAGGER}'
 
 #######
 #decorators
@@ -548,7 +570,7 @@ async def show_lists(ctx):
                                    'Use "%list <listname> access @mention" to give edit permissions to someone\n'
                                    'Their user id will also work (right click their profile --> copy id)')
 async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
-    areListsBroken = [x for x in list(pkmnLists.keys())]
+    #areListsBroken = [x for x in list(pkmnLists.keys())]
     try:
         #initialize pkmnstats and check if listname is a valid pokemon
         await pkmnstatshelper(listname)
@@ -696,8 +718,8 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
     await ctx.message.add_reaction('\N{CYCLONE}')
     save_obj(pkmnListsPriv, 'pkmnListsPriv')
     save_obj(pkmnLists, 'pkmnLists')
-    if len(pkmnLists.keys()) < len(areListsBroken) - 1:
-        await bot.appinfo.owner.send(f'{listname} {which} {pokelist}')
+    #if len(pkmnLists.keys()) < len(areListsBroken) - 1:
+    #    await bot.appinfo.owner.send(f'{listname} {which} {pokelist}')
 
 ###
 
@@ -1536,6 +1558,74 @@ async def weighted_pkmn_search(ctx, number : typing.Optional[int] = 1,
         msglist.append(tempmsg[temp:])
     for x in msglist:
         await ctx.send(x)
+
+#####
+
+@bot.command(name = 'status',
+             alias = ['statuses'],
+             help = 'A tracker for status effects in battle.\n'
+                    '%status add burn 1\n'
+                    '%status or %status round\n'
+                    '%status remove/del burn 1\n'
+                    '%status remove/del all')
+async def status(ctx, cmd = '', *, mc = ''):
+    cmd = cmd.lower()
+    mc = mc.title()
+    name_key = ctx.author.id
+    if name_key not in pokeStatus or not pokeStatus[name_key]:
+        pokeStatus[name_key] = []
+    if cmd == 'add':
+        pokeStatus[name_key].append(mc)
+        await ctx.message.add_reaction(getStatus(mc))
+
+    elif cmd in ['del', 'remove']:
+        try:
+            bad = []
+            if mc == 'All':
+                del pokeStatus[name_key]
+                await ctx.message.add_reaction('👍')
+            else:
+                #remove by index(es)
+                try:
+                    mc = sorted(re.split(', | |,', mc), reverse = True)
+                    for x in mc:
+                        ind = int(x) - 1
+                        if ind < len(pokeStatus[name_key]):
+                            await ctx.message.add_reaction(getStatus(pokeStatus[name_key].pop(ind)))
+                        else:
+                            bad.append(x)
+                #remove by name
+                except:
+                    for x in mc:
+                        try:
+                            pokeStatus[name_key].remove(x)
+                            await ctx.message.add_reaction(getStatus(x))
+                        except:
+                            bad.append(x)
+            if len(bad) > 0:
+                statlist = '\n'.join([f'[{x+1}] {y}' for x,y in enumerate(pokeStatus[name_key])])
+                await ctx.send(f'{", ".join(bad)} not recognized in the list\n{statlist}')
+        except IndexError:
+            await ctx.send(f'{x} is out of range, you currently have {len(pokeStatus[name_key])} status effects')
+        except KeyError:
+            await ctx.send(f"{ctx.author} doesn't have any status effects")
+        except:
+            await ctx.send(f'"{mc}" not recognized as an index or status in the list')
+
+    elif cmd == 'round' or cmd == '':
+        if len(pokeStatus[name_key]) > 0:
+            msg = "Status Effects:\n"
+            for x in range(len(pokeStatus[name_key])):
+                msg += f"[{x + 1}] {pokeStatus[name_key][x]}\n"
+        else:
+            msg = 'No current status effects'
+        await ctx.send(msg)
+    else:
+        await ctx.send(f'{cmd} isn\'t a recognized command')
+
+    save_obj(pokeStatus, 'pokeStatus')
+
+#####
 
 #error handling:
 
