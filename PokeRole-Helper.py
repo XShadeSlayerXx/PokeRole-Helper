@@ -261,7 +261,7 @@ def getStatus(statustype : str) -> str:
         return '🟢'#'\N{GREEN_CIRCLE}'
     elif statustype in ['love','infatuation']:
         return '❤️'#'\N{HEART}'
-    elif statustype == 'paralyzed':
+    elif statustype in ['paralyzed', 'paralysis']:
         return '⚡'#'\N{ZAP}'
     elif statustype == 'frozen':
         return '❄️'#'\N{SNOWFLAKE}'
@@ -1567,6 +1567,7 @@ async def weighted_pkmn_search(ctx, number : typing.Optional[int] = 1,
                     '%status add burn 1\n'
                     '%status or %status round\n'
                     '%status remove/del burn 1\n'
+                    '%status change {1} burn 2 --> change the status in slot 1 to "burn 2"\n'
                     '%status remove/del all')
 async def status(ctx, cmd = '', *, mc = ''):
     cmd = cmd.lower()
@@ -1612,7 +1613,16 @@ async def status(ctx, cmd = '', *, mc = ''):
         except:
             await ctx.send(f'"{mc}" not recognized as an index or status in the list')
 
-    elif cmd == 'round' or cmd == '':
+    elif cmd in ['change', 'c']:
+        where = int(mc.split()[0])-1
+        if where < len(pokeStatus[name_key]):
+            what = ' '.join(mc.split()[1:])
+            pokeStatus[name_key][where] = what
+            await ctx.message.add_reaction(getStatus(what))
+        else:
+            await ctx.message.add_reaction('❌')
+
+    elif cmd in ['round', '']:
         if len(pokeStatus[name_key]) > 0:
             msg = "Status Effects:\n"
             for x in range(len(pokeStatus[name_key])):
