@@ -561,7 +561,7 @@ async def show_lists(ctx):
         howMany = sum([len(z)-1 for z in y[1:]])
         msg += ('\n - ' if up else ' / ') + f'{x} ({str(howMany)}{" "+y[0] if y[0] == "i" else ""})'
         up = not up
-    await ctx.send(msg)
+    await send_big_msg(ctx, msg)
 
 @bot.command(name = 'list', aliases=['l'], help = '%list <listname> (add/show/del) poke1, poke2, etc\n'
                                    'or %list <listname> (add/show/del) 43% item1, item2, 10% item3, item4, etc\n'
