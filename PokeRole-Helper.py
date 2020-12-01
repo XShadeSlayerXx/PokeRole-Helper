@@ -910,31 +910,53 @@ async def pkmn_search_item(ctx, *, itemname = ''):
 
 async def instantiateShop():
     global pkmnShop
+    # unique = {'Common':[], 'Uncommon':[], 'Rare':[], 'Not for Sale':[]}
     if len(pkmnItems.keys()) == 0:
         await instantiateItemList()
     tmpList = dict()
-    for item, data in pkmnItems.values():
-        # cost is the 3rd item, index 2
-        if data[2] not in tmpList:
-            tmpList[data[2]] = [item]
+    for item, data in pkmnItems.items():
+        # cost is the 15rd item, index 14
+        try:
+            cost = data[14]
+            # if cost in unique:
+            #     unique[cost].append(item)
+            #     continue
+            cost = int(cost)
+        except:
+            continue
+        if cost not in tmpList:
+            tmpList[cost] = [item]
         else:
-            tmpList.append(item)
+            tmpList[cost].append(item)
     keyOrder = sorted(list(tmpList.keys()))
     for price in keyOrder:
         pkmnShop[price] = tmpList[price]
+    # pkmnShop.update(unique)
 
 @bot.command(name='shop', help='Lists all recommended shop items grouped by price.\n'
                                '"%shop (price) (showHigherPriced)" to limit the output by price.\n'
                                'e.g. "%shop 750 True" to list all items priced higher than 750.')
 async def shop_items(ctx, pricePoint : int = None, showHigherPriced : bool = False):
+    if not pkmnShop:
+        await instantiateShop()
     output = ''
-    tmpDict = (reversed(pkmnShop) if showHigherPriced else pkmnShop)
-    place = bisect(tmpDict, pricePoint)
+    if pricePoint:
+        place = bisect(list(pkmnShop), pricePoint)
+    else:
+        place = len(list(pkmnShop))
+    if showHigherPriced:
+        # need to flip the index in this case, and +1 to make it inclusive
+        place = len(pkmnShop) - place + 1
+        tmpDict = ODict()
+        for x in reversed(pkmnShop):
+            tmpDict[x] = pkmnShop[x]
+    else:
+        tmpDict = pkmnShop.copy()
     # array is in the right order for 'showHigherPriced' either way
-    for price, values in tmpDict.values():
+    for price, values in tmpDict.items():
         if place == 0:
             break
-        output.append(f'**{price}:**\n' + ' -- '.join(values))
+        output += f'**{price}¥**\n' + ' -- '.join(values) + '\n'
         place -= 1
     if output == '':
         output = f'Price range is {sorted(list(pkmnShop.keys())[::len(pkmnShop)-1])}'
