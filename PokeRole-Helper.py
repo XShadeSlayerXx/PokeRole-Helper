@@ -11,6 +11,9 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 from symspellpy import SymSpell, Verbosity
+# can be replaced when/if i ever convert to nosql
+from _collections import OrderedDict as ODict
+from _bisect import bisect
 
 load_dotenv()
 token = os.getenv('POKEROLE_TOKEN')
@@ -45,6 +48,7 @@ pkmnLearns = dict()
 pkmnItems = dict()
 pkmnAbilities = dict()
 pkmnHabitats = dict()
+pkmnShop = ODict()
 
 ranks = ['Starter', 'Beginner', 'Amateur', 'Ace', 'Pro', 'Master', 'Champion']
 natures = ['Hardy (9)','Lonely (5)','Brave (9)','Adamant (4)','Naughty (6)',
@@ -903,6 +907,38 @@ async def pkmn_search_item(ctx, *, itemname = ''):
             msg += x + ('\n - ' if wbool else ' / ')
             wbool = not wbool
         await ctx.send(msg)
+
+async def instantiateShop():
+    global pkmnShop
+    if len(pkmnItems.keys()) == 0:
+        await instantiateItemList()
+    tmpList = dict()
+    for item, data in pkmnItems.values():
+        # cost is the 3rd item, index 2
+        if data[2] not in tmpList:
+            tmpList[data[2]] = [item]
+        else:
+            tmpList.append(item)
+    keyOrder = sorted(list(tmpList.keys()))
+    for price in keyOrder:
+        pkmnShop[price] = tmpList[price]
+
+@bot.command(name='shop', help='Lists all recommended shop items grouped by price.\n'
+                               '"%shop (price) (showHigherPriced)" to limit the output by price.\n'
+                               'e.g. "%shop 750 True" to list all items priced higher than 750.')
+async def shop_items(ctx, pricePoint : int = None, showHigherPriced : bool = False):
+    output = ''
+    tmpDict = (reversed(pkmnShop) if showHigherPriced else pkmnShop)
+    place = bisect(tmpDict, pricePoint)
+    # array is in the right order for 'showHigherPriced' either way
+    for price, values in tmpDict.values():
+        if place == 0:
+            break
+        output.append(f'**{price}:**\n' + ' -- '.join(values))
+        place -= 1
+    if output == '':
+        output = f'Price range is {sorted(list(pkmnShop.keys())[::len(pkmnShop)-1])}'
+    await send_big_msg(ctx, output)
 
 #######
 
