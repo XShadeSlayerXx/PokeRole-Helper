@@ -12,8 +12,8 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from symspellpy import SymSpell, Verbosity
 # can be replaced when/if i ever convert to nosql
-from _collections import OrderedDict as ODict
-from _bisect import bisect
+from collections import OrderedDict as ODict
+from bisect import bisect
 
 load_dotenv()
 token = os.getenv('POKEROLE_TOKEN')
