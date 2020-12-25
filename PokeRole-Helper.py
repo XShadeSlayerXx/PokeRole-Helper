@@ -1620,7 +1620,7 @@ async def weighted_pkmn_search(ctx, number : typing.Optional[int] = 1,
 #####
 
 @bot.command(name = 'status',
-             alias = ['statuses'],
+             aliases = ['statuses'],
              help = 'A tracker for status effects in battle.\n'
                     '%status add burn 1\n'
                     '%status or %status round\n'
@@ -1692,6 +1692,21 @@ async def status(ctx, cmd = '', *, mc = ''):
         await ctx.send(f'{cmd} isn\'t a recognized command')
 
     save_obj(pokeStatus, 'pokeStatus')
+
+#####
+
+@bot.command(name = 'feedback',
+             aliases = ['fb', 'report'],
+             help = 'Send feedback/suggestions/bug reports straight to my creator!')
+async def feedback(ctx, *, info):
+    await bot.appinfo.owner.send(f'{ctx.author.name}: {info}')
+    await ctx.message.add_reaction('\N{HIBISCUS}')
+
+@bot.command(name = 'donate',
+             help = 'Support me!')
+async def donate(ctx):
+    link = r'https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=VD9LEYX4TKGUW&currency_code=USD'
+    await ctx.send(embed = discord.Embed(title = 'Click here to donate!', url = link))
 
 #####
 
