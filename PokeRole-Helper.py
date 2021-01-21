@@ -1724,4 +1724,6 @@ if not dev_env:
 
 #####
 
+bot.load_extension('mapCog')
+
 bot.run(token)
