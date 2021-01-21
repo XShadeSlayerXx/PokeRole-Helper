@@ -78,10 +78,12 @@ def abs_coord(coord):
 
 def load_tiles():
     filenames = []
-    try:
-        (_, _, filenames) = next(os.walk(fileprefix))
-    except StopIteration:
-        pass
+    for _, _, files in os.walk(fileprefix):
+        filenames = files
+    # try:
+    #     (_, _, filenames) = next(os.walk(fileprefix))
+    # except StopIteration:
+    #     pass
 
     for file in filenames:
         file = fileprefix + file
