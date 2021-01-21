@@ -7,8 +7,8 @@ import random
 import os
 import math
 
-fileprefix = r'pokeMap\\tiles\\'
-BKGD_CROSS_PATH = r'pokeMap\\cross.png'
+fileprefix = r'./pokeMap/tiles/'
+BKGD_CROSS_PATH = r'./pokeMap/cross.png'
 
 MAX_MAP_SIZE = 11
 TILE_WIDTH = 174
