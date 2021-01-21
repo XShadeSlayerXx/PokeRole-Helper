@@ -77,6 +77,7 @@ def abs_coord(coord):
     return coord%3-1, coord//3-1
 
 def load_tiles():
+    filenames = []
     try:
         (_, _, filenames) = next(os.walk(fileprefix))
     except StopIteration:
