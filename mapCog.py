@@ -42,6 +42,7 @@ event_colors = {
 #store the images in this array on startup
 tiles = []
 
+#TODO: hardcode these for now? (rename the pictures to be descriptive?)
 #organize the tiles based on which directions are available via index
 tileMaps = {
     0 : [], #center. TODO: do something with these?
