@@ -1,7 +1,7 @@
 from discord.ext import commands
 from discord import File
 from typing import Optional
-from PIL import Image
+from Pillow import Image
 
 import random
 import os
@@ -77,7 +77,11 @@ def abs_coord(coord):
     return coord%3-1, coord//3-1
 
 def load_tiles():
-    (_, _, filenames) = next(os.walk(fileprefix))
+    try:
+        (_, _, filenames) = next(os.walk(fileprefix))
+    except StopIteration:
+        pass
+
     for file in filenames:
         file = fileprefix + file
         tempImg = Image.open(file)
