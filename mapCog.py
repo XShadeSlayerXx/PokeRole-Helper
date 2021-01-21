@@ -1,7 +1,7 @@
 from discord.ext import commands
 from discord import File
 from typing import Optional
-from Pillow import Image
+from PIL import Image
 
 import random
 import os
