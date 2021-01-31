@@ -21,11 +21,11 @@ token = os.getenv('POKEROLE_TOKEN')
 #for my testing environment
 dev_env = (True if len(sys.argv) > 1 else False)
 
-cmd_prefix = ('**' if dev_env else '%')
+cmd_prefix = ('./' if dev_env else '%')
 
 bot = commands.Bot(command_prefix = cmd_prefix)
 
-
+cogs = ['mapCog']
 
 #TODO: compress more of the data in working memory
 #   ++PokeLearns ranks complete
@@ -120,6 +120,9 @@ async def on_ready():
             tempf = open(file[0] + ".pkl", "w")
             tempf.close()
             save_obj(file[1], file[0])
+
+    if not dev_env:
+        await bot.appinfo.owner.send(f'Connected Successfully')
 
 #######
 #converters
@@ -405,6 +408,12 @@ async def functionChecks(ctx, which : typing.Optional[int] = 0):
         await ctx.send('Errors:\n'+'\n'.join([error for error in errors]))
     else:
         await ctx.send('**Passed!**')
+
+@commands.is_owner()
+@bot.command(name = 'reloadCog', hidden = True)
+async def reloadCogs(ctx):
+    for cog in cogs:
+        bot.reload_extension(cog)
 
 #######
 
@@ -1724,6 +1733,7 @@ if not dev_env:
 
 #####
 
-bot.load_extension('mapCog')
+for cog in cogs:
+    bot.load_extension(cog)
 
 bot.run(token)
