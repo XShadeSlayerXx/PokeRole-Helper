@@ -16,6 +16,7 @@ class Dice(commands.Cog):
 
     @commands.command(
         name = 'roll',
+        aliases = ['r'],
         help = 'Roll a d6. You can type \'!roll 3d6\' for example to change # of dice and/or # of faces',
         brief = '\'!roll\' or \'!roll 3d6\' for example'
     )
