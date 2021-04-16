@@ -1556,7 +1556,7 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
 #####
 
 
-@bot.command(name = 'encounter', aliases = ['e'],
+@bot.command(name = 'encounter', aliases = ['e', 'pokemon'],
              brief = 'Gets # poke at listed rank from a given list',
              help = 'Simple: %e poke(, poke2, list)\n'
                     '%encounter [1-6] [1-6 upper bound] [rank/base/random] <list of pokemon>\n'
