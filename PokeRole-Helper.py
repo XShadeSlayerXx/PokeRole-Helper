@@ -1141,7 +1141,10 @@ async def instantiatePkmnMoveList():
 async def pkmnmovehelper(move):
     if len(pkmnMoves.keys()) == 0:
         await instantiatePkmnMoveList()
-    return pkmnMoves[move.title()]
+    try:
+        return pkmnMoves[move.title()]
+    except:
+        return pkmnMoves[move.title().replace(' ', '-')]
 
 @bot.command(name = 'move', aliases = ['m'], help = 'List a pokemon move traits')
 async def pkmn_search_move(ctx, *, movename : str):
