@@ -40,14 +40,28 @@ class Dice(commands.Cog):
                 dice[1] = sorted((2, int(dice[1]), maxPips))[1]
                 total = [random.randrange(int(dice[1])) + 1 for _ in range(int(dice[0]))]
                 rolled = f'{dice[0]}d{dice[1]}'
-                msg = f'{rolled} -- {", ".join([str(x) for x in total])}'
+                numSuccesses = None
+                if dice[1] == 6 and add is None:
+                    msg = f'{rolled} -- '
+                    numSuccesses = 0
+                    for x in total:
+                        if x < 4: #don't bold failed rolls
+                            msg += str(x)
+                        else: #bold successes
+                            msg += f'**{str(x)}**'
+                            numSuccesses += 1
+                        msg += ', '
+                    msg = msg[:-2]
+                else:
+                    msg = f'{rolled} -- {", ".join([str(x) for x in total])}'
                 if add is not None:
                     msg += f' + {add} = {sum(total) + add}'
+                if numSuccesses is not None:
+                    msg += (f'\n{numSuccesses} Successes' if numSuccesses != 1 else f'\n{numSuccesses} Success')
                 await ctx.send(msg)
         else:
             ran = random.randrange(6) + 1
             await ctx.send(f'{ran}')
-
 
 def setup(bot):
     bot.add_cog(Dice(bot))
