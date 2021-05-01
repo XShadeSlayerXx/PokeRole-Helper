@@ -25,7 +25,7 @@ cmd_prefix = ('./' if dev_env else '%')
 
 bot = commands.Bot(command_prefix = cmd_prefix)
 
-cogs = ['mapCog', 'diceCog']
+cogs = ['mapCog', 'diceCog', 'custom_help']
 
 #TODO: compress more of the data in working memory
 #   ++PokeLearns ranks complete
