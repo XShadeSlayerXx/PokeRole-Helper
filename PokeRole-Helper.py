@@ -1010,8 +1010,7 @@ async def pkmnRankListDisplay(title : str, listname : str) -> str:
     return await pkmnRankDisplay(title, pokelist)
 
 @bot.command(name = 'habitat', aliases = ['biome', 'h', 'habitats'],
-             help = 'List the pokemon for a biome that theworldofpokemon.com suggests.',
-             hidden=True)
+             help = 'List the pokemon for a biome that theworldofpokemon.com suggests.')
 async def pkmn_search_habitat(ctx, *, habitat : str = ''):
     try:
         habitat = habitat.title()
