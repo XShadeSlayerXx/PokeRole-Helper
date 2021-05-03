@@ -54,7 +54,7 @@ class Help(commands.Cog):
                 tmp = tmp2
             if tmp < end and tmp != -1:
                 end = tmp
-                add = '...'
+            add = '...'
         return cmd.help[:end] + add
 
     def big_help_msg(self, cmd):
