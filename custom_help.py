@@ -70,7 +70,7 @@ class Help(commands.Cog):
         if not which:
 
             custom_categories = {
-                'Reference' : sorted(['ability', 'move', 'pokelearns', 'stats', 'shop', 'item']),
+                'Reference' : sorted(['ability', 'move', 'pokelearns', 'stats', 'shop', 'item', 'weather']),
                 'Lists' : sorted(['filter', 'list', 'lists', 'listsub']),
                 'Encounters' : sorted(['encounter', 'wEncounter', 'random']),
                 'Misc': sorted(['docs', 'donate', 'feedback', 'settings', 'status', 'roll', 'dungeon', 'habitat'])
