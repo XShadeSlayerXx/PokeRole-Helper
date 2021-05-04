@@ -49,6 +49,7 @@ pkmnItems = dict()
 pkmnAbilities = dict()
 pkmnHabitats = dict()
 pkmnShop = ODict()
+pkmnWeather = dict()
 
 ranks = ['Starter', 'Beginner', 'Amateur', 'Ace', 'Pro', 'Master', 'Champion']
 natures = ['Hardy (9)','Lonely (5)','Brave (9)','Adamant (4)','Naughty (6)',
@@ -970,6 +971,40 @@ async def shop_items(ctx, pricePoint : int = None, showHigherPriced : bool = Fal
     if output == '':
         output = f'Price range is {sorted(list(pkmnShop.keys())[::len(pkmnShop)-1])}'
     await send_big_msg(ctx, output)
+
+async def instantiateWeather():
+    global pkmnWeather
+    # 0 is name, 1 is description, 2 is effect
+    with open('weather.csv', 'r', encoding = "UTF-8") as file:
+        reader = csv.reader(file)
+        for row in reader:
+            pkmnWeather[row[0]] = row[1:]
+
+@bot.command(name = 'weather',
+             aliases = ['w'],
+             help = 'Quick reference for the weather.\n'
+                    'Type `%weather` for a list of all weather types, or'
+                    'type `%weather sunny day` for example for an in-depth explanation.')
+async def weather(ctx, *, weather = ''):
+    if len(pkmnWeather) == 0:
+        await instantiateWeather()
+    output = ''
+    weatherrepl = '\t- '
+    if weather == '':
+        #list all weather
+        for k, v in list(pkmnWeather.items()):
+            output += f'**{k}**\n\t- *{v[0]}*\n'
+    else:
+        #list a single weather description
+        weather = weather.title()
+        if f'{weather} Weather' in pkmnWeather:
+            weather += ' Weather'
+        if weather in pkmnWeather:
+            effect = pkmnWeather[weather][1].replace('. ', '.\n'+weatherrepl)
+            output = f'**{weather}**:\n*{pkmnWeather[weather][0]}*\n{weatherrepl}{effect}'
+        else:
+            output = f'{weather} wasn\'t found in the weather list.\nDid you misspell it?'
+    await ctx.send(output)
 
 #######
 
