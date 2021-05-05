@@ -25,7 +25,7 @@ cmd_prefix = ('./' if dev_env else '%')
 
 bot = commands.Bot(command_prefix = cmd_prefix)
 
-cogs = ['mapCog', 'diceCog', 'custom_help']
+cogs = ['mapCog', 'diceCog', 'custom_help', 'miscCommands']
 
 #TODO: compress more of the data in working memory
 #   ++PokeLearns ranks complete
@@ -972,40 +972,6 @@ async def shop_items(ctx, pricePoint : int = None, showHigherPriced : bool = Fal
         output = f'Price range is {sorted(list(pkmnShop.keys())[::len(pkmnShop)-1])}'
     await send_big_msg(ctx, output)
 
-async def instantiateWeather():
-    global pkmnWeather
-    # 0 is name, 1 is description, 2 is effect
-    with open('weather.csv', 'r', encoding = "UTF-8") as file:
-        reader = csv.reader(file)
-        for row in reader:
-            pkmnWeather[row[0]] = row[1:]
-
-@bot.command(name = 'weather',
-             aliases = ['w'],
-             help = 'Quick reference for the weather.\n'
-                    'Type `%weather` for a list of all weather types, or'
-                    'type `%weather sunny day` for example for an in-depth explanation.')
-async def weather(ctx, *, weather = ''):
-    if len(pkmnWeather) == 0:
-        await instantiateWeather()
-    output = ''
-    weatherrepl = '\t- '
-    if weather == '':
-        #list all weather
-        for k, v in list(pkmnWeather.items()):
-            output += f'**{k}**\n\t- *{v[0]}*\n'
-    else:
-        #list a single weather description
-        weather = weather.title()
-        if f'{weather} Weather' in pkmnWeather:
-            weather += ' Weather'
-        if weather in pkmnWeather:
-            effect = pkmnWeather[weather][1].replace('. ', '.\n'+weatherrepl)
-            output = f'**{weather}**:\n*{pkmnWeather[weather][0]}*\n{weatherrepl}{effect}'
-        else:
-            output = f'{weather} wasn\'t found in the weather list.\nDid you misspell it?'
-    await ctx.send(output)
-
 #######
 
 async def instantiateHabitatsList():
@@ -1665,14 +1631,14 @@ async def weighted_pkmn_search(ctx, number : typing.Optional[int] = 1,
 
 #####
 
-@bot.command(name = 'status',
+@bot.command(name = 'tracker',
              aliases = ['statuses'],
              help = 'A tracker for status effects in battle.\n'
-                    '%status add burn 1\n'
-                    '%status or %status round\n'
-                    '%status remove/del burn 1\n'
-                    '%status change {1} burn 2 --> change the status in slot 1 to "burn 2"\n'
-                    '%status remove/del all')
+                    '%tracker add burn 1\n'
+                    '%tracker or %tracker round\n'
+                    '%tracker remove/del burn 1\n'
+                    '%tracker change {1} burn 2 --> change the status in slot 1 to "burn 2"\n'
+                    '%tracker remove/del all')
 async def status(ctx, cmd = '', *, mc = ''):
     cmd = cmd.lower()
     mc = mc.title()
