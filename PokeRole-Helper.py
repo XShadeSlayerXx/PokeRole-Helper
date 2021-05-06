@@ -25,7 +25,8 @@ cmd_prefix = ('./' if dev_env else '%')
 
 bot = commands.Bot(command_prefix = cmd_prefix)
 
-cogs = ['mapCog', 'diceCog', 'custom_help', 'miscCommands']
+#note that 'custom help' needs to load last
+cogs = ['mapCog', 'diceCog', 'miscCommands', 'custom_help']
 
 #TODO: compress more of the data in working memory
 #   ++PokeLearns ranks complete
@@ -1639,7 +1640,7 @@ async def weighted_pkmn_search(ctx, number : typing.Optional[int] = 1,
                     '%tracker remove/del burn 1\n'
                     '%tracker change {1} burn 2 --> change the status in slot 1 to "burn 2"\n'
                     '%tracker remove/del all')
-async def status(ctx, cmd = '', *, mc = ''):
+async def tracker(ctx, cmd = '', *, mc = ''):
     cmd = cmd.lower()
     mc = mc.title()
     name_key = ctx.author.id
