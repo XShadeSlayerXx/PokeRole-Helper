@@ -8,14 +8,17 @@ import os
 import math
 
 fileprefix = r'./pokeMap/tiles/'
+eventprefix = r'./pokeMap/event_icons/'
 BKGD_CROSS_PATH = r'./pokeMap/cross.png'
 
 MAX_MAP_SIZE = 11
 TILE_WIDTH = 174
-FLIP_CHANCE = .5
+# FLIP_CHANCE = .5
+FLIP_CHANCE = 0
 ENQUEUE_CHANCE = .4
 BKGD_COLOR = 0x828282
 #FILL_COLOR = 0xb7b7b7
+TILE_GLOW = 14
 
 #TODO:
 # allow mixing tiles? combine 2 and choose the lightest colors for new tiles?
@@ -32,11 +35,29 @@ event_list = [
 
 event_colors = {
     'treasure': 0x001100,
-    'enemy': 0x110000,
+    'enemy': 0x000011,
     'trap': 0x001111,
     'hazard': 0x111100,
-    'guild': 0x000011,
-    'nothing': 0
+    'guild': 0x110000,
+    'nothing': 0x101010
+}
+
+# color-blind friendly?
+# event_colors = {
+#     'treasure': 0xFFB000,
+#     'enemy': 0xDC267F,
+#     'trap': 0xFE6100,
+#     'hazard': 0x785EF0,
+#     'guild': 0x648FFF,
+#     'nothing': 0
+# }
+
+event_icons = {
+    'treasure': f'{eventprefix}bag2_small.png',
+    'enemy': f'{eventprefix}skull_small.png',
+    'trap': f'{eventprefix}confuse_trap_small.png',
+    'hazard': f'{eventprefix}question_small.png',
+    'guild': f'{eventprefix}accessory_small.png'
 }
 
 #store the images in this array on startup
@@ -58,6 +79,18 @@ tileMaps = {
 
 tileSlots = [-4, 1, 2, -3, 0, 3, -2, -1, 4]
 rotationMatrix = [1, 2, 3, 4, -1, -2, -3, -4]
+
+def blend_hex(h1, h2):
+    try:
+        h1 = int(h1, 16)
+    except:
+        pass
+    try:
+        h2 = int(h2, 16)
+    except:
+        pass
+    final = (h1 + h2) // 2
+    return final
 
 def get_random_tile(which = 0):
     return random.choice(tileMaps[which])
@@ -137,11 +170,12 @@ def separateEvents(*events):
     return newEvents
 
 def form_map(size):
-    map = [[None for x in range(MAX_MAP_SIZE)] for y in range(MAX_MAP_SIZE)]
+    # extend the y direction by 1 in order to include the event legend
+    map = [[None for _x in range(MAX_MAP_SIZE)] for _y in range(MAX_MAP_SIZE+1)]
     queue = []
     requeue = []
     tile = get_random_tile()
-    map[5][5] = [tile, False]
+    map[5][6] = [tile, False]
     for side in tiles[tile][1]:
         queue.insert(0,[5, 5, side])
     while size > 1:
@@ -154,7 +188,9 @@ def form_map(size):
         changeX, changeY = abs_coord(tileDir)
         nextX = coordx + changeX
         nextY = coordy + changeY
-        if not -1 < nextX < MAX_MAP_SIZE or not -1 < nextY < MAX_MAP_SIZE or map[nextX][nextY] is not None:
+        if not -1 < nextX < MAX_MAP_SIZE or \
+                not 0 < nextY < MAX_MAP_SIZE+1 or \
+                (map[nextX][nextY] and map[nextX][nextY] is not None):
             #out of bounds or taken
             continue
         if random.random() > FLIP_CHANCE:
@@ -183,11 +219,12 @@ def populate_map(dungeon, events, size):
     for row in dungeon:
         for tile in row:
             if tile is not None:
-                tile.append(event_colors[randEvents.pop()] * random.randint(6,12))
+                evt = randEvents.pop()
+                tile.append(event_colors[evt] * TILE_GLOW)# * random.randint(6,12))
 
     return dungeon
 
-def create_map(dungeon):
+def create_map(dungeon, legend):
     max_size = (TILE_WIDTH + 1) * MAX_MAP_SIZE
     lowX, lowY, highX, highY = max_size, max_size, 0, 0
     dungeonMap = Image.new(mode = 'RGB', size = (max_size, max_size), color = BKGD_COLOR)
@@ -214,6 +251,21 @@ def create_map(dungeon):
 
     highX += 1
     highY += 1
+
+    lowY -= 1
+    widt = highX - lowX
+    if widt < len(legend) - 1:
+        highX += len(legend) - widt - 1
+    for offset, evt in enumerate(legend):
+        evt = evt[0]
+        if evt == 'nothing':
+            continue
+        clr = blend_hex(event_colors[evt]*TILE_GLOW, BKGD_COLOR)
+        tmp = Image.new('RGBA', (TILE_WIDTH, TILE_WIDTH), clr)
+        event_img = Image.open(event_icons[evt])
+        img_size = [x//2 for x in event_img.size]
+        tmp.paste(event_img, img_size)
+        dungeonMap.paste(tmp, ((lowX + offset)*TILE_WIDTH, (lowY*TILE_WIDTH)))
 
     box = (lowX * TILE_WIDTH, lowY * TILE_WIDTH, highX * TILE_WIDTH, highY * TILE_WIDTH)
     newDungeon = dungeonMap.crop(box = box)
@@ -252,7 +304,7 @@ class Maps(commands.Cog):
         dungeonMap = form_map(size)
         dungeonMap = populate_map(dungeonMap, newEvents, size)
         #TODO: implement the event pictures here?
-        dungeon = create_map(dungeonMap)
+        dungeon = create_map(dungeonMap, newEvents)
 
         dungeon.save(f'tmpDungeon.png')
 
