@@ -8,7 +8,7 @@ import os
 import math
 
 fileprefix = r'./pokeMap/tiles/'
-BKGD_CROSS_PATH = r'./pokeMap/cross.png'
+BKGD_CROSS_PATH = r'./pokeMap/quad.png'
 
 MAX_MAP_SIZE = 11
 TILE_WIDTH = 174
@@ -108,11 +108,6 @@ def load_tiles():
 
         tiles.append((file, goodSides))
 
-    tileMaps[-1].append(18)
-    #print(tiles,'\n',tileMaps)
-    # for x in tileMaps:
-    #     print(x, tileMaps[x])
-
 def separateEvents(*events):
     newEvents = []
     nothingTotal = 100
@@ -157,12 +152,14 @@ def form_map(size):
         if not -1 < nextX < MAX_MAP_SIZE or not -1 < nextY < MAX_MAP_SIZE or map[nextX][nextY] is not None:
             #out of bounds or taken
             continue
-        if random.random() > FLIP_CHANCE:
+        #TODO: is tileDir != -1 necessary?
+        if random.random() > FLIP_CHANCE and tileDir != 1:
             randTile = get_random_tile(-tileDir)
-            rotation = None
+            rotation = False
             sides = tiles[randTile][1]
         else:
-            rotation = random.choice(range(7))+1
+            #rotation = random.choice(range(7))+1
+            rotation = random.choice(range(1,8))
             randTile = get_random_tile(rotationMatrix[rotation])
             sides = new_tile_angles(randTile, rotation)
         map[nextX][nextY] = [randTile, rotation]
@@ -198,6 +195,7 @@ def create_map(dungeon):
                 tile_image = Image.open(tiles[dungeon[x][y][0]][0])
                 # if the image should be flipped
                 if dungeon[x][y][1] is not None:
+                    #TODO: need to only apply the corner addition necessary, not the full 4 points
                     cross_tmp = BKGD_CROSS.copy()
                     tile_image = Image.alpha_composite(cross_tmp, tile_image.rotate(dungeon[x][y][1]*45))
                 color = dungeon[x][y][2]
@@ -240,6 +238,7 @@ class Maps(commands.Cog):
         with each tile having a 10% chance for treasure, 50% chance for an enemy encounter, and 40% chance for nothing.
         Events: """ + ', '.join([x[0] for x in event_list])
     )
+    @commands.cooldown(5, 60, commands.BucketType.user)
     async def make_map(self, ctx, size : int, seed: Optional[int], *events):
         if seed is None:
             random.seed()
