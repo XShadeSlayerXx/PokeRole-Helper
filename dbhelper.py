@@ -5,6 +5,11 @@ import os
 
 db_file = 'pokerole.db'
 
+# TODO: function to return whole table as list
+#  (for items and generational stuff)
+#  implement the other lists too
+#  add evolution stuff and backwards search for %e moves
+
 def create_connection(file):
     connection = None
     try:
@@ -32,6 +37,7 @@ class Database:
         self.instantiatePkmnLearnsList()
         self.instantiatePkmnStatList()
         self.instantiatePkmnMoveList()
+        self.instantiatePkmnAbilityList()
 
     def close_connection(self):
         self.connection.close()

@@ -48,7 +48,6 @@ pokeStatus = dict()
 #pokemon moves
 pkmnMoves = dict()
 pkmnItems = dict()
-pkmnAbilities = dict()
 pkmnHabitats = dict()
 pkmnShop = ODict()
 pkmnWeather = dict()
@@ -429,18 +428,21 @@ async def functionChecks(ctx, which : typing.Optional[int] = 0):
 
 @commands.is_owner()
 @bot.command(name = 'reloadCog', hidden = True)
-async def reloadCogs():
+async def reloadCogs(ctx):
     for mycog in cogs:
         bot.reload_extension(mycog)
 
 @commands.is_owner()
 @bot.command(name = 'updateLists', hidden = True)
-async def reloadLists():
+async def reloadLists(ctx):
+    global database
     for file in github_files:
         r = requests.get(github_base+file[0])
         with open(file[0], 'w', encoding = file[1]) as f:
-            f.write(r.text)
+            r = r.text.replace('\r\n', '\n')
+            f.write(r)
     database.reloadLists()
+    await ctx.message.add_reaction('\N{CYCLONE}')
 
 #######
 
@@ -1127,7 +1129,11 @@ async def pkmn_filter_habitat(ctx, listname : str, rank : typing.Optional[ensure
 #######
 
 async def pkmnabilitieshelper(ability):
-    return list(database.query_table('pkmnAbilities', 'name', ability.title())[0])[1:]
+    global database
+    try:
+        return list(database.query_table('pkmnAbilities', 'name', ability.title())[0])[1:]
+    except:
+        raise KeyError(f'{ability} wasn\'t recognized as an ability.')
 
 @bot.command(name = 'ability', aliases = ['a'], help = 'List a pokemon ability\'s traits')
 async def pkmn_search_ability(ctx, *, abilityname : str):
@@ -1144,6 +1150,7 @@ async def pkmn_search_ability(ctx, *, abilityname : str):
 #######
 
 async def pkmnmovehelper(move):
+    global database
     try:
         return list(database.query_table('pkmnMoves', 'name', move.title())[0])[1:]
     except:
@@ -1171,7 +1178,11 @@ async def pkmn_search_move(ctx, *, movename : str):
 #####
 
 async def pkmnstatshelper(poke : str):
-    tmp = list(database.query_table('pkmnStats', 'name', poke)[0])
+    global database
+    try:
+        tmp = list(database.query_table('pkmnStats', 'name', poke)[0])
+    except:
+        raise KeyError(poke)
     tmp = [f'#{tmp[0]}'] + tmp[2:]
     return tmp
 
@@ -1222,7 +1233,11 @@ async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
 #####
 
 async def pkmnlearnshelper(poke : str, rank : ensure_rank = 'Master'):
-    found = list(database.query_table('pkmnLearns', 'name', poke)[0][2:])
+    global database
+    try:
+        found = list(database.query_table('pkmnLearns', 'name', poke)[0][2:])
+    except:
+        raise KeyError(poke)
     #truncate the list to just the valid members
     try:
         found = found[:found.index(None)]
@@ -1248,7 +1263,7 @@ async def pkmnlearnshelper(poke : str, rank : ensure_rank = 'Master'):
     return moves
 
 @bot.command(name = 'pokelearns',
-             aliases = ['canlearn', 'pl'],
+             aliases = ['canlearn', 'pl', 'moves', 'learnset'],
              help = 'Lists what moves a pokemon can learn\ne.g. %pokelearns vulpix')
 async def pkmn_search_learns(ctx, *, pokemon : pkmn_cap):
     #known moves is insight + 2
@@ -1547,7 +1562,6 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
     return msg
 
 #####
-
 
 @bot.command(name = 'encounter', aliases = ['e', 'pokemon'],
              brief = 'Gets # poke at listed rank from a given list',
