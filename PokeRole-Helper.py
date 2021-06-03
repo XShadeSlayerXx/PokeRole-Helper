@@ -546,23 +546,23 @@ async def update_settings(ctx):
     save_obj(pokebotsettings, 'pokebotsettings')
     await ctx.send('Good to go')
 
-def reformatList(listname):
-    if len(pkmnLists[listname]) == 0:
-        del pkmnLists[listname]
-        return
-    #the first element should be either 'i' or 'p'
-    if pkmnLists[listname][0] not in ['i', 'p']:
-        temp = pkmnLists[listname][:]
-        pkmnLists[listname] = [None, None] #two slots
-        pkmnLists[listname][0] = ('p' if lookup_poke(temp[0]) in pkmnStats else 'i')
-        pkmnLists[listname][1] = [100] + [x for x in temp]
-    #fix directly for item lists, such that
-    #['i', [40, (i1, i2, i3)], [60, (i4, i5, i6)]] --> ['i', [40, i1, i2, i3], ...]
-    if pkmnLists[listname][0] == 'i':
-        for i in range(1,len(pkmnLists[listname][1:])+1):
-            if isinstance(pkmnLists[listname][i][1], str):
-                continue
-            pkmnLists[listname][i] = [pkmnLists[listname][i][0]] + [x for x in pkmnLists[listname][i][1]]
+# def reformatList(listname):
+#     if len(pkmnLists[listname]) == 0:
+#         del pkmnLists[listname]
+#         return
+#     #the first element should be either 'i' or 'p'
+#     if pkmnLists[listname][0] not in ['i', 'p']:
+#         temp = pkmnLists[listname][:]
+#         pkmnLists[listname] = [None, None] #two slots
+#         pkmnLists[listname][0] = ('p' if lookup_poke(temp[0]) in pkmnStats else 'i')
+#         pkmnLists[listname][1] = [100] + [x for x in temp]
+#     #fix directly for item lists, such that
+#     #['i', [40, (i1, i2, i3)], [60, (i4, i5, i6)]] --> ['i', [40, i1, i2, i3], ...]
+#     if pkmnLists[listname][0] == 'i':
+#         for i in range(1,len(pkmnLists[listname][1:])+1):
+#             if isinstance(pkmnLists[listname][i][1], str):
+#                 continue
+#             pkmnLists[listname][i] = [pkmnLists[listname][i][0]] + [x for x in pkmnLists[listname][i][1]]
 
 
 # @commands.is_owner()
@@ -648,19 +648,21 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
             correct = []
             tempmsg = ''
             #item or pokemon?
+            isItem = True
             try:
-                if lookup_poke(pokelist[0][1]) not in pkmnStats:
-                    isItem = True
+                if database.query_table('pkmnStats', 'name', pokelist[0][1]):
+                #if lookup_poke(pokelist[0][1]) not in pkmnStats:
+                    isItem = False
             except:
                 #hopefully empty bc 'del', 'show', etc
                 pass
 
             if not isItem:
                 #check for misspelled pokemon...
-                whichList = pkmnStats
+                whichList = True
             else:
                 #...or misspelled items
-                whichList = pkmnItems
+                whichList = False
 
             #for pokelist in the passed in str
             for y in pokelist:
@@ -668,16 +670,25 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
                 y = y[1:]
                 #for pokemon in the list
                 for x in y:
-                    if x not in whichList:
-                        if x == '':
-                            #sometimes an empty string gets through
-                            pokelist.remove('')
-                            continue
+                    if x == '':
+                        #sometimes an empty string gets through
+                        pokelist.remove('')
+                        continue
+                    if not whichList and x not in pkmnItems:
                         bad.append(x)
                         if x in pkmnLists:
                             tempmsg+=f'{x} : '+', '.join(pkmnLists[x])+'\n'
                         elif not isItem:
                             correct.append(lookup_poke(x))
+                    if whichList:
+                        try:
+                            database.query_table('pkmnStats', 'name', x)
+                        except:
+                            bad.append(x)
+                            if x in pkmnLists:
+                                tempmsg+=f'{x} : '+', '.join(pkmnLists[x])+'\n'
+                            elif not isItem:
+                                correct.append(lookup_poke(x))
             if len(bad) > 0 and which in ['add', 'remove', 'del']:
                 if tempmsg != '':
                     tempmsg ='Right now, you can\'t have a list inside of a list:\n'+tempmsg
@@ -857,6 +868,7 @@ async def pkmn_randomitem_driver(ctx, listname : str, howMany : int = 1):
 async def pkmn_filter_list(ctx, listname : str, rank : ensure_rank,
                            type1 : str, type2 : str = 'Any',
                            includeLowerRanks : bool = False):#, generation : int = 0):
+    # TODO: turn this whole thing into a query
     type1 = type1.title()
     type2 = type2.title()
 
