@@ -13,7 +13,10 @@ from dotenv import load_dotenv
 from symspellpy import SymSpell, Verbosity
 # can be replaced when/if i ever convert to nosql
 from collections import OrderedDict as ODict
+import requests
 from bisect import bisect
+
+from dbhelper import Database
 
 load_dotenv()
 token = os.getenv('POKEROLE_TOKEN')
@@ -44,13 +47,12 @@ pokeStatus = dict()
 
 #pokemon moves
 pkmnMoves = dict()
-pkmnStats = dict()
-pkmnLearns = dict()
 pkmnItems = dict()
 pkmnAbilities = dict()
 pkmnHabitats = dict()
 pkmnShop = ODict()
 pkmnWeather = dict()
+database = None
 
 ranks = ['Starter', 'Beginner', 'Amateur', 'Ace', 'Pro', 'Master', 'Champion']
 natures = ['Hardy (9)','Lonely (5)','Brave (9)','Adamant (4)','Naughty (6)',
@@ -77,6 +79,17 @@ pkmnListsPriv = dict()
 poke_dict = SymSpell()
 poke_dict.load_dictionary('PokeDictionary.txt', 0, 1, separator = '$')
 
+#github stuff for updating the lists
+github_base = 'https://raw.githubusercontent.com/XShadeSlayerXx/PokeRole-Discord.py-Base/master/'
+github_files = [
+    ('PokeRoleItems.csv', 'UTF-8'),
+    ('PokeRoleAbilities.csv', 'UTF-8'),
+    ('PokeRoleItems.csv', 'UTF-8'),
+    ('pokeMoveSorted.csv', 'UTF-8'),
+    ('PokeLearnMovesFull.csv', 'UTF-8'),
+    ('PokeroleStats.csv', 'WINDOWS-1252')
+]
+
 # save and load functions
 def save_obj(obj: object, name: str):
     with open(name + '.pkl', 'wb') as f:
@@ -95,6 +108,9 @@ async def on_ready():
     global pkmnLists
     global pokebotsettings
     global pkmnListsPriv
+    global database
+
+    database = Database()
 
     print(f'{bot.user} has connected to Discord! A part of {len(bot.guilds)} servers!')
 
@@ -314,64 +330,64 @@ async def guildcheck(ctx):
     # I'm curious of the growth
     await ctx.send(f'Currently in {len(bot.guilds)} guilds.')
 
-@commands.is_owner()
-@bot.command(name = 'checkdata', hidden = True)
-async def integrityChecks(ctx, which : typing.Optional[int] = 0):
-    #0 is all, 1 is stats, 2 is moves, 3 is learnables, 4 is habitats
-
-    #stats first
-    errors = []
-    if which in [0,1]:
-        if len(pkmnStats) == 0:
-            await instantiatePkmnStatList()
-        for pokemon, stats in list(pkmnStats.items()):
-            newName = pkmn_cap(pokemon)
-            if pokemon != newName:
-                errors.append((pokemon, ' stats name mismatch'))
-            try:
-                await pkmnlearnshelper(newName)
-            except:
-                errors.append((newName, ' not found stats -> learnables'))
-            #check abilities
-            for x in range(15,18):
-                if stats[x] != '':
-                    try:
-                        await pkmnabilitieshelper(stats[x])
-                    except:
-                        errors.append((pokemon, f' ability {stats[x]}'))
-
-    #moves next
-    if which in [0,2]:
-        if len(pkmnMoves) == 0:
-            await instantiatePkmnMoveList()
-        for move, info in list(pkmnMoves.items()):
-            if move.title() != move:
-                errors.append((move, ' move name mismatch'))
-
-    #learnables now
-    if which in [0,3]:
-        if len(pkmnLearns) == 0:
-            await instantiatePkmnLearnsList()
-        for pokemon, stats in list(pkmnLearns.items()):
-            newName = pkmn_cap(pokemon)
-            if pokemon != newName:
-                errors.append((pokemon, ' learn name mismatch'))
-            try:
-                await pkmnstatshelper(newName)
-            except:
-                errors.append((newName, ' not found learnables -> stats'))
-            for move in stats[::2]:
-                try:
-                    await pkmnmovehelper(move)
-                except:
-                    errors.append((pokemon, f' move {move} not found'))
-
-    msg = '\n'.join([f'{x} {y}' for x,y in errors if not x.startswith('Delta')])
-    #print(msg)
-    if ctx is not None:
-        await send_big_msg(ctx, msg)
-    else:
-        print(msg)
+# @commands.is_owner()
+# @bot.command(name = 'checkdata', hidden = True)
+# async def integrityChecks(ctx, which : typing.Optional[int] = 0):
+#     #0 is all, 1 is stats, 2 is moves, 3 is learnables, 4 is habitats
+#
+#     #stats first
+#     errors = []
+#     if which in [0,1]:
+#         if len(pkmnStats) == 0:
+#             await instantiatePkmnStatList()
+#         for pokemon, stats in list(pkmnStats.items()):
+#             newName = pkmn_cap(pokemon)
+#             if pokemon != newName:
+#                 errors.append((pokemon, ' stats name mismatch'))
+#             try:
+#                 await pkmnlearnshelper(newName)
+#             except:
+#                 errors.append((newName, ' not found stats -> learnables'))
+#             #check abilities
+#             for x in range(15,18):
+#                 if stats[x] != '':
+#                     try:
+#                         await pkmnabilitieshelper(stats[x])
+#                     except:
+#                         errors.append((pokemon, f' ability {stats[x]}'))
+#
+#     #moves next
+#     if which in [0,2]:
+#         if len(pkmnMoves) == 0:
+#             await instantiatePkmnMoveList()
+#         for move, info in list(pkmnMoves.items()):
+#             if move.title() != move:
+#                 errors.append((move, ' move name mismatch'))
+#
+#     #learnables now
+#     if which in [0,3]:
+#         if len(pkmnLearns) == 0:
+#             await instantiatePkmnLearnsList()
+#         for pokemon, stats in list(pkmnLearns.items()):
+#             newName = pkmn_cap(pokemon)
+#             if pokemon != newName:
+#                 errors.append((pokemon, ' learn name mismatch'))
+#             try:
+#                 await pkmnstatshelper(newName)
+#             except:
+#                 errors.append((newName, ' not found learnables -> stats'))
+#             for move in stats[::2]:
+#                 try:
+#                     await pkmnmovehelper(move)
+#                 except:
+#                     errors.append((pokemon, f' move {move} not found'))
+#
+#     msg = '\n'.join([f'{x} {y}' for x,y in errors if not x.startswith('Delta')])
+#     #print(msg)
+#     if ctx is not None:
+#         await send_big_msg(ctx, msg)
+#     else:
+#         print(msg)
 
 @commands.is_owner()
 @bot.command(name = 'checkfuncs', hidden = True)
@@ -413,9 +429,18 @@ async def functionChecks(ctx, which : typing.Optional[int] = 0):
 
 @commands.is_owner()
 @bot.command(name = 'reloadCog', hidden = True)
-async def reloadCogs(ctx):
-    for cog in cogs:
-        bot.reload_extension(cog)
+async def reloadCogs():
+    for mycog in cogs:
+        bot.reload_extension(mycog)
+
+@commands.is_owner()
+@bot.command(name = 'updateLists', hidden = True)
+async def reloadLists():
+    for file in github_files:
+        r = requests.get(github_base+file[0])
+        with open(file[0], 'w', encoding = file[1]) as f:
+            f.write(r.text)
+    database.reloadLists()
 
 #######
 
@@ -537,18 +562,18 @@ def reformatList(listname):
             pkmnLists[listname][i] = [pkmnLists[listname][i][0]] + [x for x in pkmnLists[listname][i][1]]
 
 
-@commands.is_owner()
-@bot.command(name = 'update_lists', hidden = True)
-async def update_lists(ctx):
-    if len(pkmnStats) == 0:
-        await instantiatePkmnStatList()
-    for key, val in list(pkmnLists.items()):
-        # print('before: ',key, val)
-        reformatList(key)
-        # if key in pkmnLists:
-        #     print('after: ',key, pkmnLists[key])
-    await ctx.send('Done')
-    save_obj(pkmnLists, 'pkmnLists')
+# @commands.is_owner()
+# @bot.command(name = 'update_lists', hidden = True)
+# async def update_lists(ctx):
+#     if len(pkmnStats) == 0:
+#         await instantiatePkmnStatList()
+#     for key, val in list(pkmnLists.items()):
+#         # print('before: ',key, val)
+#         reformatList(key)
+#         # if key in pkmnLists:
+#         #     print('after: ',key, pkmnLists[key])
+#     await ctx.send('Done')
+#     save_obj(pkmnLists, 'pkmnLists')
 
 @commands.is_owner()
 @bot.command(name = 'listoverride', hidden = True)
@@ -798,22 +823,23 @@ async def pkmn_randomitem_driver(ctx, listname : str, howMany : int = 1):
 
 #######
 
-async def which_generation(gen : int) -> tuple:
-    #do dictionaries keep order in python 3.6? I'm pretty sure they do
-    starters = ['Bulbasaur', 'Chikorita', 'Treecko', 'Turtwig', 'Snivy', 'Chespin', 'Rowlet', 'Grookey']
-    start = 0
-    end = 0
-    #make sure the list is instantiated
-    gen = sorted((0,8,gen))[1]
-    try:
-        start = list(pkmnStats).index(starters[gen-1])
-    except:
-        await instantiatePkmnStatList()
-    if gen == 8:
-        end = len(pkmnStats)
-    else:
-        end = list(pkmnStats).index(starters[gen])
-    return start, end
+# TODO: add generations to the database
+# async def which_generation(gen : int) -> tuple:
+#     #do dictionaries keep order in python 3.6? I'm pretty sure they do
+#     starters = ['Bulbasaur', 'Chikorita', 'Treecko', 'Turtwig', 'Snivy', 'Chespin', 'Rowlet', 'Grookey']
+#     start = 0
+#     end = 0
+#     #make sure the list is instantiated
+#     gen = sorted((0,8,gen))[1]
+#     try:
+#         start = list(pkmnStats).index(starters[gen-1])
+#     except:
+#         await instantiatePkmnStatList()
+#     if gen == 8:
+#         end = len(pkmnStats)
+#     else:
+#         end = list(pkmnStats).index(starters[gen])
+#     return start, end
 
 @bot.command(name = 'filter', aliases = ['f'],
              help = '%filter <listname> <rank> <type1> <type2> [includeLowerRanks T/F]'
@@ -827,7 +853,7 @@ async def which_generation(gen : int) -> tuple:
                                      '  --> Adds up to Ace rank bug/Any types from gen 6 to the list forest')
 async def pkmn_filter_list(ctx, listname : str, rank : ensure_rank,
                            type1 : str, type2 : str = 'Any',
-                           includeLowerRanks : bool = False, generation : int = 0):
+                           includeLowerRanks : bool = False):#, generation : int = 0):
     type1 = type1.title()
     type2 = type2.title()
 
@@ -836,16 +862,18 @@ async def pkmn_filter_list(ctx, listname : str, rank : ensure_rank,
         rank = ranks[:ranks.index(rank)+1]
     else:
         rank = [rank]
-    if 0 < generation < 9:
-        gen = await which_generation(generation)
-    else:
-        try:
-            pkmnStats['Bulbasaur']
-        except:
-            await instantiatePkmnStatList()
-        gen = (0, len(pkmnStats))
+    #TODO: fix poke generational stuff
+
+    # if 0 < generation < 9:
+    #     gen = await which_generation(generation)
+    # else:
+    #     try:
+    #         pkmnStats['Bulbasaur']
+    #     except:
+    #         await instantiatePkmnStatList()
+    #     gen = (0, len(pkmnStats))
     filtered = []
-    for x in list(pkmnStats.items())[gen[0]:gen[1]]:
+    for x in list(pkmnStats.items()):#[gen[0]:gen[1]]:
         if x[1][-2] in rank and (x[1][1] == type1 or type1 == 'Any'):
             if type2 == 'Any' or type2 == x[1][2] or type2 == 'None' and x[1][2] == '':
                 filtered.append(pkmn_cap(x[0]))
@@ -1098,26 +1126,8 @@ async def pkmn_filter_habitat(ctx, listname : str, rank : typing.Optional[ensure
 
 #######
 
-async def instantiateAbilitiesList():
-    with open('PokeRoleAbilities.csv', 'r', encoding = "UTF-8") as file:
-        reader = csv.reader(file)
-        head = ''
-        for row in reader:
-            if row[1] == '':
-                head = row[0]
-                continue
-            if head in pkmnAbilities:
-                pkmnAbilities[head].append(row[0])
-            else:
-                pkmnAbilities[head] = [row[0]]
-            pkmnAbilities[row[0]] = row[1:]
-        pkmnAbilities.pop('Name')
-        pkmnAbilities.pop('')
-
 async def pkmnabilitieshelper(ability):
-    if len(pkmnAbilities.keys()) == 0:
-        await instantiateAbilitiesList()
-    return pkmnAbilities[ability.title()]
+    return list(database.query_table('pkmnAbilities', 'name', ability.title())[0])[1:]
 
 @bot.command(name = 'ability', aliases = ['a'], help = 'List a pokemon ability\'s traits')
 async def pkmn_search_ability(ctx, *, abilityname : str):
@@ -1133,19 +1143,12 @@ async def pkmn_search_ability(ctx, *, abilityname : str):
 
 #######
 
-async def instantiatePkmnMoveList():
-    with open('pokeMoveSorted.csv', 'r', newline = '', encoding = "UTF-8") as infile:
-        reader = csv.reader(infile)
-        for row in reader:
-            pkmnMoves.update({row[0]: row[1:]})
-
 async def pkmnmovehelper(move):
-    if len(pkmnMoves.keys()) == 0:
-        await instantiatePkmnMoveList()
     try:
-        return pkmnMoves[move.title()]
+        return list(database.query_table('pkmnMoves', 'name', move.title())[0])[1:]
     except:
-        return pkmnMoves[move.title().replace(' ', '-')]
+        move = move.title().replace(' ', '-')
+        return list(database.query_table('pkmnMoves', 'name', move)[0])[1:]
 
 @bot.command(name = 'move', aliases = ['m'], help = 'List a pokemon move traits')
 async def pkmn_search_move(ctx, *, movename : str):
@@ -1167,16 +1170,10 @@ async def pkmn_search_move(ctx, *, movename : str):
 
 #####
 
-async def instantiatePkmnStatList():
-    with open('PokeroleStats.csv', 'r', newline = '', encoding = "WINDOWS-1252") as infile:
-        reader = csv.reader(infile)
-        for row in reader:
-            pkmnStats.update({row[1]: [row[0]] + row[2:]})
-
 async def pkmnstatshelper(poke : str):
-    if len(pkmnStats.keys()) == 0:
-        await instantiatePkmnStatList()
-    return pkmnStats[poke]
+    tmp = list(database.query_table('pkmnStats', 'name', poke)[0])
+    tmp = [f'#{tmp[0]}'] + tmp[2:]
+    return tmp
 
 @bot.command(name = 'stats', aliases = ['s', 'info'], help = 'List a pokemon\'s stats')
 async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
@@ -1224,20 +1221,13 @@ async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
 
 #####
 
-async def instantiatePkmnLearnsList():
-    ranks = {'Starter': 0, 'Beginner': 1, 'Amateur': 2, 'Ace': 3, 'Pro': 4, 'Master': 5, 'Champion': 6}
-    with open('PokeLearnMovesFull.csv', 'r', newline = '', encoding = "UTF-8") as infile:
-        reader = csv.reader(infile)
-        for row in reader:
-            value = row[1:]
-            value[1::2] = [ranks[x] for x in value[1::2]]
-            pkmnLearns.update({row[0][4:]: value})
-
 async def pkmnlearnshelper(poke : str, rank : ensure_rank = 'Master'):
-    if len(pkmnLearns.keys()) == 0:
-        await instantiatePkmnLearnsList()
-
-    found = pkmnLearns[poke]
+    found = list(database.query_table('pkmnLearns', 'name', poke)[0][2:])
+    #truncate the list to just the valid members
+    try:
+        found = found[:found.index(None)]
+    except:
+        pass
     #works if the ranks are 'starter', etc, or numbers
     try:
         found[1::2] = [ranks[x] for x in found[1::2]]
@@ -1255,7 +1245,6 @@ async def pkmnlearnshelper(poke : str, rank : ensure_rank = 'Master'):
                 done = True
         else:
             moves[found[x + 1]].append(found[x])
-
     return moves
 
 @bot.command(name = 'pokelearns',
