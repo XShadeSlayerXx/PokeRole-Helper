@@ -312,15 +312,16 @@ async def restart(ctx):
     await bot.logout()
 
 @commands.is_owner()
-@bot.command(name = 'reload', hidden = True)
+@bot.command(name = 'reloadItems', hidden = True)
 async def reload(ctx, what):
-    global pkmnItems, pkmnStats, pkmnMoves, pkmnLearns
-    try:
+    global pkmnItems
+    # try:
         #will this work correctly? maybe change to global()?
-        await globals()['instantiate'+what]()
-        await ctx.message.add_reaction('\N{CYCLONE}')
-    except:
-        await ctx.send('ItemList, PkmnStatList, PkmnMoveList, PkmnLearnsList')
+        #await globals()['instantiate'+what]()
+    await instantiateItemList()
+    await ctx.message.add_reaction('\N{CYCLONE}')
+    # except:
+    #     await ctx.send('ItemList, PkmnStatList, PkmnMoveList, PkmnLearnsList')
 
 @commands.is_owner()
 @bot.command(name = 'guilds', hidden = True)
