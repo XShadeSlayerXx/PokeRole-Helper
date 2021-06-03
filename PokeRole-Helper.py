@@ -167,7 +167,7 @@ def lookup_poke(arg : str) -> str:
 async def send_big_msg(ctx, arg : str):
     while arg != '':
         try:
-            last_newline = arg.rindex('\n', 0, 1996)
+            last_newline = arg.rindex('\n', 5, 1996)
         except:
             last_newline = 1996
         await ctx.send(arg[:last_newline])
@@ -598,6 +598,8 @@ async def pkmn_list_override(ctx, listname, who : discord.Member):
 
 @bot.command(name = 'lists', help = 'Displays all the lists people have made in the format:\n- list1 (#) / list2 (#)\n')
 async def show_lists(ctx):
+    #TODO: why is this broken
+    print(pkmnLists)
     msg = ''
     up = True
     for x, y in pkmnLists.items():
@@ -888,10 +890,10 @@ async def pkmn_filter_list(ctx, listname : str, rank : ensure_rank,
     #         await instantiatePkmnStatList()
     #     gen = (0, len(pkmnStats))
     filtered = []
-    for x in list(pkmnStats.items()):#[gen[0]:gen[1]]:
-        if x[1][-2] in rank and (x[1][1] == type1 or type1 == 'Any'):
-            if type2 == 'Any' or type2 == x[1][2] or type2 == 'None' and x[1][2] == '':
-                filtered.append(pkmn_cap(x[0]))
+    # for x in list(pkmnStats.items()):#[gen[0]:gen[1]]:
+    #     if x[1][-2] in rank and (x[1][1] == type1 or type1 == 'Any'):
+    #         if type2 == 'Any' or type2 == x[1][2] or type2 == 'None' and x[1][2] == '':
+    #             filtered.append(pkmn_cap(x[0]))
 
     #send the filtered list to %list, which will print it
     await pkmn_list(ctx = ctx, listname = listname, which = 'add', pokelist = ', '.join(filtered))

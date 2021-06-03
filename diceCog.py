@@ -21,6 +21,8 @@ class Dice(commands.Cog):
         brief = '\'!roll\' or \'!roll 3d6\' for example'
     )
     async def rollDice(self, ctx, *, mc = ''):
+        name = ctx.author.display_name
+        msg = f'{name} rolled '
         mc = mc.lower()
         if '+' in mc:
             place = mc.find('+')
@@ -42,7 +44,7 @@ class Dice(commands.Cog):
                 rolled = f'{dice[0]}d{dice[1]}'
                 numSuccesses = None
                 if dice[1] == 6 and add is None:
-                    msg = f'{rolled} -- '
+                    msg += f'{rolled} -- '
                     numSuccesses = 0
                     for x in total:
                         if x < 4: #don't bold failed rolls
@@ -53,15 +55,21 @@ class Dice(commands.Cog):
                         msg += ', '
                     msg = msg[:-2]
                 else:
-                    msg = f'{rolled} -- {", ".join([str(x) for x in total])}'
+                    msg += f'{rolled} -- {", ".join([str(x) for x in total])}'
                 if add is not None:
                     msg += f' + {add} = {sum(total) + add}'
                 if numSuccesses is not None:
                     msg += (f'\n{numSuccesses} Successes' if numSuccesses != 1 else f'\n{numSuccesses} Success')
                 await ctx.send(msg)
+            else:
+                try:
+                    int(mc)
+                    await self.rollDice(ctx, mc = f'{mc}d6')
+                except:
+                    pass
         else:
             ran = random.randrange(6) + 1
-            await ctx.send(f'{ran}')
+            await ctx.send(msg+f'a {ran}')
 
 def setup(bot):
     bot.add_cog(Dice(bot))
