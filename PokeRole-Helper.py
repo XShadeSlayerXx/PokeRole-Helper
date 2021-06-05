@@ -457,7 +457,13 @@ async def docs(ctx):
 #[ability1, ability2, ability3, shiny, show_move_desc, show ability desc, the item list used in encounter,
 # display lists pokemon by rank or odds]
 async def instantiateSettings(where : str):
-    pokebotsettings[where] = [50,49,1,.00012, True, True, False, True, False]
+    num_settings = 10
+    defaults = [50,49,1,.00012, True, True, False, True, False, 0]
+    for x in range(num_settings):
+        try:
+            pokebotsettings[where][x]
+        except:
+            pokebotsettings[where][x] = defaults[x]
 
 @bot.command(name = 'settings',
              help = '%settings <setting_name> [value]\n'
@@ -466,6 +472,7 @@ async def instantiateSettings(where : str):
                     '(ability_two_chance value)\n'
                     '(ability_hidden_chance value)\n'
                     '(shiny_chance value)\n'
+                    '(pre_evo_moves Yes/No/Lower)\n'
                     '(show_move_description True/False)\n'
                     '(encounter_item <listname>)\n'
                     '(display_list Rank/Odds)\n'
@@ -492,16 +499,16 @@ async def settings(ctx, setting='', value=''):
     except:
         await ctx.send('This setting may be any real number, set it to 0 to disable the chance (write it as 50, not 50%)')
     if setting == 'show_move_description' or setting[0:9] == 'show_move':
-        if value[0].lower() == 't':
+        if value[0].lower() == 't' or bool(value):
             pokebotsettings[guild][4] = True
-        elif value[0].lower() == 'f':
+        elif value[0].lower() == 'f' or not bool(value):
             pokebotsettings[guild][4] = False
         else:
             await ctx.send('Setting "show_move_description" may only be True or False')
     elif setting == 'show_ability_description' or setting == 'show_ability':
-        if value[0].lower() == 't':
+        if value[0].lower() == 't' or bool(value):
             pokebotsettings[guild][5] = True
-        elif value[0].lower() == 'f':
+        elif value[0].lower() == 'f' or not bool(value):
             pokebotsettings[guild][5] = False
         else:
             await ctx.send('Setting "show_ability_description" may only be True or False')
@@ -518,10 +525,19 @@ async def settings(ctx, setting='', value=''):
         else: #set it to show rank
             pokebotsettings[guild][7] = True
     elif setting == 'random_rolls':
-        if value[0].lower() == 't':
+        if value[0].lower() == 't' or bool(value):
             pokebotsettings[guild][8] = True
-        elif value[0].lower() == 'f':
+        elif value[0].lower() == 'f' or not bool(value):
             pokebotsettings[guild][8] = False
+    elif setting == 'pre_evo_moves':
+        if bool(value):
+            pokebotsettings[guild][9] = 0 # new behaviour
+        elif not bool(value):
+            pokebotsettings[guild][9] = 1 # old behaviour
+        elif value[0].lower() == 'l':
+            pokebotsettings[guild][9] = 2 # lower rank pre-evo
+        else:
+            await ctx.send('Setting "pre_evo_moves" may be True, False, or Lower (Rank Pre-Evo Moves)')
     temp = pokebotsettings[guild]
     await ctx.send(f'{msg}'
                    f'Current settings:\n(Ability1/Ability2/AbilityHidden)\n**{temp[0],temp[1],temp[2]}**\n'
@@ -1385,6 +1401,12 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
             # to differentiate between naturally learned moves at an evolution
             naturalMoves = await pkmnlearnshelper(nextpoke, rank)
             naturalMoves = [item for sublist in list(naturalMoves.values()) for item in sublist]
+            #TODO: if pokebotsettings[guild][xxx] == 1: previous behaviour
+            #   movelist = await pkmnlearnshelper(nextpoke, rank)
+            #   naturalMoves = movelist[:]
+            # elif pokebotsettings[guild][xxx] == 2: previous evos at lower rank
+            #   movelist = await move_aggregator(nextpoke, downrank)
+            #   etc.
         except:
             movelist = []
 
