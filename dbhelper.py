@@ -60,6 +60,13 @@ class Database:
         self.connection.commit()
         return cursor.lastrowid
 
+    def custom_query(self, query):
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        rows = cursor.fetchall()
+
+        return rows
+
     def query_table(self, tablename, qtype, val):
         cursor = self.connection.cursor()
         cursor.execute(f"SELECT * FROM {tablename} WHERE {qtype}='{val}'")

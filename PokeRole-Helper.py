@@ -68,7 +68,7 @@ natures = ['Hardy (9)','Lonely (5)','Brave (9)','Adamant (4)','Naughty (6)',
 pkmnLists = dict()
 
 pokecap = re.compile(r'(^|[-( ])\s*([a-zA-Z])')
-pokeweight = re.compile(r'(\d+)%?,? ([\-\',\sA-z]+)(?= \d|$)')
+pokeweight = re.compile(r'(\d+)%?,? ([\-\'\.(),\sA-z]+)(?= \d|$)')
 
 #...but need access privileges
 #{user : [listName list] }
@@ -598,8 +598,6 @@ async def pkmn_list_override(ctx, listname, who : discord.Member):
 
 @bot.command(name = 'lists', help = 'Displays all the lists people have made in the format:\n- list1 (#) / list2 (#)\n')
 async def show_lists(ctx):
-    #TODO: why is this broken
-    print(pkmnLists)
     msg = ''
     up = True
     for x, y in pkmnLists.items():
@@ -840,22 +838,7 @@ async def pkmn_randomitem_driver(ctx, listname : str, howMany : int = 1):
 #######
 
 # TODO: add generations to the database
-# async def which_generation(gen : int) -> tuple:
-#     #do dictionaries keep order in python 3.6? I'm pretty sure they do
 #     starters = ['Bulbasaur', 'Chikorita', 'Treecko', 'Turtwig', 'Snivy', 'Chespin', 'Rowlet', 'Grookey']
-#     start = 0
-#     end = 0
-#     #make sure the list is instantiated
-#     gen = sorted((0,8,gen))[1]
-#     try:
-#         start = list(pkmnStats).index(starters[gen-1])
-#     except:
-#         await instantiatePkmnStatList()
-#     if gen == 8:
-#         end = len(pkmnStats)
-#     else:
-#         end = list(pkmnStats).index(starters[gen])
-#     return start, end
 
 @bot.command(name = 'filter', aliases = ['f'],
              help = '%filter <listname> <rank> <type1> <type2> [includeLowerRanks T/F]'
@@ -866,13 +849,14 @@ async def pkmn_randomitem_driver(ctx, listname : str, howMany : int = 1):
                                      '%filter forest beginner grass None\n'
                                      '  --> Adds beginner rank grass types to the list forest\n'
                                      '%filter forest ace bug any True 6\n'
-                                     '  --> Adds up to Ace rank bug/Any types from gen 6 to the list forest')
+                                     '  --> Adds up to Ace rank bug/Any types from gen 6 to the list forest\n'
+                                     '(filtering by generation is currently not working, sorry)')
 async def pkmn_filter_list(ctx, listname : str, rank : ensure_rank,
                            type1 : str, type2 : str = 'Any',
                            includeLowerRanks : bool = False):#, generation : int = 0):
-    # TODO: turn this whole thing into a query
     type1 = type1.title()
     type2 = type2.title()
+    rank = rank.title()
 
     #which ranks to find
     if includeLowerRanks:
@@ -881,22 +865,20 @@ async def pkmn_filter_list(ctx, listname : str, rank : ensure_rank,
         rank = [rank]
     #TODO: fix poke generational stuff
 
-    # if 0 < generation < 9:
-    #     gen = await which_generation(generation)
-    # else:
-    #     try:
-    #         pkmnStats['Bulbasaur']
-    #     except:
-    #         await instantiatePkmnStatList()
-    #     gen = (0, len(pkmnStats))
-    filtered = []
-    # for x in list(pkmnStats.items()):#[gen[0]:gen[1]]:
-    #     if x[1][-2] in rank and (x[1][1] == type1 or type1 == 'Any'):
-    #         if type2 == 'Any' or type2 == x[1][2] or type2 == 'None' and x[1][2] == '':
-    #             filtered.append(pkmn_cap(x[0]))
+    if type2 == 'None':
+        type2 = ''
+
+    query = f'SELECT name FROM pkmnStats WHERE ' \
+            f'( type1="{type1}" ' + \
+            (f'AND type2="{type2}")'
+             f' OR ( type1="{type2}" AND type2="{type1}") AND (' if type2 != 'Any' else ') AND (') + \
+            ' OR '.join([f'rank="{x}"' for x in rank]) + ')'
+    returned = database.custom_query(query)
+    returned = [x[0] for x in returned]
 
     #send the filtered list to %list, which will print it
-    await pkmn_list(ctx = ctx, listname = listname, which = 'add', pokelist = ', '.join(filtered))
+    await send_big_msg(ctx, f'Trying to add these pokemon to the list {listname}:\n'+', '.join(returned))
+    await pkmn_list(ctx = ctx, listname = listname, which = 'add', pokelist = ', '.join(returned))
 
 #######
 
