@@ -463,7 +463,7 @@ async def instantiateSettings(where : str):
         try:
             pokebotsettings[where][x]
         except:
-            pokebotsettings[where][x] = defaults[x]
+            pokebotsettings[where].append(defaults[x])
 
 @bot.command(name = 'settings',
              help = '%settings <setting_name> [value]\n'
@@ -539,14 +539,21 @@ async def settings(ctx, setting='', value=''):
         else:
             await ctx.send('Setting "pre_evo_moves" may be True, False, or Lower (Rank Pre-Evo Moves)')
     temp = pokebotsettings[guild]
+    if temp[9] == 0:
+        pre_evo='Same Rank'
+    elif temp[9] == 0:
+        pre_evo='No'
+    else:
+        pre_evo='Lower Rank'
     await ctx.send(f'{msg}'
                    f'Current settings:\n(Ability1/Ability2/AbilityHidden)\n**{temp[0],temp[1],temp[2]}**\n'
                    f'Shiny chance: {temp[3]} out of 1, **{temp[3]*100}%**\n'
+                   f'Allow previous evolution moves in `%encounter`? **{pre_evo}**'
                    f'Show move descriptions in %encounter: **{temp[4]}**\n'
                    f'Show ability description in %encounter: **{temp[5]}**\n'
-                   f'Items in %encounter? {temp[6]}\n'
-                   f'display_list by odds or rank? {temp[7]}\n'
-                   f'arbitrary encounter random_rolls? {temp[8]}\n'
+                   f'Items in %encounter? **{temp[6]}**\n'
+                   f'display_list by odds or rank? **{temp[7]}**\n'
+                   f'arbitrary encounter random_rolls? **{temp[8]}**\n'
                    f'"%help settings" for help')
     save_obj(pokebotsettings, 'pokebotsettings')
 
@@ -1309,7 +1316,6 @@ async def move_aggregator(poke : str, rank : str) -> dict:
         query = f'SELECT previous FROM pkmnEvo WHERE name="{allPokes[-1]}"'
         result = database.custom_query(query, multiple = False)
         if result:
-            print(result[0])
             allPokes.append(result[0])
     for pkmn in allPokes:
         tmp = await pkmnlearnshelper(pkmn, rank)
@@ -1395,16 +1401,25 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
         rankIndex = ranks.index(rank)
         #get all potential moves, up to the rank
         try:
-            movelist = await move_aggregator(nextpoke, rank)
-            # to differentiate between naturally learned moves at an evolution
-            naturalMoves = await pkmnlearnshelper(nextpoke, rank)
-            naturalMoves = [item for sublist in list(naturalMoves.values()) for item in sublist]
-            #TODO: if pokebotsettings[guild][xxx] == 1: previous behaviour
-            #   movelist = await pkmnlearnshelper(nextpoke, rank)
-            #   naturalMoves = movelist[:]
-            # elif pokebotsettings[guild][xxx] == 2: previous evos at lower rank
-            #   movelist = await move_aggregator(nextpoke, downrank)
-            #   etc.
+            try:
+                setting = pokebotsettings[guild][9]
+            except:
+                await instantiateSettings(guild)
+                setting = pokebotsettings[guild][9]
+            if setting == 0: # all moves at rank from poke and pre evos
+                movelist = await move_aggregator(nextpoke, rank)
+                # to differentiate between naturally learned moves at an evolution
+                naturalMoves = await pkmnlearnshelper(nextpoke, rank)
+                naturalMoves = [item for sublist in list(naturalMoves.values()) for item in sublist]
+            if setting == 1: # previous behaviour
+                movelist = await pkmnlearnshelper(nextpoke, rank)
+                naturalMoves = movelist[:]
+            elif setting == 2: # previous evos at lower rank
+                newrank = ranks.index(rank.title())
+                if newrank != 0:
+                    newrank -= 1
+                newrank = ranks[newrank]
+                movelist = await move_aggregator(nextpoke, newrank)
         except:
             movelist = []
 
