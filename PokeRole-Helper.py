@@ -68,7 +68,7 @@ natures = ['Hardy (9)','Lonely (5)','Brave (9)','Adamant (4)','Naughty (6)',
 pkmnLists = dict()
 
 pokecap = re.compile(r'(^|[-( ])\s*([a-zA-Z])')
-pokeweight = re.compile(r'(\d+)%?,? ([\-\'\.(),\sA-z]+)(?= \d|$)')
+pokeweight = re.compile(r'(\d+)%?,? ([\-\'\.():,\sA-z]+)(?= \d|$)')
 
 #...but need access privileges
 #{user : [listName list] }
@@ -1284,6 +1284,29 @@ async def pkmn_search_learns(ctx, *, pokemon : pkmn_cap):
 
 #####
 
+# returns the moves of a pokemon + all it's devolutions
+async def move_aggregator(poke : str, rank : str) -> dict:
+    movelist = {} # init final dict
+    allPokes = [poke]
+    print(poke)
+    result = False
+    while result is not None:
+        query = f'SELECT previous FROM pkmnEvo WHERE name="{allPokes[-1]}"'
+        result = database.custom_query(query, multiple = False)
+        if result:
+            print(result[0])
+            allPokes.append(result[0])
+    for pkmn in allPokes:
+        tmp = await pkmnlearnshelper(pkmn, rank)
+        for x, y in list(tmp.items()):
+            if x in movelist:
+                for name in y:
+                    movelist[x].add(name)
+            else:
+                movelist[x] = set(y)
+    print(movelist)
+    return movelist
+
 async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
     guild = await getGuilds(ctx)
     msg = ''
@@ -1346,6 +1369,7 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
         try:
             statlist = await pkmnstatshelper(nextpoke)
         except:
+            # name is a typo
             nextpoke = lookup_poke(nextpoke)
             statlist = await pkmnstatshelper(nextpoke)
         if rankbase:
@@ -1357,7 +1381,10 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
         rankIndex = ranks.index(rank)
         #get all potential moves, up to the rank
         try:
-            movelist = await pkmnlearnshelper(nextpoke, rank)
+            movelist = await move_aggregator(nextpoke, rank)
+            # to differentiate between naturally learned moves at an evolution
+            naturalMoves = await pkmnlearnshelper(nextpoke, rank)
+            naturalMoves = [item for sublist in list(naturalMoves.values()) for item in sublist]
         except:
             movelist = []
 
@@ -1384,6 +1411,7 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
             else:
                 sanity = sanity - 1
 
+        sanity = 30
         #distribute skills
         x = 0
         while x < skillAmount[rankIndex] and sanity > 0:
@@ -1394,6 +1422,7 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
             else:
                 sanity = sanity - 1
 
+        sanity = 30
         #only legendaries learn 'master' moves --> ensure its not a legendary
         if 'Master' not in movelist:
             #distribute stats last bc of legendaries
@@ -1531,6 +1560,8 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
                     else:
                         accMod = 0
                     #todo: differentiate between damaging STAB, non-damaging STAB, and add + after the STAB dmg array
+                    if x.title() not in naturalMoves:
+                        msg += '*'
                     msg += f'__{x.title()}__\n'
                     msg += f'**Type**: {found[0].capitalize()}'
                     msg += f' -- **{found[1].capitalize()}**\n'
@@ -1540,7 +1571,7 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
                     totalDmg = (allAttr[found[3]] or 0) + (allAttr[found[4]] or 0) + int(found[2])
                     dmgArray = [sum([random.randint(0,1) for _ in range(totalDmg)]) for _ in range(numRolls)]
                     totalAcc = (allAttr[found[5]] or 0) + (allAttr[found[6]] or 0)
-                    accArray = [sum([random.randint(0,1)-accMod for _ in range(totalAcc)]) for _ in range(numRolls)]
+                    accArray = [sum([random.randint(0,1) for _ in range(totalAcc)])-accMod for _ in range(numRolls)]
                     msg += f'**Dmg Mods**: {(found[3] or "None")} + {(found[4] or "None")} ' \
                            f'+ {found[2]} = ({totalDmg}'
                     msg += f'{" STAB" if found[0].capitalize() in (statlist[1],statlist[2]) else ""})'

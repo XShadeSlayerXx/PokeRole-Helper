@@ -38,6 +38,7 @@ class Database:
         self.instantiatePkmnStatList()
         self.instantiatePkmnMoveList()
         self.instantiatePkmnAbilityList()
+        self.instantiateEvoList()
 
     def close_connection(self):
         self.connection.close()
@@ -60,10 +61,13 @@ class Database:
         self.connection.commit()
         return cursor.lastrowid
 
-    def custom_query(self, query):
+    def custom_query(self, query, multiple : bool = True):
         cursor = self.connection.cursor()
         cursor.execute(query)
-        rows = cursor.fetchall()
+        if multiple:
+            rows = cursor.fetchall()
+        else:
+            rows = cursor.fetchone()
 
         return rows
 
@@ -78,6 +82,29 @@ class Database:
         cursor = self.connection.cursor()
         cursor.execute(f'DROP TABLE {tablename}')
 
+        self.connection.commit()
+
+    #TODO: initialize evolution table
+    # and modify %encounter to aggregate the moves
+    # (in a dictionary of sets?)
+    # .
+    # P.S. you can use cursor_result.fetchone() to check if an entry exists
+    # Return [this] + previousEvoFunc()
+
+    def instantiateEvoList(self):
+        cursor = self.connection.cursor()
+        tblnm = 'pkmnEvo'
+        vals = """
+        name text PRIMARY KEY,
+        previous text
+        """
+        self.create_table(tblnm, vals)
+        with open('pokeEvoListFull.csv', 'r', newline = '', encoding = "UTF-8") as infile:
+            reader = csv.reader(infile)
+            next(reader)  #skip the header
+            for row in reader:
+                tmp = ','.join('?' * len(row))
+                cursor.execute(f'INSERT OR IGNORE INTO {tblnm} values ({tmp})', row)
         self.connection.commit()
 
     def instantiatePkmnStatList(self):
