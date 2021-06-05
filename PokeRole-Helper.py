@@ -1304,7 +1304,6 @@ async def pkmn_search_learns(ctx, *, pokemon : pkmn_cap):
 async def move_aggregator(poke : str, rank : str) -> dict:
     movelist = {} # init final dict
     allPokes = [poke]
-    print(poke)
     result = False
     while result is not None:
         query = f'SELECT previous FROM pkmnEvo WHERE name="{allPokes[-1]}"'
@@ -1320,7 +1319,6 @@ async def move_aggregator(poke : str, rank : str) -> dict:
                     movelist[x].add(name)
             else:
                 movelist[x] = set(y)
-    print(movelist)
     return movelist
 
 async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
