@@ -150,8 +150,6 @@ def sep_weights(arg) -> str:
 
 def ensure_rank(arg : str) -> str:
     arg = arg.title()
-    if arg == 'Professional':
-        arg = 'Pro'
     if arg not in ranks and arg not in ['Base', 'Random']:
         raise commands.errors.ConversionError(f'{arg} is not a valid rank.')
     return arg
