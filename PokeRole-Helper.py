@@ -36,8 +36,6 @@ cogs = ['mapCog', 'diceCog', 'miscCommands', 'custom_help']
 #   Need:
 #   --PokeLearns moves (probably index the movelist and change all moves in pokelearns to an index?)
 
-
-
 #settings {channel : [(shiny_chance, int), (ability, int), (secondary, int), (hidden, int),
 # (show_encounter_move_desc, 0)]}
 pokebotsettings = dict()
@@ -52,6 +50,7 @@ pkmnHabitats = dict()
 pkmnShop = ODict()
 pkmnWeather = dict()
 database = None
+logfile = 'pokerolelogs.txt'
 
 ranks = ['Starter', 'Beginner', 'Amateur', 'Ace', 'Pro', 'Master', 'Champion']
 natures = ['Hardy (9)','Lonely (5)','Brave (9)','Adamant (4)','Naughty (6)',
@@ -305,11 +304,24 @@ def dev():
 
 #######
 
+async def send_owner_msg(msg = '', fp = None):
+    tmp = await bot.application_info()
+    if fp:
+        await tmp.owner.send(msg, file = discord.File(fp))
+    else:
+        await tmp.owner.send(msg)
+
 @commands.is_owner()
 @bot.command(name = 'restart', hidden = True)
 async def restart(ctx):
+    try:
+        await send_owner_msg(fp = logfile)
+    except Exception as e:
+        pass
+    finally:
+        os.remove(logfile)
     await ctx.message.add_reaction('\N{HIBISCUS}')
-    await bot.logout()
+    await bot.close()
 
 @commands.is_owner()
 @bot.command(name = 'reloadItems', hidden = True)
@@ -445,21 +457,15 @@ async def reloadLists(ctx):
     database.reloadLists()
     await ctx.message.add_reaction('\N{CYCLONE}')
 
-
 @commands.is_owner()
-@bot.command(name = 'deleteSetting', hidden = True)
-async def deleteSetting(ctx):
-    where = ctx.author.id
-    del(pokebotsettings[where])
-    await ctx.message.add_reaction('\N{CYCLONE}')
-
-@commands.is_owner()
-@bot.command(name = 'deleteSettingPartial', hidden = True)
-async def deletePartial(ctx):
-    where = ctx.author.id
-    defaults = [50, 49, 1, .00012, True, True, False, True, False, 0]
-    pokebotsettings[where] = defaults[:6]
-    await ctx.message.add_reaction('\N{CYCLONE}')
+@bot.command(name = 'updateSettings', hidden = True)
+async def updateSettings(ctx):
+    try:
+        for place in pokebotsettings:
+            await instantiateSettings(place)
+    except:
+        tmp = traceback.format_exc(limit = 3)
+        await send_owner_msg(msg = tmp)
 
 #######
 
@@ -478,7 +484,10 @@ async def instantiateSettings(where : str):
         pokebotsettings[where] = defaults
         return
     size = len(pokebotsettings[where])
+    print(f'{pokebotsettings[where]} --> ')
     pokebotsettings[where] += defaults[size:]
+    print(f'\t{pokebotsettings[where]}')
+    save_obj(pokebotsettings, 'pokebotsettings')
 
 @bot.command(name = 'settings', aliases = ['setting'],
              help = '%settings <setting_name> [value]\n'
@@ -1808,10 +1817,12 @@ async def info_error(ctx, error):
     if 'IndexError' in str(error):
         await ctx.send('Don\'t forget the percentages.\nFor example "40% bulbasaur, charmander 60% squirtle"')
 
-if not dev_env:
+if not dev_env or True:
     @bot.event
     async def on_command_error(ctx, error):
-      await ctx.send(f"Error:\n{str(error)}\n*(This message self-destructs in 15 seconds)*", delete_after=15)
+        with open(logfile, 'a', encoding = 'UTF-8') as file:
+            file.write(f'{str(error)}\n')
+        await ctx.send(f"Error:\n{str(error)}\n*(This message self-destructs in 15 seconds)*", delete_after=15)
 
 #####
 
