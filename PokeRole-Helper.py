@@ -1411,7 +1411,7 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
         if setting == 0: # all moves at rank from poke and pre evos
             movelist = await move_aggregator(nextpoke, rank)
         if setting == 1: # previous behaviour
-            movelist = naturalMoves[:]
+            movelist = naturalMoves.copy()
         elif setting == 2: # previous evos at lower rank
             newrank = ranks.index(rank.title())
             if newrank != 0:
