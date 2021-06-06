@@ -91,13 +91,6 @@ class Database:
         cursor.close()
         self.connection.commit()
 
-    #TODO: initialize evolution table
-    # and modify %encounter to aggregate the moves
-    # (in a dictionary of sets?)
-    # .
-    # P.S. you can use cursor_result.fetchone() to check if an entry exists
-    # Return [this] + previousEvoFunc()
-
     def instantiateEvoList(self):
         cursor = self.connection.cursor()
         tblnm = 'pkmnEvo'
@@ -116,6 +109,9 @@ class Database:
         self.connection.commit()
 
     def instantiatePkmnStatList(self):
+        #TODO: append generation to the end of these.
+        # first check for 'A' or 'G' in the number,
+        # then determine the poke gen by the national dex number.
         cursor = self.connection.cursor()
         tblnm = 'pkmnStats'
         vals = """
