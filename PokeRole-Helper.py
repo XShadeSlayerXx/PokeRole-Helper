@@ -465,7 +465,7 @@ async def instantiateSettings(where : str):
         except:
             pokebotsettings[where].append(defaults[x])
 
-@bot.command(name = 'settings',
+@bot.command(name = 'settings', aliases = ['setting'],
              help = '%settings <setting_name> [value]\n'
                     'e.g. %settings ability_one_chance 50\n'
                     'List: (ability_one_chance value)\n'
@@ -499,16 +499,16 @@ async def settings(ctx, setting='', value=''):
     except:
         await ctx.send('This setting may be any real number, set it to 0 to disable the chance (write it as 50, not 50%)')
     if setting == 'show_move_description' or setting[0:9] == 'show_move':
-        if value[0].lower() == 't' or bool(value):
+        if value[0].lower() == 't':
             pokebotsettings[guild][4] = True
-        elif value[0].lower() == 'f' or not bool(value):
+        elif value[0].lower() == 'f':
             pokebotsettings[guild][4] = False
         else:
             await ctx.send('Setting "show_move_description" may only be True or False')
     elif setting == 'show_ability_description' or setting == 'show_ability':
-        if value[0].lower() == 't' or bool(value):
+        if value[0].lower() == 't':
             pokebotsettings[guild][5] = True
-        elif value[0].lower() == 'f' or not bool(value):
+        elif value[0].lower() == 'f':
             pokebotsettings[guild][5] = False
         else:
             await ctx.send('Setting "show_ability_description" may only be True or False')
@@ -525,14 +525,14 @@ async def settings(ctx, setting='', value=''):
         else: #set it to show rank
             pokebotsettings[guild][7] = True
     elif setting == 'random_rolls':
-        if value[0].lower() == 't' or bool(value):
+        if value[0].lower() == 't':
             pokebotsettings[guild][8] = True
-        elif value[0].lower() == 'f' or not bool(value):
+        elif value[0].lower() == 'f':
             pokebotsettings[guild][8] = False
-    elif setting == 'pre_evo_moves':
-        if bool(value):
+    elif setting in ['pre_evo_moves', 'pre_evo', 'evo_moves']:
+        if value[0].lower() in ['y', 't', 's']:
             pokebotsettings[guild][9] = 0 # new behaviour
-        elif not bool(value):
+        elif value[0].lower() in ['n', 'f', 'd']:
             pokebotsettings[guild][9] = 1 # old behaviour
         elif value[0].lower() == 'l':
             pokebotsettings[guild][9] = 2 # lower rank pre-evo
@@ -548,7 +548,7 @@ async def settings(ctx, setting='', value=''):
     await ctx.send(f'{msg}'
                    f'Current settings:\n(Ability1/Ability2/AbilityHidden)\n**{temp[0],temp[1],temp[2]}**\n'
                    f'Shiny chance: {temp[3]} out of 1, **{temp[3]*100}%**\n'
-                   f'Allow previous evolution moves in `%encounter`? **{pre_evo}**'
+                   f'Allow previous evolution moves in `%encounter`? **{pre_evo}**\n'
                    f'Show move descriptions in %encounter: **{temp[4]}**\n'
                    f'Show ability description in %encounter: **{temp[5]}**\n'
                    f'Items in %encounter? **{temp[6]}**\n'
@@ -1399,29 +1399,26 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
             #just give them an arbitrary rank
             rank = random.choice(ranks[:-1])
         rankIndex = ranks.index(rank)
+
+        # to differentiate between naturally learned moves at an evolution
+        naturalMoves = await pkmnlearnshelper(nextpoke, rank)
         #get all potential moves, up to the rank
-        try:
-            try:
-                setting = pokebotsettings[guild][9]
-            except:
-                await instantiateSettings(guild)
-                setting = pokebotsettings[guild][9]
-            if setting == 0: # all moves at rank from poke and pre evos
-                movelist = await move_aggregator(nextpoke, rank)
-                # to differentiate between naturally learned moves at an evolution
-                naturalMoves = await pkmnlearnshelper(nextpoke, rank)
-                naturalMoves = [item for sublist in list(naturalMoves.values()) for item in sublist]
-            if setting == 1: # previous behaviour
-                movelist = await pkmnlearnshelper(nextpoke, rank)
-                naturalMoves = movelist[:]
-            elif setting == 2: # previous evos at lower rank
-                newrank = ranks.index(rank.title())
-                if newrank != 0:
-                    newrank -= 1
-                newrank = ranks[newrank]
-                movelist = await move_aggregator(nextpoke, newrank)
+        try: #does the setting exist...
+            setting = pokebotsettings[guild][9]
         except:
-            movelist = []
+            await instantiateSettings(guild)
+            setting = pokebotsettings[guild][9]
+        if setting == 0: # all moves at rank from poke and pre evos
+            movelist = await move_aggregator(nextpoke, rank)
+        if setting == 1: # previous behaviour
+            movelist = naturalMoves[:]
+        elif setting == 2: # previous evos at lower rank
+            newrank = ranks.index(rank.title())
+            if newrank != 0:
+                newrank -= 1
+            newrank = ranks[newrank]
+            movelist = await move_aggregator(nextpoke, newrank)
+        naturalMoves = [item for sublist in list(naturalMoves.values()) for item in sublist]
 
         #3/4/6/8/10/12 == b.hp/str/dex/vit/spe/ins
         attributes = [int(statlist[3])] + [int(statlist[x]) for x in range(4, 13, 2)]
