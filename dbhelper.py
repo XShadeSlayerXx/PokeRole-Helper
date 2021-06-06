@@ -21,7 +21,7 @@ def create_connection(file):
 class Database:
     def __init__(self):
         self.connection = create_connection(db_file)
-        self.instantiateAllLists()
+        # self.instantiateAllLists()
 
     def reloadLists(self):
         try:
