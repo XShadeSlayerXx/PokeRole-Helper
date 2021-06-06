@@ -541,7 +541,7 @@ async def settings(ctx, setting='', value=''):
     temp = pokebotsettings[guild]
     if temp[9] == 0:
         pre_evo='Same Rank'
-    elif temp[9] == 0:
+    elif temp[9] == 1:
         pre_evo='No'
     else:
         pre_evo='Lower Rank'
