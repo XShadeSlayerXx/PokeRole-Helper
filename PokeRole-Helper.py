@@ -50,7 +50,6 @@ pkmnHabitats = dict()
 pkmnShop = ODict()
 pkmnWeather = dict()
 database = None
-logfile = 'pokerolelogs.txt'
 
 ranks = ['Starter', 'Beginner', 'Amateur', 'Ace', 'Pro', 'Master', 'Champion']
 natures = ['Hardy (9)','Lonely (5)','Brave (9)','Adamant (4)','Naughty (6)',
@@ -314,12 +313,6 @@ async def send_owner_msg(msg = '', fp = None):
 @commands.is_owner()
 @bot.command(name = 'restart', hidden = True)
 async def restart(ctx):
-    try:
-        await send_owner_msg(fp = logfile)
-    except Exception as e:
-        pass
-    finally:
-        os.remove(logfile)
     await ctx.message.add_reaction('\N{HIBISCUS}')
     await bot.close()
 
@@ -484,9 +477,7 @@ async def instantiateSettings(where : str):
         pokebotsettings[where] = defaults
         return
     size = len(pokebotsettings[where])
-    print(f'{pokebotsettings[where]} --> ')
     pokebotsettings[where] += defaults[size:]
-    print(f'\t{pokebotsettings[where]}')
     save_obj(pokebotsettings, 'pokebotsettings')
 
 @bot.command(name = 'settings', aliases = ['setting'],
@@ -1820,8 +1811,6 @@ async def info_error(ctx, error):
 if not dev_env:
     @bot.event
     async def on_command_error(ctx, error):
-        with open(logfile, 'a', encoding = 'UTF-8') as file:
-            file.write(f'{str(error)}\n')
         await ctx.send(f"Error:\n{str(error)}\n*(This message self-destructs in 15 seconds)*", delete_after=15)
 
 #####
