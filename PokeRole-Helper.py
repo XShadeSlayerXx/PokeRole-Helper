@@ -1817,7 +1817,7 @@ async def info_error(ctx, error):
     if 'IndexError' in str(error):
         await ctx.send('Don\'t forget the percentages.\nFor example "40% bulbasaur, charmander 60% squirtle"')
 
-if not dev_env or True:
+if not dev_env:
     @bot.event
     async def on_command_error(ctx, error):
         with open(logfile, 'a', encoding = 'UTF-8') as file:
