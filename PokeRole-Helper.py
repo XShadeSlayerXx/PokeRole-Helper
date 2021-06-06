@@ -50,6 +50,7 @@ pkmnHabitats = dict()
 pkmnShop = ODict()
 pkmnWeather = dict()
 database = None
+restartError = True
 
 ranks = ['Starter', 'Beginner', 'Amateur', 'Ace', 'Pro', 'Master', 'Champion']
 natures = ['Hardy (9)','Lonely (5)','Brave (9)','Adamant (4)','Naughty (6)',
@@ -106,6 +107,7 @@ async def on_ready():
     global pokebotsettings
     global pkmnListsPriv
     global database
+    global restartError
 
     database = Database()
 
@@ -138,6 +140,7 @@ async def on_ready():
 
     if not dev_env:
         await bot.appinfo.owner.send(f'Connected Successfully')
+    restartError = False
 
 #######
 #converters
@@ -1813,7 +1816,11 @@ async def info_error(ctx, error):
 if not dev_env:
     @bot.event
     async def on_command_error(ctx, error):
-        await ctx.send(f"Error:\n{str(error)}\n*(This message self-destructs in 15 seconds)*", delete_after=15)
+        global restartError
+        msg = f"Error:\n{str(error)}\n*(This message self-destructs in 15 seconds)*"
+        if restartError:
+            msg += f'\n*Restarting... please give me a minute*'
+        await ctx.send(msg, delete_after=15)
 
 #####
 
