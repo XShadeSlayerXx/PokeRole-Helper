@@ -52,14 +52,18 @@ class Database:
             cursor.execute(cmd)
         except Error as e:
             print(e)
+        finally:
+            cursor.close()
 
     def insert_into_table(self, tablename, values):
         cursor = self.connection.cursor()
         tmp = ','.join('?' * len(values))
         cursor.execute(f'INSERT INTO {tablename} values ({tmp})', values)
 
+        tmp = cursor.lastrowid
+        cursor.close()
         self.connection.commit()
-        return cursor.lastrowid
+        return tmp
 
     def custom_query(self, query, multiple : bool = True):
         cursor = self.connection.cursor()
@@ -69,6 +73,7 @@ class Database:
         else:
             rows = cursor.fetchone()
 
+        cursor.close()
         return rows
 
     def query_table(self, tablename, qtype, val):
@@ -76,12 +81,14 @@ class Database:
         cursor.execute(f"SELECT * FROM {tablename} WHERE {qtype}='{val}'")
         rows = cursor.fetchall()
 
+        cursor.close()
         return rows
 
     def delete_table(self, tablename):
         cursor = self.connection.cursor()
         cursor.execute(f'DROP TABLE {tablename}')
 
+        cursor.close()
         self.connection.commit()
 
     #TODO: initialize evolution table
@@ -104,7 +111,8 @@ class Database:
             next(reader)  #skip the header
             for row in reader:
                 tmp = ','.join('?' * len(row))
-                cursor.execute(f'INSERT OR IGNORE INTO {tblnm} values ({tmp})', row)
+                cursor.execute(f'INSERT OR REPLACE INTO {tblnm} values ({tmp})', row)
+        cursor.close()
         self.connection.commit()
 
     def instantiatePkmnStatList(self):
@@ -142,7 +150,8 @@ class Database:
             for row in reader:
                 tmp = ','.join('?' * len(row))
                 newrow = [row[0][1:]] + row[1:]
-                cursor.execute(f'INSERT OR IGNORE INTO {tblnm} values ({tmp})', newrow)
+                cursor.execute(f'INSERT OR REPLACE INTO {tblnm} values ({tmp})', newrow)
+        cursor.close()
         self.connection.commit()
 
     def instantiatePkmnLearnsList(self):
@@ -162,7 +171,8 @@ class Database:
                 nam = row[0][4:]
                 tmp = ','.join('?' * 58)
                 newrow = [num, nam] + value
-                cursor.execute(f'INSERT OR IGNORE INTO {tblnm} values ({tmp})', newrow)
+                cursor.execute(f'INSERT OR REPLACE INTO {tblnm} values ({tmp})', newrow)
+        cursor.close()
         self.connection.commit()
 
     def instantiatePkmnMoveList(self):
@@ -185,7 +195,8 @@ class Database:
             reader = csv.reader(infile)
             for row in reader:
                 tmp = ','.join('?' * len(row))
-                cursor.execute(f'INSERT OR IGNORE INTO {tblnm} values ({tmp})', row)
+                cursor.execute(f'INSERT OR REPLACE INTO {tblnm} values ({tmp})', row)
+        cursor.close()
         self.connection.commit()
 
     def instantiatePkmnAbilityList(self):
@@ -201,5 +212,5 @@ class Database:
             next(reader)  #skip the header
             for row in reader:
                 tmp = ','.join('?' * len(row))
-                cursor.execute(f'INSERT OR IGNORE INTO {tblnm} values ({tmp})', row)
+                cursor.execute(f'INSERT OR REPLACE INTO {tblnm} values ({tmp})', row)
         self.connection.commit()

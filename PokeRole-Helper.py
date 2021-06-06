@@ -445,6 +445,22 @@ async def reloadLists(ctx):
     database.reloadLists()
     await ctx.message.add_reaction('\N{CYCLONE}')
 
+
+@commands.is_owner()
+@bot.command(name = 'deleteSetting', hidden = True)
+async def deleteSetting(ctx):
+    where = ctx.author.id
+    del(pokebotsettings[where])
+    await ctx.message.add_reaction('\N{CYCLONE}')
+
+@commands.is_owner()
+@bot.command(name = 'deleteSettingPartial', hidden = True)
+async def deletePartial(ctx):
+    where = ctx.author.id
+    defaults = [50, 49, 1, .00012, True, True, False, True, False, 0]
+    pokebotsettings[where] = defaults[:6]
+    await ctx.message.add_reaction('\N{CYCLONE}')
+
 #######
 
 @bot.command(name = 'docs',
@@ -457,13 +473,12 @@ async def docs(ctx):
 #[ability1, ability2, ability3, shiny, show_move_desc, show ability desc, the item list used in encounter,
 # display lists pokemon by rank or odds]
 async def instantiateSettings(where : str):
-    num_settings = 10
     defaults = [50,49,1,.00012, True, True, False, True, False, 0]
-    for x in range(num_settings):
-        try:
-            pokebotsettings[where][x]
-        except:
-            pokebotsettings[where].append(defaults[x])
+    if where not in pokebotsettings:
+        pokebotsettings[where] = defaults
+        return
+    size = len(pokebotsettings[where])
+    pokebotsettings[where] += defaults[size:]
 
 @bot.command(name = 'settings', aliases = ['setting'],
              help = '%settings <setting_name> [value]\n'
