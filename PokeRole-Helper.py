@@ -774,7 +774,7 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
                 #if there are no pokemon delete the list
                 msg = displayList(listname)
                 del pkmnLists[listname]
-                await ctx.send(f'Everything ({msg}) was removed from list "{listname}"')
+                await send_big_msg(ctx, f'Everything ({msg}) was removed from list "{listname}"')
             else:
                 msg = modifyList(False, pokelist, listname)
                 if len(msg) > 0:
