@@ -466,23 +466,26 @@ async def updateSettings(ctx):
 @commands.is_owner()
 @bot.command(name = 'devQuery', hidden = True)
 async def query(ctx, *, msg = ''):
-    if len(msg.split()) == 1:
-        returned = database.custom_query(f"PRAGMA table_info({msg})")
-        await ctx.send(', '.join([x[1] for x in returned]))
-        return
-    elif msg == '':
-        returned = database.custom_query('SELECT name FROM sqlite_master WHERE type="table" AND name NOT LIKE "SQLITE_%"')
-        await ctx.send(', '.join([x[0] for x in returned]))
-        return
-    returned = database.custom_query(msg)
-    if returned is None:
-        await ctx.send('Error: no results')
-        return
-    if len(returned[0]) == 1:
-        returned = ', '.join([x[0] for x in returned])
-    else:
-        returned = ', '.join([f'**{x[0]}**: {list(x[1:])}' for x in returned])
-    await send_big_msg(ctx, returned)
+    try:
+        if len(msg.split()) == 1:
+            returned = database.custom_query(f"PRAGMA table_info({msg})")
+            await ctx.send(', '.join([x[1] for x in returned]))
+            return
+        elif msg == '':
+            returned = database.custom_query('SELECT name FROM sqlite_master WHERE type="table" AND name NOT LIKE "SQLITE_%"')
+            await ctx.send(', '.join([x[0] for x in returned]))
+            return
+        returned = database.custom_query(msg)
+        if returned is None:
+            await ctx.send('Error: no results')
+            return
+        if len(returned[0]) == 1:
+            returned = ', '.join([x[0] for x in returned])
+        else:
+            returned = ', '.join([f'**{x[0]}**: {list(x[1:])}' for x in returned])
+        await send_big_msg(ctx, returned)
+    except:
+        await ctx.send('Error: Bad or Empty Request')
 
 #######
 
