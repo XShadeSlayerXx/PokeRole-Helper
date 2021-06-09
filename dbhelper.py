@@ -5,11 +5,6 @@ import os
 
 db_file = 'pokerole.db'
 
-# TODO: function to return whole table as list
-#  (for items and generational stuff)
-#  implement the other lists too
-#  add evolution stuff and backwards search for %e moves
-
 def create_connection(file):
     connection = None
     try:
@@ -18,10 +13,23 @@ def create_connection(file):
         print(e)
     return connection
 
+def get_generation(number : str) -> int:
+    if 'A' in number or 'B' in number: #Alolan or Beast
+        return 7
+    elif 'G' in number: #Galar
+        return 8
+    elif 'D' in number: #Delta... (Pokemon Insurgence?)
+        return 9
+    number = int(number)
+    cutoffs = [0, 151, 251, 386, 493, 649, 721, 809, 898]
+    for i, num in enumerate(cutoffs):
+        if number <= num:
+            return i
+
 class Database:
     def __init__(self):
         self.connection = create_connection(db_file)
-        # self.instantiateAllLists()
+        self.instantiatePkmnStatList()
 
     def reloadLists(self):
         try:
@@ -109,9 +117,6 @@ class Database:
         self.connection.commit()
 
     def instantiatePkmnStatList(self):
-        #TODO: append generation to the end of these.
-        # first check for 'A' or 'G' in the number,
-        # then determine the poke gen by the national dex number.
         cursor = self.connection.cursor()
         tblnm = 'pkmnStats'
         vals = """
@@ -137,15 +142,18 @@ class Database:
         unevolved text,
         form text,
         rank text,
-        gender text
+        gender text,
+        generation integer NOT NULL
         """
         self.create_table(tblnm, vals)
         with open('PokeroleStats.csv', 'r', newline = '', encoding = "WINDOWS-1252") as infile:
             reader = csv.reader(infile)
             next(reader)  #skip the header
             for row in reader:
-                tmp = ','.join('?' * len(row))
-                newrow = [row[0][1:]] + row[1:]
+                tmp = ','.join('?' * (len(row) + 1)) #add 1 for generation
+                num = row[0][1:]
+                gen = get_generation(num)
+                newrow = [num] + row[1:] + [gen]
                 cursor.execute(f'INSERT OR REPLACE INTO {tblnm} values ({tmp})', newrow)
         cursor.close()
         self.connection.commit()
