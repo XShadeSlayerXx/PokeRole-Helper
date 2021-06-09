@@ -886,15 +886,15 @@ async def pkmn_randomitem_driver(ctx, listname : str, howMany : int = 1):
                                      ' <generation>\n'
                                      'type1 & type2 - can be Any or None\n'
                                      'includeLowerRanks - if <rank> is ace, do you want starter/beginner/amateur/ace?\n'
-                                     'generation - any number between 1 and 8 (kanto through galar)\n'
+                                     'generation - any number between 1 and 9 (kanto through galar + delta pkmn)\n'
                                      '%filter forest beginner grass None\n'
-                                     '  --> Adds beginner rank grass types to the list forest\n'
-                                     '%filter forest ace bug any True 6\n'
-                                     '  --> Adds up to Ace rank bug/Any types from gen 6 to the list forest\n'
-                                     '(filtering by generation is currently not working, sorry)')
+                                     '  --> Adds beginner rank pure grass types to the list forest\n'
+                                     '%filter forest ace bug any True 4-6\n'
+                                     '  --> Adds up to Ace rank bug/Any types from gen 4 to 6 to the list forest\n'
+                                     'Note: generation 1-8 is default, and to change it you will need to include all parameters')
 async def pkmn_filter_list(ctx, listname : str, rank : ensure_rank,
                            type1 : str, type2 : str = 'Any',
-                           includeLowerRanks : bool = False):#, generation : int = 0):
+                           includeLowerRanks : bool = False, generation : str = ''):
     type1 = type1.title()
     type2 = type2.title()
     rank = rank.title()
@@ -904,20 +904,31 @@ async def pkmn_filter_list(ctx, listname : str, rank : ensure_rank,
         rank = ranks[:ranks.index(rank)+1]
     else:
         rank = [rank]
-    #TODO: fix poke generational stuff
 
     if type2 == 'None':
         type2 = ''
 
+    if generation == '':
+        generation = '1-8'
+
+    generation = generation.replace(' ', '').split('-')
+    if len(generation) == 1:
+        gen = f' AND generation="{generation[0]}"'
+    else:
+        gen = f' AND generation BETWEEN {generation[0]} AND {generation[1]}'
+
     query = f'SELECT name FROM pkmnStats WHERE ' \
-            f'( type1="{type1}" ' + \
+            f'( ( type1="{type1}" ' + \
             (f'AND type2="{type2}")'
-             f' OR ( type1="{type2}" AND type2="{type1}") AND (' if type2 != 'Any' else ') AND (') + \
-            ' OR '.join([f'rank="{x}"' for x in rank]) + ')'
+             f' OR ( type1="{type2}" AND type2="{type1}") ) AND (' if type2 != 'Any' else ') ) AND (') + \
+            ' OR '.join([f'rank="{x}"' for x in rank]) + ')' + gen + ' ORDER BY number ASC'
     returned = database.custom_query(query)
     returned = [x[0] for x in returned]
 
     #send the filtered list to %list, which will print it
+    if len(returned) == 0:
+        await ctx.send(f'I couldn\'t find any pokemon...')
+        return
     await send_big_msg(ctx, f'Trying to add these pokemon to the list {listname}:\n'+', '.join(returned))
     await pkmn_list(ctx = ctx, listname = listname, which = 'add', pokelist = ', '.join(returned))
 
