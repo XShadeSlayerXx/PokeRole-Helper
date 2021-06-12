@@ -1279,12 +1279,13 @@ async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
         output += '\n'
     else:
         output += f' / {found[2].capitalize()}\n'
+    exStats = [f'`({len(found[x])}/{len(found[x])+len(found[x+1])})`' for x in range(4,14,2)]
     output += f'**Base HP**: {found[3]}\n'
-    output += f'**Strength**: {found[4]}{found[5]}\n'
-    output += f'**Dexterity**: {found[6]}{found[7]}\n'
-    output += f'**Vitality**: {found[8]}{found[9]}\n'
-    output += f'**Special**: {found[10]}{found[11]}\n'
-    output += f'**Insight**: {found[12]}{found[13]}\n'
+    output += f'**Strength**: {found[4]}{found[5]} {exStats[0]}\n'
+    output += f'**Dexterity**: {found[6]}{found[7]} {exStats[1]}\n'
+    output += f'**Vitality**: {found[8]}{found[9]} {exStats[2]}\n'
+    output += f'**Special**: {found[10]}{found[11]} {exStats[3]}\n'
+    output += f'**Insight**: {found[12]}{found[13]} {exStats[4]}\n'
     output += f'**Ability**: {found[14]}'
     if found[15] != '': #secondary
         output += f' / {found[15]}'
@@ -1592,6 +1593,7 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
         #⬤⦿⭘
         just = 0
         fullattr = [0]
+        totalNums = [0]
         for attr in range(1,len(attributes)):
             a = int(baseattr[attr])
             b = int(attributes[attr])
@@ -1601,16 +1603,17 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
             baseattr[attr] = '⬤'*a
             attributes[attr] = '⦿'*(b-a)
             maxattr[attr] = '⭘'*(c-b)
+            totalNums.append(f' `({b}/{c})`')
             fullattr.append(baseattr[attr]+attributes[attr]+maxattr[attr])
             d = int(socials[attr-1][1])
             socials[attr-1] = (socials[attr-1][0],'⬤'*d + '⭘'*(5-d))
         just += 12
         msg += f'**Total HP:** {attributes[0]}\n'
-        msg += ('**Str:** '+fullattr[1]).ljust(just)+f' -- **{socials[0][0]}:**  {socials[0][1]}\n'
-        msg += ('**Dex:** '+fullattr[2]).ljust(just)+f' -- **{socials[1][0]}:**  {socials[1][1]}\n'
-        msg += ('**Vit:** '+fullattr[3]).ljust(just)+f' -- **{socials[2][0]}:**  {socials[2][1]}\n'
-        msg += ('**Spe:** '+fullattr[4]).ljust(just)+f' -- **{socials[3][0]}:**  {socials[3][1]}\n'
-        msg += ('**Ins:** '+fullattr[5]).ljust(just)+f' -- **{socials[4][0]}:**  {socials[4][1]}\n'
+        msg += ('**Str:** '+fullattr[1]+totalNums[1]).ljust(just)+f' -- **{socials[0][0]}:**  {socials[0][1]}\n'
+        msg += ('**Dex:** '+fullattr[2]+totalNums[2]).ljust(just)+f' -- **{socials[1][0]}:**  {socials[1][1]}\n'
+        msg += ('**Vit:** '+fullattr[3]+totalNums[3]).ljust(just)+f' -- **{socials[2][0]}:**  {socials[2][1]}\n'
+        msg += ('**Spe:** '+fullattr[4]+totalNums[4]).ljust(just)+f' -- **{socials[3][0]}:**  {socials[3][1]}\n'
+        msg += ('**Ins:** '+fullattr[5]+totalNums[5]).ljust(just)+f' -- **{socials[4][0]}:**  {socials[4][1]}\n'
 
         msg+= '\n'
 
