@@ -1524,8 +1524,8 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
 
         #cut the movelist down to this number
         newMoves = []
-        movelist = list(movelist.values())
-        movelist = [item for sublist in movelist for item in sublist]
+        #convert to a set and back to remove duplicates
+        movelist = list(set([item for sublist in list(movelist.values()) for item in set(sublist)]))
         for x in range(attributes[5] + 2):
             if len(movelist) == 0:
                 break
