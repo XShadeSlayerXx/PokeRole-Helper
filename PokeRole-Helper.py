@@ -29,7 +29,7 @@ cmd_prefix = ('./' if dev_env else '%')
 bot = commands.Bot(command_prefix = cmd_prefix)
 
 #note that 'custom help' needs to load last
-cogs = ['mapCog', 'diceCog', 'miscCommands', 'custom_help']
+cogs = ['mapCog', 'diceCog', 'miscCommands', 'custom_help', 'questCog']
 
 #TODO: compress more of the data in working memory
 #   ++PokeLearns ranks complete
@@ -68,6 +68,7 @@ pkmnLists = dict()
 
 pokecap = re.compile(r'(^|[-( ])\s*([a-zA-Z])')
 pokeweight = re.compile(r'(\d+)%?,? ([\-\'\.():,\sA-z]+)(?= \d|$)')
+alpha_str = re.compile(r'[^\w_, \-]+')
 
 #...but need access privileges
 #{user : [listName list] }
@@ -85,7 +86,7 @@ github_files = [
     ('PokeRoleItems.csv', 'UTF-8'),
     ('pokeMoveSorted.csv', 'UTF-8'),
     ('PokeLearnMovesFull.csv', 'UTF-8'),
-    ('PokeroleStats.csv', 'WINDOWS-1252')
+    ('PokeroleStats.csv', 'WINDOWS-1252'),
 ]
 
 # save and load functions
@@ -320,18 +321,6 @@ async def restart(ctx):
     await bot.close()
 
 @commands.is_owner()
-@bot.command(name = 'reloadItems', hidden = True)
-async def reload(ctx, what):
-    global pkmnItems
-    # try:
-        #will this work correctly? maybe change to global()?
-        #await globals()['instantiate'+what]()
-    await instantiateItemList()
-    await ctx.message.add_reaction('\N{CYCLONE}')
-    # except:
-    #     await ctx.send('ItemList, PkmnStatList, PkmnMoveList, PkmnLearnsList')
-
-@commands.is_owner()
 @bot.command(name = 'guilds', hidden = True)
 async def guildcheck(ctx):
     # once the bot hits 75 servers I want to verify it
@@ -485,7 +474,11 @@ async def query(ctx, *, msg = ''):
             returned = ', '.join([f'**{x[0]}**: {list(x[1:])}' for x in returned])
         await send_big_msg(ctx, returned)
     except:
-        await ctx.send('Error: Bad or Empty Request')
+        try:
+            surplus = returned
+        except:
+            surplus = ''
+        await ctx.send('Error: Bad or Empty Request\n'+surplus)
 
 #######
 
@@ -958,122 +951,84 @@ async def pkmn_filter_list(ctx, listname : str, rank : ensure_rank,
 
 #######
 
-async def instantiateItemList():
-    with open('PokeRoleItems.csv', 'r', encoding = "UTF-8") as file:
-        reader = csv.reader(file)
-        head = ''
-        for row in reader:
-            if row[1] == '':
-                head = row[0]
-                continue
-            if head in pkmnItems:
-                pkmnItems[head].append(row[0])
-            else:
-                pkmnItems[head] = [row[0]]
-            pkmnItems[row[0]] = row[1:]
-        pkmnItems.pop('Name')
-        pkmnItems.pop('')
-
 async def pkmnitemhelper(item):
-    if len(pkmnItems.keys()) == 0:
-        await instantiateItemList()
-    return pkmnItems[item]
-
-@bot.command(name = 'item', alias = ['items', 'i'], help = 'List an item\'s traits. "%item" for categories.')
-async def pkmn_search_item(ctx, *, itemname = ''):
+    global database
     try:
-        itemname = itemname.title()
-        found = await pkmnitemhelper(itemname)
+        return list(database.query_table('pkmnItems', 'name', item.title())[0])[1:]
     except:
-        pass
+        raise KeyError(f'{item} wasn\'t recognized as an item.')
+
+@bot.command(name = 'item', aliases = ['items', 'i'], help = 'List an item\'s traits. "%item" for categories.')
+async def pkmn_search_item(ctx, *, itemname = ''):
+    global database
     if itemname != '':
+        try:
+            itemname = itemname.title()
+            found = await pkmnitemhelper(itemname)
+        except:
+            await ctx.send(f'{itemname} wasn\'t found in the item list.')
+            return
         try:
             output = f'__{itemname}__\n'
 
-            if found[0] not in pkmnItems:
+            if found[0] != '':
                 order = [0,'Type Bonus', 'Value', 'Strength', 'Dexterity', 'Vitality', 'Special', 'Insight', 'Defense',
                          'Special Defense', 'Evasion', 'Accuracy', 0, 'Heal Amount']
                 #this is an actual item
-                output += f'**Price**: {found[-1] or "???"}\n'
-                if found[13] != '':
-                    output += f'**Pokemon**: {", ".join(found[-3])}\n'
+                output += f'**Price**: {found[-3] or "???"}\n'
+                if found[12] != '':
+                    output += f'**Pokemon**: {alpha_str.sub("", found[12])}\n'
                 for name in range(1,len(order)):
-                    if name == 13:
+                    if name == 12:
                         continue
                     if found[name] != '':
                         output += f'**{order[name]}**: {found[name]}\n'
                 output += f'**Description**: {found[0].capitalize()}'
             else:
                 #this is a category
-                for x in range(len(found)):
-                    output += f' - {found[x]}\n'
+                temp = database.custom_query(f'SELECT name FROM pkmnItems WHERE category="{itemname}"')
+                temp = [x[0] for x in temp]
+                for x in temp:
+                    output += f' - {x}\n'
             await ctx.send(output)
         except:
-            await ctx.send(f'{itemname} wasn\'t found in the item list.')
+            await ctx.send(f'{itemname} wasn\'t found in the item list.\n*Unknown Error Occurred?*')
     else:
-        temp = []
-        for key in list(pkmnItems.keys()):
-            if pkmnItems[key][0] in pkmnItems:
-                temp.append(key)
-        msg = ' - '
+        temp = database.custom_query('SELECT name FROM pkmnItems WHERE description=""')
+        temp = [x[0] for x in temp]
+        msg = ''
         wbool = False
         for x in temp:
-            msg += x + ('\n - ' if wbool else ' / ')
+            msg += ('\n - ' if not wbool else ' / ') + x
             wbool = not wbool
         await ctx.send(msg)
-
-async def instantiateShop():
-    global pkmnShop
-    # unique = {'Common':[], 'Uncommon':[], 'Rare':[], 'Not for Sale':[]}
-    if len(pkmnItems.keys()) == 0:
-        await instantiateItemList()
-    tmpList = dict()
-    for item, data in pkmnItems.items():
-        # cost is the 15rd item, index 14
-        try:
-            cost = data[14]
-            # if cost in unique:
-            #     unique[cost].append(item)
-            #     continue
-            cost = int(cost)
-        except:
-            continue
-        if cost not in tmpList:
-            tmpList[cost] = [item]
-        else:
-            tmpList[cost].append(item)
-    keyOrder = sorted(list(tmpList.keys()))
-    for price in keyOrder:
-        pkmnShop[price] = tmpList[price]
-    # pkmnShop.update(unique)
 
 @bot.command(name='shop', help='Lists all recommended shop items grouped by price.\n'
                                '"%shop (price) (showHigherPriced)" to limit the output by price.\n'
                                'e.g. "%shop 750 True" to list all items priced higher than 750.')
 async def shop_items(ctx, pricePoint : int = None, showHigherPriced : bool = False):
-    if not pkmnShop:
-        await instantiateShop()
-    output = ''
-    if pricePoint:
-        place = bisect(list(pkmnShop), pricePoint)
-    else:
-        place = len(list(pkmnShop))
+    global database
+    low = 5
+    high = 10000
     if showHigherPriced:
-        # need to flip the index in this case, and +1 to make it inclusive
-        place = len(pkmnShop) - place + 1
-        tmpDict = ODict()
-        for x in reversed(pkmnShop):
-            tmpDict[x] = pkmnShop[x]
+        low = pricePoint or low
     else:
-        tmpDict = pkmnShop.copy()
-    # array is in the right order for 'showHigherPriced' either way
+        high = pricePoint or high
+    if low < 5:
+        low = 5
+    full_list = "SELECT name, CAST(suggested_price as integer) FROM pkmnItems WHERE " \
+                f"CAST(suggested_price as integer) BETWEEN {low} AND {high} " \
+                "ORDER BY CAST(suggested_price as integer)"
+    tmp = database.custom_query(full_list)
+    output = ''
+    tmpDict = ODict()
+    for name, val in tmp:
+        if val in tmpDict:
+            tmpDict[val].append(name)
+        else:
+            tmpDict[val] = [name]
     for price, values in tmpDict.items():
-        if place == 0:
-            break
         output += f'**{price}¥**\n' + ' -- '.join(values) + '\n'
-        place -= 1
-    if output == '':
-        output = f'Price range is {sorted(list(pkmnShop.keys())[::len(pkmnShop)-1])}'
     await send_big_msg(ctx, output)
 
 #######

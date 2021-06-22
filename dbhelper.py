@@ -46,6 +46,7 @@ class Database:
         self.instantiatePkmnMoveList()
         self.instantiatePkmnAbilityList()
         self.instantiateEvoList()
+        self.instantiatePkmnItemList()
 
     def close_connection(self):
         self.connection.close()
@@ -215,5 +216,42 @@ class Database:
             next(reader)  #skip the header
             for row in reader:
                 tmp = ','.join('?' * len(row))
+                cursor.execute(f'INSERT OR REPLACE INTO {tblnm} values ({tmp})', row)
+        self.connection.commit()
+
+    def instantiatePkmnItemList(self):
+        cursor = self.connection.cursor()
+        tblnm = 'pkmnItems'
+        vals = """
+        name text PRIMARY KEY,
+        description text,
+        type_bonus text,
+        value text,
+        strength text,
+        dexterity text,
+        vitality text,
+        special text,
+        insight text,
+        defense text,
+        special_defense text,
+        evasion text,
+        accuracy text,
+        specific_pokemon text,
+        heal_amount text,
+        suggested_price text,
+        pmd_price text,
+        category text
+        """
+
+        self.create_table(tblnm, vals)
+        with open('PokeRoleItems.csv', 'r', newline = '', encoding = "UTF-8") as infile:
+            reader = csv.reader(infile)
+            next(reader)  #skip the header
+            category = False
+            for row in reader:
+                tmp = ','.join('?' * (len(row)+1))
+                if row[1] == '':
+                    category = row[0]
+                row.append(('' if row[1] == '' else category))
                 cursor.execute(f'INSERT OR REPLACE INTO {tblnm} values ({tmp})', row)
         self.connection.commit()
