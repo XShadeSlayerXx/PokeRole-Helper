@@ -29,7 +29,7 @@ cmd_prefix = ('./' if dev_env else '%')
 bot = commands.Bot(command_prefix = cmd_prefix)
 
 #note that 'custom help' needs to load last
-cogs = ['mapCog', 'diceCog', 'miscCommands', 'custom_help', 'questCog']
+cogs = ['mapCog', 'diceCog', 'miscCommands', 'custom_help']#, 'questCog']
 
 #TODO: compress more of the data in working memory
 #   ++PokeLearns ranks complete
@@ -1817,5 +1817,7 @@ if not dev_env:
 
 for cog in cogs:
     bot.load_extension(cog)
+
+bot.expand_list = pokesFromList
 
 bot.run(token)
