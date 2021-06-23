@@ -45,9 +45,7 @@ pokeStatus = dict()
 
 #pokemon moves
 pkmnMoves = dict()
-pkmnItems = dict()
 pkmnHabitats = dict()
-pkmnShop = ODict()
 pkmnWeather = dict()
 database = None
 restartError = True
