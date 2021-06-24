@@ -29,7 +29,6 @@ def get_generation(number : str) -> int:
 class Database:
     def __init__(self):
         self.connection = create_connection(db_file)
-        self.instantiatePkmnStatList()
 
     def reloadLists(self):
         try:
