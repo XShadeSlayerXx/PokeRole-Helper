@@ -73,7 +73,9 @@ class Help(commands.Cog):
                 'Reference' : sorted(['ability', 'move', 'pokelearns', 'stats', 'shop', 'item', 'weather', 'status']),
                 'Lists' : sorted(['filter', 'list', 'lists', 'listsub']),
                 'Encounters' : sorted(['encounter', 'wEncounter', 'random']),
-                'Misc': sorted(['docs', 'donate', 'feedback', 'settings', 'tracker', 'roll', 'dungeon', 'habitat'])
+                'Misc': sorted([
+                    'docs', 'donate', 'feedback', 'settings', 'tracker', 'roll', 'dungeon', 'habitat', 'quest'
+                ])
             }
             output = '```\n'
 

@@ -156,7 +156,7 @@ class Quests(commands.Cog):
 
     @commands.command(
         name = 'quest',
-        aliases = ['q'],
+        aliases = ['q', 'quests'],
         help = 'Generate a Mystery Dungeon quest.\n'
                'Format: `%quest (numQuests) rank (price_lower_bound) (price_higher bound) (pokemon list)`\n'
                'Example: Generate 2 quests at beginner rank, with pmd items priced between 30 and 100 as rewards,\n'

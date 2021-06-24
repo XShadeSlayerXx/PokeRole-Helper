@@ -29,7 +29,7 @@ cmd_prefix = ('./' if dev_env else '%')
 bot = commands.Bot(command_prefix = cmd_prefix)
 
 #note that 'custom help' needs to load last
-cogs = ['mapCog', 'diceCog', 'miscCommands', 'custom_help', 'questCog']
+cogs = ['mapCog', 'diceCog', 'miscCommands', 'questCog', 'custom_help']
 
 #TODO: compress more of the data in working memory
 #   ++PokeLearns ranks complete
