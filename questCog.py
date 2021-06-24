@@ -1,6 +1,6 @@
 from discord.ext import commands
 from dbhelper import Database
-import typing, random
+import typing, random, math
 import pmd_quest_text as pmd
 
 import random
@@ -76,18 +76,23 @@ class Quests(commands.Cog):
         item, price = self.get_item(price_lower, price_upper)
         output = item
         rand = random.random()
+        vary = random.random() + .5
         if price > price_lower:
-            if rand > .5:
+            if rand > .5 or price == 0:
                 output += ' + ???'
             else:
-                tmp = self.get_item(0, price)
-                if tmp[0] == '???':
-                    output += f' + {price//10}'
+                tmp, tmp_price = self.get_item(0, price)
+                if tmp == '???':
+                    output += f' + {math.ceil(tmp_price/10) * vary} PoKé'
                 else:
-                    output += f' + {tmp[0]}'
+                    output += f' + {tmp}'
         elif rand > .5:
-            output += f' + {price//5}'
-        return item
+            tmp = math.ceil(price/3 * vary)
+            if tmp > 0:
+                output += f' + {tmp} PoKé'
+            else:
+                output += f' + ???'
+        return output
 
     def quest_output(self, client, difficulty, price_range) -> str:
         # get a random poke to deliver to/help/rescue/arrest/etc
