@@ -29,7 +29,7 @@ cmd_prefix = ('./' if dev_env else '%')
 bot = commands.Bot(command_prefix = cmd_prefix)
 
 #note that 'custom help' needs to load last
-cogs = ['mapCog', 'diceCog', 'miscCommands', 'custom_help']#, 'questCog']
+cogs = ['mapCog', 'diceCog', 'miscCommands', 'custom_help', 'questCog']
 
 #TODO: compress more of the data in working memory
 #   ++PokeLearns ranks complete
@@ -730,7 +730,12 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
                         #sometimes an empty string gets through
                         pokelist.remove('')
                         continue
-                    if not whichList and x not in pkmnItems:
+                    try:
+                        database.query_table('pkmnItems', 'name', x)
+                        tmp = True
+                    except:
+                        tmp = False
+                    if not whichList and not tmp:
                         bad.append(x)
                         if x in pkmnLists:
                             tempmsg+=f'{x} : '+', '.join(pkmnLists[x])+'\n'
@@ -1218,7 +1223,7 @@ async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
     #deep[:] copy of coroutine, otherwise it kindly creates a shallow copy which breaks everything
     try:
         found = (await pkmnstatshelper(pokemon))[:]
-    except:
+    except Exception as e:
         pokemon = lookup_poke(pokemon)
         found = (await pkmnstatshelper(pokemon))[:]
     for x in range(4, 14, 2):
@@ -1817,5 +1822,7 @@ for cog in cogs:
     bot.load_extension(cog)
 
 bot.expand_list = pokesFromList
+bot.big_msg = send_big_msg
+bot.dictionary = lookup_poke
 
 bot.run(token)
