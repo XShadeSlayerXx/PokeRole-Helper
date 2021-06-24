@@ -1223,7 +1223,7 @@ async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
     #deep[:] copy of coroutine, otherwise it kindly creates a shallow copy which breaks everything
     try:
         found = (await pkmnstatshelper(pokemon))[:]
-    except Exception as e:
+    except:
         pokemon = lookup_poke(pokemon)
         found = (await pkmnstatshelper(pokemon))[:]
     for x in range(4, 14, 2):

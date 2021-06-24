@@ -29,6 +29,7 @@ def get_generation(number : str) -> int:
 class Database:
     def __init__(self):
         self.connection = create_connection(db_file)
+        self.instantiatePkmnStatList()
 
     def reloadLists(self):
         try:
@@ -86,7 +87,7 @@ class Database:
 
     def query_table(self, tablename, qtype, val):
         cursor = self.connection.cursor()
-        cursor.execute(f"SELECT * FROM {tablename} WHERE {qtype}='{val}'")
+        cursor.execute(f'SELECT * FROM {tablename} WHERE {qtype}="{val}"')
         rows = cursor.fetchall()
 
         cursor.close()
@@ -152,8 +153,10 @@ class Database:
             for row in reader:
                 tmp = ','.join('?' * (len(row) + 1)) #add 1 for generation
                 num = row[0][1:]
+                #frick farfetch'd
+                name = row[1].replace("'", "\'")
                 gen = get_generation(num)
-                newrow = [num] + row[1:] + [gen]
+                newrow = [num] + [name] + row[2:] + [gen]
                 cursor.execute(f'INSERT OR REPLACE INTO {tblnm} values ({tmp})', newrow)
         cursor.close()
         self.connection.commit()
@@ -172,7 +175,8 @@ class Database:
                 value[1::2] = [ranks[x] for x in value[1::2]]
                 value += [None] * (56 - len(value))  #pad value to number of moves maximum
                 num = row[0][:3]
-                nam = row[0][4:]
+                #frick farfetch'd
+                nam = row[0][4:].replace("'", "\'")
                 tmp = ','.join('?' * 58)
                 newrow = [num, nam] + value
                 cursor.execute(f'INSERT OR REPLACE INTO {tblnm} values ({tmp})', newrow)
