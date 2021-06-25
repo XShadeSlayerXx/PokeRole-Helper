@@ -57,6 +57,11 @@ natures = ['Hardy (9)','Lonely (5)','Brave (9)','Adamant (4)','Naughty (6)',
            'Naive (7)', 'Modest (10)', 'Mild (8)', 'Quiet (5)', 'Bashful (6)',
            'Rash (6)', 'Calm (8)', 'Gentle (10)', 'Sassy (7)', 'Careful (5)', 'Quirky (9)']
 
+bot.socials = [('Tough', 1), ('Cool', 1), ('Beauty', 1), ('Clever', 1), ('Cute', 1)]
+bot.skills = [('Brawl', 0), ('Channel', 0), ('Clash', 0), ('Evasion', 0),
+          ('Alert', 0), ('Athletic', 0), ('Nature', 0), ('Stealth', 0),
+          ('Allure', 0), ('Etiquette', 0), ('Intimidate', 0), ('Perform', 0)]
+
 #lists are global...
 #   pokemon list:
 #{listName : [list] }
@@ -1389,11 +1394,9 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
         #initialize base stats
 
         #no limits on socials (except max of 5)
-        socials = [('Tough',1), ('Cool',1), ('Beauty',1), ('Clever',1), ('Cute',1)]
+        socials = bot.socials[:]
         #limited by rank
-        skills = [('Brawl',0),('Channel',0),('Clash',0),('Evasion',0),
-                  ('Alert',0),('Athletic',0),('Nature',0),('Stealth',0),
-                  ('Allure',0),('Etiquette',0),('Intimidate',0),('Perform',0)]
+        skills = bot.skills[:]
 
         #get a poke from the list
         nextpoke = random.choice(pokelist)
