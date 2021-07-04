@@ -660,7 +660,10 @@ async def pkmn_list_override(ctx, listname, who : discord.Member):
 @bot.command(name = 'lists', help = 'Displays all the lists people have made in the format:\n- list1 (#) / list2 (#)\n')
 async def show_lists(ctx):
     msg = ''
+    mymsg = ''
     up = True
+    myUp = True
+    permissibleLists = pkmnListsPriv[ctx.author.id]
     for x, y in pkmnLists.items():
         howMany = sum([len(z)-1 for z in y[1:]])
         msg += ('\n - ' if up else ' / ') + f'{x} ({str(howMany)}{" "+y[0] if y[0] == "i" else ""})'
@@ -696,7 +699,7 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
         pass
     #make sure the author is registered, regardless of what they do
     if ctx.author.id not in pkmnListsPriv:
-        pkmnListsPriv[ctx.author.id] = []
+        pkmnListsPriv[ctx.author.id] = set()
     #is this a task that looks at the pokelist parameter?
     if which not in ['access', 'show']:
         #split up the pokelist argument into separate bits... 'bulbasaur' --> [(100, 'bulbasaur')]
@@ -771,9 +774,10 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
         else:
             pkmnLists[listname].append('p')
         if ctx.author.id in pkmnListsPriv:
-            pkmnListsPriv[ctx.author.id].append(listname)
+            pkmnListsPriv[ctx.author.id] = set(pkmnListsPriv[ctx.author.id])
+            pkmnListsPriv[ctx.author.id].add(listname)
         else:
-            pkmnListsPriv[ctx.author.id] = [listname]
+            pkmnListsPriv[ctx.author.id] = set([listname])
     if which == 'show':
         if listname in pkmnLists and len(pkmnLists[listname]) > 0:
             #is it an item?
@@ -817,9 +821,9 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
                 await ctx.send(f'Access removed from {bot.get_user(temp)}')
             else:
                 try:
-                    pkmnListsPriv[temp].append(listname)
+                    pkmnListsPriv[temp].add(listname)
                 except:
-                    pkmnListsPriv[temp] = [listname]
+                    pkmnListsPriv[temp] = set([listname])
                 await ctx.send(f'Access given to {bot.get_user(temp)}')
     elif listname not in pkmnListsPriv[ctx.author.id]:
         users = [str(bot.get_user(x)) for x in pkmnListsPriv if listname in pkmnListsPriv[x]]
@@ -828,7 +832,7 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
                            f'edit access to this. Please ask {"one of" if len(users)>1 else ""} '
                            f'them to "%list {listname} access @mention" if you want access')
         else:
-            pkmnListsPriv[ctx.author.id].append(listname)
+            pkmnListsPriv[ctx.author.id].add(listname)
             await ctx.send(f'No users linked to this list. You now have permission, please try again.')
     # try:
     #     if isItem and pkmnLists[listname][0] != 'i':
