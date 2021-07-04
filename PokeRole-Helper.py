@@ -897,8 +897,27 @@ def pkmn_random_driver(listname : str, giveList = False) -> str:
 @bot.command(name = 'random', aliases = ['rl'],
              help = 'Get a random item/poke from a list.\n'
                     '%random <list> [howMany]')
-async def pkmn_randomitem_driver(ctx, listname : str, howMany : int = 1):
-    msg = [str(x+1)+". "+pkmn_random_driver(listname) for x in range(howMany)]
+async def pkmn_randomitem_driver(ctx, *, listname : str):
+    where = listname.rfind(' ')
+    try:
+        if where == -1:
+            howMany = 1
+        else:
+            howMany = int(listname[where+1:])
+            listname = listname[:where]
+    except:
+        howMany = 1
+    if listname in pkmnLists:
+        msg = [str(x+1)+". "+pkmn_random_driver(listname) for x in range(howMany)]
+    else:
+        try:
+            query = f'SELECT name FROM pkmnItems WHERE category="{listname.title()}" ORDER BY RANDOM() LIMIT {howMany}'
+            result = database.custom_query(query)
+            if not result:
+                raise Exception()
+            msg = [f'{str(x+1)}. {result[x][0]}' for x in range(len(result))]
+        except:
+            msg = ['There was not a list with this name.\n']
     await ctx.send('\n'.join(msg))
 
 #######
