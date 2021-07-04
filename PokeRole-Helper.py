@@ -666,8 +666,14 @@ async def show_lists(ctx):
     permissibleLists = pkmnListsPriv[ctx.author.id]
     for x, y in pkmnLists.items():
         howMany = sum([len(z)-1 for z in y[1:]])
-        msg += ('\n - ' if up else ' / ') + f'{x} ({str(howMany)}{" "+y[0] if y[0] == "i" else ""})'
-        up = not up
+        if x in permissibleLists:
+            mymsg += ('\n - ' if myUp else ' / ') + f'{x} ({str(howMany)}{" "+y[0] if y[0] == "i" else ""})'
+            myUp = not myUp
+        else:
+            msg += ('\n - ' if up else ' / ') + f'{x} ({str(howMany)}{" "+y[0] if y[0] == "i" else ""})'
+            up = not up
+    if mymsg != '' and msg == '':
+        msg = mymsg + '\n-----------\n' + msg
     await send_big_msg(ctx, msg)
 
 @bot.command(name = 'list', aliases=['l'], help = '%list <listname> (add/show/del) poke1, poke2, etc\n'
