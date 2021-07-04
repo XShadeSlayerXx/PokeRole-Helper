@@ -221,18 +221,17 @@ class Quests(commands.Cog):
                'where the client is possibly a Pikachu, Dwebble, or in the custom list called myPokemon. Do not include garmets.\n'
                '`%quest 2 False beginner 30 100 Pikachu, Dwebble, myPokemon`\n'
                'Please note that any part left blank will be randomized within reason. This is a work in progress,\n'
-               'so rewards are currently limited to a small pool. Garmets will increase a random social/skill/attribute.\n'
-               'The DM should feel free to use an equivalent tier from the PMD 1.0 book.',
+               'so rewards are currently limited to a small pool.',
         brief = 'Generate a Mystery Dungeon quest.'
     )
     # example: %quest (numQuests) rank (price) (price2) (pkmnList)
     async def generate_quest(self, ctx,
                              numQuests : typing.Optional[int] = 1,
-                             include_garmets : typing.Optional[bool] = False,
                              rank : ensure_rank = '',
                              price : typing.Optional[int] = -1,
                              price_upper : typing.Optional[int] = -1,
                              *, mc : (lambda x : x.split(', ')) = ''):
+        include_garmets = False
         msg = self.quest_recursor(ctx = ctx, numQuests = numQuests, include_garmets = include_garmets, rank = rank,
                                   price = price, price_upper = price_upper, mc = mc)
         await self.bot.big_msg(ctx, msg)
