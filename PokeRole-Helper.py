@@ -474,14 +474,14 @@ async def query(ctx, *, msg = ''):
         if len(returned[0]) == 1:
             returned = ', '.join([x[0] for x in returned])
         else:
-            returned = ', '.join([f'**{x[0]}**: {list(x[1:])}' for x in returned])
+            returned = ', '.join([f'**{str(x[0])}**: {list(x[1:])}' for x in returned])
         await send_big_msg(ctx, returned)
     except:
         try:
             surplus = returned
         except:
             surplus = ''
-        await ctx.send('Error: Bad or Empty Request\n'+surplus)
+        await ctx.send('Error: Bad or Empty Request\n'+str(surplus))
 
 #######
 
