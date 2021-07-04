@@ -672,7 +672,7 @@ async def show_lists(ctx):
         else:
             msg += ('\n - ' if up else ' / ') + f'{x} ({str(howMany)}{" "+y[0] if y[0] == "i" else ""})'
             up = not up
-    if mymsg != '' and msg == '':
+    if mymsg != '':
         msg = mymsg + '\n-----------\n' + msg
     await send_big_msg(ctx, msg)
 
