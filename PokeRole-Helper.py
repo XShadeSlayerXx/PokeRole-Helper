@@ -1855,6 +1855,8 @@ async def on_raw_reaction_add(payload):
         return
     channel = await bot.fetch_channel(payload.channel_id)
     message = await channel.fetch_message(payload.message_id)
+    if len(message.reactions) != 1 or message.reactions[0].count != 1:
+        return
     if message.author != bot.user or message.content[0] != '#':
         return
     msg = message.content
