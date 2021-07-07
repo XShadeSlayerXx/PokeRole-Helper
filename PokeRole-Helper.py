@@ -1251,7 +1251,8 @@ async def pkmnstatshelper(poke : str):
     tmp = [f'#{tmp[0]}'] + tmp[2:]
     return tmp
 
-@bot.command(name = 'stats', aliases = ['s', 'info'], help = 'List a pokemon\'s stats')
+@bot.command(name = 'stats', aliases = ['s', 'info'], help = 'List a pokemon\'s stats. '
+                                                             'Emote on the message to expand the abilities!')
 async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
     #try:
     #deep[:] copy of coroutine, otherwise it kindly creates a shallow copy which breaks everything
