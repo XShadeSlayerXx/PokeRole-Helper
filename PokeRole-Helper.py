@@ -831,6 +831,9 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
                 except:
                     pkmnListsPriv[temp] = set([listname])
                 await ctx.send(f'Access given to {bot.get_user(temp)}')
+        else:
+            await ctx.send(f'The format for this command is `%list <listname> (add/del/show/access) poke1, poke2, etc`\n'
+                           f'The part for (add/del/show/access) wasn\'t recognized.')
     elif listname not in pkmnListsPriv[ctx.author.id]:
         users = [str(bot.get_user(x)) for x in pkmnListsPriv if listname in pkmnListsPriv[x]]
         if len(users) > 0:
