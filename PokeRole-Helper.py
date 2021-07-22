@@ -1269,7 +1269,7 @@ async def metronome(ctx, *, parameters : str = ''):
         custom_query += f' WHERE power BETWEEN {lower} and {higher}'
     elif parameters.isdigit():
         custom_query += f' WHERE power={parameters}'
-    elif parameters.title() == 'Support':
+    elif parameters.upper() == 'SUPPORT':
         custom_query += f' WHERE pwrtype="{parameters.upper()}"'
     else:
         custom_query += f' WHERE type="{parameters.lower()}"'
@@ -1277,7 +1277,12 @@ async def metronome(ctx, *, parameters : str = ''):
     custom_query += ' ORDER BY RANDOM() LIMIT 1'
     result = database.custom_query(custom_query)
 
-    await pkmn_search_move(ctx = ctx, movename = result[0][0])
+    try:
+        await pkmn_search_move(ctx = ctx, movename = result[0][0])
+    except:
+        await ctx.send(f'`{parameters}` was not recognized as a valid type (grass, water, etc) or power level (1, 2, 3 < 5, etc).\n'
+                       f'*(This message self-destructs in 15 seconds)*',
+                       delete_after = 15)
 
 #####
 
