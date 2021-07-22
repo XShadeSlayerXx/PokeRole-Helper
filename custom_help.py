@@ -3,6 +3,8 @@ from discord.ext import commands
 cmd_list = {}
 spacing = 12
 
+# todo: allow %help to recognize command aliases
+
 class Help(commands.Cog):
 
     def __init__(self, bot):
@@ -74,7 +76,8 @@ class Help(commands.Cog):
                 'Lists' : sorted(['filter', 'list', 'lists', 'listsub']),
                 'Encounters' : sorted(['encounter', 'wEncounter', 'random']),
                 'Misc': sorted([
-                    'docs', 'donate', 'feedback', 'settings', 'tracker', 'roll', 'dungeon', 'habitat', 'quest'
+                    'docs', 'donate', 'feedback', 'settings', 'tracker', 'roll',
+                    'dungeon', 'habitat', 'quest', 'metronome'
                 ])
             }
             output = '```\n'

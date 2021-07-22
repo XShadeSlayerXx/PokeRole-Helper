@@ -1241,6 +1241,44 @@ async def pkmn_search_move(ctx, *, movename : pkmn_cap):
     except:
         await ctx.send(f'{movename} wasn\'t found in the move list.')
 
+@bot.command(name = 'metronome',
+             aliases = ['mtr'],
+             help = """
+             Simulates a random move. Comes with options to limit the scope.
+             
+             %metronome
+                Randomly select any move.
+             
+             %metronome 1
+                Select any move with power 1.
+             
+             %metronome 2<5
+                Any move between power 2 and 5 (inclusive)
+             
+             %metronome dragon
+                Any dragon type move. `support` instead of a type would give a random support move.""")
+async def metronome(ctx, *, parameters : str = ''):
+    parameters = parameters.replace(' ', '')
+    custom_query = 'SELECT name FROM pkmnMoves'
+    if parameters == '':
+        pass
+    elif '<' in parameters:
+        tmp = parameters.split('<')
+        lower = tmp[0]
+        higher = tmp[1]
+        custom_query += f' WHERE power BETWEEN {lower} and {higher}'
+    elif parameters.isdigit():
+        custom_query += f' WHERE power={parameters}'
+    elif parameters.title() == 'Support':
+        custom_query += f' WHERE pwrtype="{parameters.upper()}"'
+    else:
+        custom_query += f' WHERE type="{parameters.lower()}"'
+
+    custom_query += ' ORDER BY RANDOM() LIMIT 1'
+    result = database.custom_query(custom_query)
+
+    await pkmn_search_move(ctx = ctx, movename = result[0][0])
+
 #####
 
 async def pkmnstatshelper(poke : str):
