@@ -994,16 +994,15 @@ async def pkmn_filter_list(ctx, listname : str, rank : ensure_rank,
 async def pkmnitemhelper(item):
     global database
     try:
-        return list(database.query_table('pkmnItems', 'name', item.title())[0])[1:]
+        return list(database.query_table('pkmnItems', 'name', item)[0])[1:]
     except:
         raise KeyError(f'{item} wasn\'t recognized as an item.')
 
 @bot.command(name = 'item', aliases = ['items', 'i'], help = 'List an item\'s traits. "%item" for categories.')
-async def pkmn_search_item(ctx, *, itemname = ''):
+async def pkmn_search_item(ctx, *, itemname : pkmn_cap = ''):
     global database
     if itemname != '':
         try:
-            itemname = itemname.title()
             found = await pkmnitemhelper(itemname)
         except:
             await ctx.send(f'{itemname} wasn\'t found in the item list.')
@@ -1199,14 +1198,13 @@ async def pkmn_filter_habitat(ctx, listname : str, rank : typing.Optional[ensure
 async def pkmnabilitieshelper(ability):
     global database
     try:
-        return list(database.query_table('pkmnAbilities', 'name', ability.title())[0])[1:]
+        return list(database.query_table('pkmnAbilities', 'name', ability)[0])[1:]
     except:
         raise KeyError(f'{ability} wasn\'t recognized as an ability.')
 
 @bot.command(name = 'ability', aliases = ['a'], help = 'List a pokemon ability\'s traits')
-async def pkmn_search_ability(ctx, *, abilityname : str):
+async def pkmn_search_ability(ctx, *, abilityname : pkmn_cap):
     try:
-        abilityname = abilityname.title()
         found = await pkmnabilitieshelper(abilityname)
 
         output = f'**{abilityname}:** {found[0]}'
@@ -1220,17 +1218,17 @@ async def pkmn_search_ability(ctx, *, abilityname : str):
 async def pkmnmovehelper(move):
     global database
     try:
-        return list(database.query_table('pkmnMoves', 'name', move.title())[0])[1:]
+        return list(database.query_table('pkmnMoves', 'name', move)[0])[1:]
     except:
-        move = move.title().replace(' ', '-')
+        move = move.replace(' ', '-')
         return list(database.query_table('pkmnMoves', 'name', move)[0])[1:]
 
 @bot.command(name = 'move', aliases = ['m'], help = 'List a pokemon move traits')
-async def pkmn_search_move(ctx, *, movename : str):
+async def pkmn_search_move(ctx, *, movename : pkmn_cap):
     try:
-        found = await pkmnmovehelper(movename.title())
+        found = await pkmnmovehelper(movename)
 
-        output = f'__{movename.title()}__\n'
+        output = f'__{movename}__\n'
         output += f'**Type**: {found[0].capitalize()}'
         output += f' -- **{found[1].capitalize()}**\n'
         output += f'**Target**: {found[7]}'
