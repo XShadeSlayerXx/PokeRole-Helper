@@ -437,12 +437,16 @@ async def reloadCogs(ctx):
 @bot.command(name = 'updateLists', hidden = True)
 async def reloadLists(ctx):
     global database
+    for cog in cogs:
+        bot.unload_extension(cog)
     for file in github_files:
         r = requests.get(github_base+file[0])
         with open(file[0], 'w', encoding = file[1]) as f:
             r = r.text.replace('\r\n', '\n')
             f.write(r)
     database.reloadLists()
+    for cog in cogs:
+        bot.load_extension(cog)
     await ctx.message.add_reaction('\N{CYCLONE}')
 
 @commands.is_owner()
@@ -1229,6 +1233,7 @@ async def pkmn_search_move(ctx, *, movename : pkmn_cap):
         found = await pkmnmovehelper(movename)
 
         output = f'__{movename}__\n'
+        output += f'*{found[9]}*\n'
         output += f'**Type**: {found[0].capitalize()}'
         output += f' -- **{found[1].capitalize()}**\n'
         output += f'**Target**: {found[7]}'
@@ -1686,6 +1691,7 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
                     if x.title() not in naturalMoves:
                         msg += '*'
                     msg += f'__{x.title()}__\n'
+                    msg += f'*{found[9]}*\n'
                     msg += f'**Type**: {found[0].capitalize()}'
                     msg += f' -- **{found[1].capitalize()}**\n'
                     msg += f'**Target**: {found[7]}'

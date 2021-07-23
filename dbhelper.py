@@ -195,7 +195,8 @@ class Database:
         acc1 text,
         acc2 text,
         foe text NOT NULL,
-        effect text
+        effect text,
+        description text
         """
         self.create_table(tblnm, vals)
         with open('pokeMoveSorted.csv', 'r', newline = '', encoding = "UTF-8") as infile:

@@ -44,6 +44,9 @@ class Quests(commands.Cog):
         self.special_attributes = ['Lucky', 'Magic']
         self.fabric_types = ['Mouth Piece', 'Band', 'Scarf', 'Ribbon', 'Belt', 'Necklace', 'Hat']
 
+    def cog_unload(self):
+        self.db.connection.close()
+
     # get random poke from the given rank
     # TODO: should this include gen 8+?
     def get_poke(self, rank):
@@ -235,6 +238,10 @@ class Quests(commands.Cog):
         msg = self.quest_recursor(ctx = ctx, numQuests = numQuests, include_garmets = include_garmets, rank = rank,
                                   price = price, price_upper = price_upper, mc = mc)
         await self.bot.big_msg(ctx, msg)
+
+    @generate_quest.error
+    async def q_error(self, ctx, error):
+        await ctx.send('Don\'t forget to state the quest rank! (Starter, Beginner, Amateur, Ace, Pro)')
 
 
 def setup(bot):
