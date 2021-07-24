@@ -1231,7 +1231,8 @@ async def pkmn_filter_habitat(ctx, listname : str, rank : typing.Optional[ensure
         await ctx.send(f'All these pokemon are already in the list \'{listname}\'!')
 
 @bot.command(name = 'viewhabitat', aliases = ['vh'],
-             help = '')
+             help = 'Expand a habitat into a viewable format.\n'
+                    'e.g. %vh ocean biomes')
 async def view_habitat(ctx, *, habitatlist : sep_biomes):
     await ctx.send((await pkmnRankDisplay(f'__tmp__', habitatlist)))
 
@@ -1954,6 +1955,12 @@ async def donate(ctx):
 async def info_error(ctx, error):
     if 'IndexError' in str(error):
         await ctx.send('Don\'t forget the percentages.\nFor example "40% bulbasaur, charmander 60% squirtle"')
+
+@view_habitat.error
+async def vh_error(ctx, info):
+    await ctx.send(f'Make sure you type the biome name exactly (e.g. Ocean Biomes)\n'
+                   f'*(This message self-destructs in 15 seconds)*',
+                   delete_after=15)
 
 if not dev_env:
     @bot.event

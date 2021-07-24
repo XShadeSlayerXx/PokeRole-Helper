@@ -74,10 +74,10 @@ class Help(commands.Cog):
             custom_categories = {
                 'Reference' : sorted(['ability', 'move', 'pokelearns', 'stats', 'shop', 'item', 'weather', 'status']),
                 'Lists' : sorted(['filter', 'list', 'lists', 'listsub']),
-                'Encounters' : sorted(['encounter', 'wEncounter', 'random']),
+                'Encounters' : sorted(['encounter', 'wEncounter', 'random', 'hEncounter']),
                 'Misc': sorted([
                     'docs', 'donate', 'feedback', 'settings', 'tracker', 'roll',
-                    'dungeon', 'habitat', 'quest', 'metronome'
+                    'dungeon', 'habitat', 'quest', 'metronome', 'viewhabitat'
                 ])
             }
             output = '```\n'
