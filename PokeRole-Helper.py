@@ -141,6 +141,7 @@ async def on_ready():
             tempf = open(file[0] + ".pkl", "w")
             tempf.close()
             save_obj(file[1], file[0])
+    await instantiateHabitatsList()
 
     if not dev_env:
         await bot.appinfo.owner.send(f'Connected Successfully')
@@ -151,6 +152,21 @@ async def on_ready():
 
 def sep_weights(arg) -> str:
     return re.findall(pokeweight, arg)
+
+def sep_biomes(arg) -> list:
+    arg = arg.title()
+    biomes = set()
+    last = 0
+    marker = arg.find(', ')
+    while marker != -1:
+        for pkmn in pokesFromBiome(arg[last:marker]):
+            biomes.add(pkmn)
+        last = marker + 2 #ignore the comma and space
+        marker = arg.find(', ', marker+1)
+    #check from marker to end arg[marker:]
+    for pkmn in pokesFromBiome(arg[last:]):
+        biomes.add(pkmn)
+    return list(biomes)
 
 def ensure_rank(arg : str) -> str:
     arg = arg.title()
@@ -299,6 +315,17 @@ def getStatus(statustype : str) -> str:
     elif statustype == 'leech':
         return '🌱'#'\N{SEEDLING}'
     return '🗡️'#'\N{DAGGER}'
+
+def pokesFromBiome(name : str) -> list:
+    biomes = set()
+    if name.endswith('Biomes'):
+        for biome in pkmnHabitats[name]:
+            for pkmn in pkmnHabitats[biome]:
+                biomes.add(pkmn)
+    else:
+        for pkmn in pkmnHabitats[name]:
+            biomes.add(pkmn)
+    return biomes
 
 #######
 #decorators
@@ -1090,7 +1117,13 @@ async def pkmnhabitatshelper(habitat):
 async def pkmnDictRanks(pokemon : list) -> dict:
     level = dict()
     for poke in pokemon:
-        rank = (await pkmnstatshelper(poke))[20]
+        try:
+            rank = (await pkmnstatshelper(poke))[20]
+        except:
+            #its either nidoran or oricorio
+            print(pkmnLists[poke.lower()])
+            tmppoke = random.choice(random.choice(pkmnLists[poke.lower()][1:])[1:])
+            rank = (await pkmnstatshelper(tmppoke))[20]
         if rank not in level:
             level[rank] = []
         level[rank].append(poke)
@@ -1197,6 +1230,11 @@ async def pkmn_filter_habitat(ctx, listname : str, rank : typing.Optional[ensure
     else:
         await ctx.send(f'All these pokemon are already in the list \'{listname}\'!')
 
+@bot.command(name = 'viewhabitat', aliases = ['vh'],
+             help = '')
+async def view_habitat(ctx, *, habitatlist : sep_biomes):
+    await ctx.send((await pkmnRankDisplay(f'__tmp__', habitatlist)))
+
 #######
 
 async def pkmnabilitieshelper(ability):
@@ -1233,7 +1271,8 @@ async def pkmn_search_move(ctx, *, movename : pkmn_cap):
         found = await pkmnmovehelper(movename)
 
         output = f'__{movename}__\n'
-        output += f'*{found[9]}*\n'
+        if found[9] != "":
+            output += f'*{found[9]}*\n'
         output += f'**Type**: {found[0].capitalize()}'
         output += f' -- **{found[1].capitalize()}**\n'
         output += f'**Target**: {found[7]}'
@@ -1691,7 +1730,8 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
                     if x.title() not in naturalMoves:
                         msg += '*'
                     msg += f'__{x.title()}__\n'
-                    msg += f'*{found[9]}*\n'
+                    if found[9] != "":
+                        msg += f'*{found[9]}*\n'
                     msg += f'**Type**: {found[0].capitalize()}'
                     msg += f' -- **{found[1].capitalize()}**\n'
                     msg += f'**Target**: {found[7]}'
@@ -1746,7 +1786,7 @@ async def pkmn_search_encounter(ctx, number : typing.Optional[int] = 1,
 @bot.command(name = 'wEncounter', aliases = ['we'],
              brief = 'Weighted encounter. %help wEncounter',
              help = 'Simple: %we 95% poke1 5% poke2, list\n'
-                    '%encounter [1-6] [1-6] (rank/base/random) <True/False> [num]% list [num]% poke1, poke2, list2 [num]% etc\n'
+                    '%wEncounter [1-6] [1-6] (rank/base/random) <True/False> [num]% list [num]% poke1, poke2, list2 [num]% etc\n'
                     'Same as %encounter, but the lists are weighted. Have a common and rare encounter in'
                     'the same area? This is the command you want.\n'
                     'separatePools: True sticks to the list you draw first. False does not.\n'
@@ -1785,6 +1825,31 @@ async def weighted_pkmn_search(ctx, number : typing.Optional[int] = 1,
     while len(msglist[-1]) > 1995:
         tempmsg = msglist[-1]
         temp = tempmsg.rindex('\n',1500,1995)
+        msglist[-1] = tempmsg[:temp]
+        msglist.append(tempmsg[temp:])
+    for x in msglist:
+        await ctx.send(x)
+
+@bot.command(name = 'hEncounter', aliases = ['he'],
+             brief = 'Habitat encounter. %help hEncounter',
+             help = 'Simple: %he habitat\n'
+                    '%encounter [1-6] [1-6] (rank/base/random) habitat 1, habitat 2, etc\n'
+                    'Same as %encounter, but draws from the %habitat pools\n'
+                    'e.g. %hEncounter 2 beginner tide pools, field biomes\n')
+async def weighted_pkmn_search(ctx, number : typing.Optional[int] = 1,
+                                numberMax : typing.Optional[int] = None,
+                                rank : typing.Optional[ensure_rank] = 'Base',
+                               *, pokelist : sep_biomes):
+    if numberMax is not None:
+        number = random.randint(number, numberMax)
+    msg = []
+    for x in range(number):
+        msg.append(await pkmn_encounter(ctx, 1, rank, pokelist))
+    msg = '\n\n'.join(msg)
+    msglist = [msg]
+    while len(msglist[-1]) > 1995:
+        tempmsg = msglist[-1]
+        temp = tempmsg.rindex('\n', 1500, 1995)
         msglist[-1] = tempmsg[:temp]
         msglist.append(tempmsg[temp:])
     for x in msglist:
