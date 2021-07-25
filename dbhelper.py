@@ -212,7 +212,8 @@ class Database:
         tblnm = 'pkmnAbilities'
         vals = """
         name text PRIMARY KEY,
-        description text NOT NULL
+        effect text NOT NULL,
+        description text
         """
         self.create_table(tblnm, vals)
         with open('PokeRoleAbilities.csv', 'r', newline = '', encoding = "UTF-8") as infile:

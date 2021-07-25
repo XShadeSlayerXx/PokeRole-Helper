@@ -1251,6 +1251,8 @@ async def pkmn_search_ability(ctx, *, abilityname : pkmn_cap):
         found = await pkmnabilitieshelper(abilityname)
 
         output = f'**{abilityname}:** {found[0]}'
+        if found[1] != '':
+            output += f'\n-\n*{found[1]}*'
 
         await ctx.send(output)
     except:
@@ -1705,6 +1707,8 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
 
         if pokebotsettings[guild][5] and abilitytext != '':
             msg += f'\n**{ability}**: {abilitytext[0]}\n'
+            if abilitytext[1] != '':
+                msg += f'-\n*{abilitytext[1]}*\n'
 
         if item != 'None':
             try:
