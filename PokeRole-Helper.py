@@ -1708,7 +1708,7 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
         if pokebotsettings[guild][5] and abilitytext != '':
             msg += f'\n**{ability}**: {abilitytext[0]}\n'
             if abilitytext[1] != '':
-                msg += f'-\n*{abilitytext[1]}*\n'
+                msg += f'*{abilitytext[1]}*\n'
 
         if item != 'None':
             try:
