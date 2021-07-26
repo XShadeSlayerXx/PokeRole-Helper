@@ -1994,11 +1994,14 @@ async def on_raw_reaction_add(payload):
         ability = list(query)
         while '' in ability:
             ability.remove('')
-        ability_expanded = [(await pkmnabilitieshelper(x))[0] for x in ability]
+        ability_expanded = [(await pkmnabilitieshelper(x)) for x in ability]
 
         output = ''
-        for name, desc in zip(ability, ability_expanded):
-            output += f'**{name}:** {desc}\n\n'
+        for name, (effect, desc) in zip(ability, ability_expanded):
+            output += f'**{name}:** {effect}\n'
+            if desc != "":
+                output += f'-\n*{desc}*\n'
+            output += '\n'
 
         await channel.send(output[:-2]) #-2 to remove the trailing \n 's
 
