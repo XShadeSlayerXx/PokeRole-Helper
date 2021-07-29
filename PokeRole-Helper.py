@@ -1465,13 +1465,14 @@ async def move_aggregator(poke : str, rank : str) -> dict:
                 movelist[x] = set(y)
     return movelist
 
-async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
+async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list, exact_rank : bool = False) -> str:
     guild = await getGuilds(ctx)
     msg = ''
     rankrandom = False
     rankbase = False
     #rank = rank.title()
     if rank == 'Random':
+        rank = random.choice(ranks[:-1])
         rankrandom = True
     if rank == 'Base':
         rankbase = True
@@ -1491,6 +1492,7 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
             #if len(pokelist)==1:
             #    pokelist = [x.strip().title() for x in pokelist[0].split(' ')]
     pokelist = [pkmn_cap(item) for item in tempList]
+    random.shuffle(pokelist)
 
     if number > 6:
         msg+='Can only create up to 6 pokes at once due to size\n'
@@ -1519,21 +1521,36 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list) -> str:
         #limited by rank
         skills = bot.skills[:]
 
-        #get a poke from the list
-        nextpoke = random.choice(pokelist)
-        #get the attributes
-        try:
-            statlist = await pkmnstatshelper(nextpoke)
-        except:
-            # name is a typo
-            nextpoke = lookup_poke(nextpoke)
-            statlist = await pkmnstatshelper(nextpoke)
-        if rankbase:
-            #20 is suggested rank
-            rank = statlist[20].title()
-        if rankrandom:
-            #just give them an arbitrary rank
-            rank = random.choice(ranks[:-1])
+        if not exact_rank:
+            #get a poke from the list
+            nextpoke = random.choice(pokelist)
+            #get the attributes
+            try:
+                statlist = await pkmnstatshelper(nextpoke)
+            except:
+                # name is a typo
+                nextpoke = lookup_poke(nextpoke)
+                statlist = await pkmnstatshelper(nextpoke)
+            if rankbase:
+                #20 is suggested rank
+                rank = statlist[20].title()
+        else:
+            foundrank = None
+            nextpoke = None
+            while len(pokelist) > 1 and foundrank != rank:
+                if nextpoke:
+                    pokelist.remove(nextpoke)
+                #get a poke from the list
+                nextpoke = random.choice(pokelist)
+                #get the attributes
+                try:
+                    statlist = await pkmnstatshelper(nextpoke)
+                except:
+                    # name is a typo
+                    nextpoke = lookup_poke(nextpoke)
+                    statlist = await pkmnstatshelper(nextpoke)
+                foundrank = statlist[20].title()
+
         rankIndex = ranks.index(rank)
 
         # to differentiate between naturally learned moves at an evolution
@@ -1840,6 +1857,7 @@ async def weighted_pkmn_search(ctx, number : typing.Optional[int] = 1,
              help = 'Simple: %he habitat\n'
                     '%encounter [1-6] [1-6] (rank/base/random) habitat 1, habitat 2, etc\n'
                     'Same as %encounter, but draws from the %habitat pools\n'
+                    'Note: specifying a rank will only pull from pokemon with that suggested rank.\n'
                     'e.g. %hEncounter 2 beginner tide pools, field biomes\n')
 async def weighted_pkmn_search(ctx, number : typing.Optional[int] = 1,
                                 numberMax : typing.Optional[int] = None,
@@ -1849,9 +1867,13 @@ async def weighted_pkmn_search(ctx, number : typing.Optional[int] = 1,
         number = random.randint(number, numberMax)
     msg = []
     for x in range(number):
-        msg.append(await pkmn_encounter(ctx, 1, rank, pokelist))
-    msg = '\n\n'.join(msg)
-    msglist = [msg]
+        msg.append(await pkmn_encounter(ctx, 1, rank, pokelist,
+                                        exact_rank = (True if rank != 'Base' else False)))
+    out = ''
+    for x in range(len(msg)):
+        out += f'\n**{x+1}**.\n{msg[x]}'
+    # msg = '\n\n'.join(msg)
+    msglist = [out]
     while len(msglist[-1]) > 1995:
         tempmsg = msglist[-1]
         temp = tempmsg.rindex('\n', 1500, 1995)
