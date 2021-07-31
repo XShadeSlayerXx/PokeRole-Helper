@@ -921,7 +921,7 @@ async def pkmn_listsub(ctx, list1 : str, list2 : str):
 
 def pkmn_full_list(listname : str) -> list:
     if listname not in pkmnLists:
-        return 'There was not a list with this name.\n'
+        return ['There was not a list with this name.\n']
     full = []
     #strip out the 'p' or 'i'
     for lst in pkmnLists[listname][1:]:
