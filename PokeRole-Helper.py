@@ -919,6 +919,16 @@ async def pkmn_listsub(ctx, list1 : str, list2 : str):
 
 #######
 
+def pkmn_full_list(listname : str) -> list:
+    if listname not in pkmnLists:
+        return 'There was not a list with this name.\n'
+    full = []
+    #strip out the 'p' or 'i'
+    for lst in pkmnLists[listname][1:]:
+        #strip out the percentage
+        full += lst[1:]
+    return full
+
 #returns a random pokemon or item from given list
 def pkmn_random_driver(listname : str, giveList = False) -> str:
     if listname not in pkmnLists:
@@ -940,34 +950,32 @@ def pkmn_random_driver(listname : str, giveList = False) -> str:
 
 @bot.command(name = 'random', aliases = ['rl'],
              help = 'Get a random item/poke from a list.\n'
-                    '%random <list> [howMany]')
-async def pkmn_randomitem_driver(ctx, *, listname : str):
-    where = listname.rfind(' ')
-    try:
-        if where == -1:
-            howMany = 1
-        else:
-            howMany = int(listname[where+1:])
-            listname = listname[:where]
-    except:
-        howMany = 1
-    if listname in pkmnLists:
-        msg = [str(x+1)+". "+pkmn_random_driver(listname) for x in range(howMany)]
-    else:
-        try:
-            query = f'SELECT name FROM pkmnItems WHERE category="{listname.title()}" ORDER BY RANDOM() LIMIT {howMany}'
-            result = database.custom_query(query)
-            if not result:
-                raise Exception()
-            msg = [f'{str(x+1)}. {result[x][0]}' for x in range(len(result))]
-        except:
-            msg = ['There was not a list with this name.\n']
-    await ctx.send('\n'.join(msg))
+                    '%random [howMany] <list>, <list2>, pokemon, etc')
+async def pkmn_randomitem_driver(ctx, howMany : typing.Optional[int] = 1, *, listname : str):
+    combined_list = []
+    errors = []
+    for name in listname.split(', '):
+        #not using if/else because otherwise i would need the queries up front
+        if name in pkmnLists:
+            combined_list += pkmn_full_list(name)
+            continue
+        item_query = database.custom_query(f'SELECT name FROM pkmnItems WHERE category="{name.title()}"')
+        if item_query:
+            combined_list += [x[0] for x in item_query]
+            continue
+        poke_query = database.custom_query(f'SELECT name FROM pkmnStats WHERE name="{lookup_poke(name)}"')
+        if poke_query:
+            combined_list += [x[0] for x in poke_query]
+            continue
+        errors.append(name)
+
+    rand = [f'{x+1}. {random.choice(combined_list)}' for x in range(howMany)]
+    if errors:
+        errors = ', '.join(errors)
+        rand.append(f'*"{errors}" wasn\'t found as items, pokemon, or lists*')
+    await ctx.send('\n'.join(rand))
 
 #######
-
-# TODO: add generations to the database
-#     starters = ['Bulbasaur', 'Chikorita', 'Treecko', 'Turtwig', 'Snivy', 'Chespin', 'Rowlet', 'Grookey']
 
 @bot.command(name = 'filter', aliases = ['f'],
              help = '%filter <listname> <rank> <type1> <type2> [includeLowerRanks T/F]'
