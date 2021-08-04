@@ -77,7 +77,8 @@ class Help(commands.Cog):
                 'Encounters' : sorted(['encounter', 'wEncounter', 'random', 'hEncounter']),
                 'Misc': sorted([
                     'docs', 'donate', 'feedback', 'settings', 'tracker', 'roll',
-                    'dungeon', 'habitat', 'quest', 'metronome', 'viewhabitat'
+                    'dungeon', 'habitat', 'quest', 'metronome', 'viewhabitat',
+                    'forms'
                 ])
             }
             output = '```\n'

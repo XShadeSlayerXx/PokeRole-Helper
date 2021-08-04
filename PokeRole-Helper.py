@@ -1892,6 +1892,23 @@ async def weighted_pkmn_search(ctx, number : typing.Optional[int] = 1,
 
 #####
 
+@bot.command(name = 'forms',
+             aliases = ['form'],
+             help = 'A way to find pokemon with forms or similar names.\n'
+                    '`%forms Lycanroc` (Capitalization should not matter)')
+async def form_finder(ctx, *, name : str = ''):
+    query = f'SELECT name FROM pkmnStats WHERE name LIKE "%{name}%"'
+    result = database.custom_query(query)
+    if len(result) > 20:
+        msg = f'Too many results with `{name}`. Try a longer string?'
+    elif len(result) == 0:
+        msg = f'No pokemon with `{name}` were found. Try a shorter string?'
+    else:
+        msg = '- ' + '\n- '.join([x[0] for x in result])
+    await ctx.send(msg)
+
+#####
+
 @bot.command(name = 'tracker',
              aliases = ['statuses'],
              help = 'A tracker for status effects in battle.\n'
