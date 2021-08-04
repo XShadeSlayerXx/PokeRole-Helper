@@ -1897,7 +1897,8 @@ async def weighted_pkmn_search(ctx, number : typing.Optional[int] = 1,
              help = 'A way to find pokemon with forms or similar names.\n'
                     '`%forms Lycanroc` (Capitalization should not matter)')
 async def form_finder(ctx, *, name : str = ''):
-    query = f'SELECT name FROM pkmnStats WHERE name LIKE "%{name}%"'
+    query = f'SELECT name FROM pkmnStats WHERE name LIKE "%{name}%" ' \
+            f'AND generation BETWEEN 1 AND 8'
     result = database.custom_query(query)
     if len(result) > 20:
         msg = f'Too many results with `{name}`. Try a longer string?'
