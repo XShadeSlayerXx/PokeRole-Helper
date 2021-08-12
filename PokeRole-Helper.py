@@ -1685,7 +1685,9 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list, exact_r
         #if there's only one number then skip this
         if number != 1:
             msg += f'**{pokeamount+1}**.\n\n'
-        msg += f'__{nextpoke}__  |  **{rank}**'
+        msg += f'__{nextpoke}__' \
+               f' ({"M" if random.random() < .5 else "F"})' \
+               f'  |  **{rank}**'
         msg += f'  |  {random.choice(natures)}'
         msg += (f'  |  ***SHINY***' if pokebotsettings[guild][3] >= random.random() else f'')
 
