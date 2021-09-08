@@ -2005,6 +2005,13 @@ async def donate(ctx):
     link = r'https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=VD9LEYX4TKGUW&currency_code=USD'
     await ctx.send(embed = discord.Embed(title = 'Click here to donate!', url = link))
 
+@bot.command(name = 'invite',
+             aliases = ['inv'],
+             help = 'Get the invite code')
+async def invite(ctx):
+    link = r'https://discord.com/oauth2/authorize?client_id=747930418702974983&scope=bot&permissions=2048'
+    await ctx.send(embed = discord.Embed(title = 'Invite me!', url = link))
+
 #####
 
 #error handling:
