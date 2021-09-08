@@ -14,6 +14,7 @@ from symspellpy import SymSpell, Verbosity
 # can be replaced when/if i ever convert to nosql
 from collections import OrderedDict as ODict
 import requests
+from numpy.random import choice
 from bisect import bisect
 
 from dbhelper import Database
@@ -51,6 +52,7 @@ database = None
 restartError = True
 
 ranks = ['Starter', 'Beginner', 'Amateur', 'Ace', 'Pro', 'Master', 'Champion']
+rankBias = [0, 25, 50, 75, 85, 100, 100]
 natures = ['Hardy (9)','Lonely (5)','Brave (9)','Adamant (4)','Naughty (6)',
            'Bold (9)','Docile (7)','Relaxed (8)','Impish (7)',
            'Lax (8)', 'Timid (4)', 'Hasty (7)', 'Serious (4)', 'Jolly (10)',
@@ -61,6 +63,14 @@ bot.socials = [('Tough', 1), ('Cool', 1), ('Beauty', 1), ('Clever', 1), ('Cute',
 bot.skills = [('Brawl', 0), ('Channel', 0), ('Clash', 0), ('Evasion', 0),
           ('Alert', 0), ('Athletic', 0), ('Nature', 0), ('Stealth', 0),
           ('Allure', 0), ('Etiquette', 0), ('Intimidate', 0), ('Perform', 0)]
+
+#total attributes at a rank (base/social)
+#attributes are limited by poke
+attributeAmount = (0, 2, 4, 6, 8, 8, 14)
+#total skill points at a rank
+skillAmount = (5, 9, 12, 14, 15, 15, 16)
+#highest any single skill can be
+limit = (1, 2, 3, 4, 5, 5, 5)
 
 #lists are global...
 #   pokemon list:
@@ -1473,7 +1483,112 @@ async def move_aggregator(poke : str, rank : str) -> dict:
                 movelist[x] = set(y)
     return movelist
 
-async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list, exact_rank : bool = False) -> str:
+async def calcStats(rank : str, attr : list, maxAttr : list,
+                    movelist : list, attrMod : int = 0) -> (list, list, list):
+    #initialize base stats
+    attributes = attr[:]
+    maxattr = maxAttr[:]
+    #no limits on socials (except max of 5)
+    socials = bot.socials[:]
+    extraSocial = 6 if rank == 'Master' else 0
+    #limited by rank
+    skills = bot.skills[:]
+    rankIndex = ranks.index(rank)
+
+    def weightedrand(low, high):
+        return random.randint(low, high)
+
+    def weightedattr(low, high):
+        return random.randint(low, high)
+
+    def weightedsocials(low, high):
+        return random.randint(low, high)
+
+    def weightedskill(low, high):
+        return random.randint(low, high)
+
+    if movelist:
+        attrWeight = [0]*len(attributes)
+        skillWeight = [0]*len(skills)
+        #define all attributes and skills in separate lists (initially 0)
+        # iterate over all moves, and add 1 to the equivalent attr/skill for each instance
+        # this will be the weighted function
+        for move in movelist:
+            # print(move)
+            pass
+    else:
+        attrWeight = [1]*len(attributes)
+        skillWeight = [1]*len(skills)
+
+    # allocate attributes
+    fullStats = [False]*len(attributes)
+    randfunc = weightedattr
+    x = 0 #count allocated stats
+    #need "- attrMod" because insight may already be allocated
+    while x < attributeAmount[rankIndex] - attrMod and len(attributes) > 1:
+        #between 2 and max bc HP is at #0
+        temp = randfunc(2, len(attributes)) - 1
+        if attributes[temp] < maxattr[temp]:
+            attributes[temp] = attributes[temp] + 1
+            x = x + 1
+        else:
+            attrWeight.pop(temp)
+            maxattr.pop(temp)
+            tmpStat = attributes.pop(temp)
+            temp = temp + sum([0 if not x else 1 for x in fullStats[:temp]])
+            while fullStats[temp]:
+                temp += 1
+            fullStats[temp] = tmpStat
+
+    for index, val in enumerate(fullStats):
+        if val:
+            attributes.insert(index, val)
+
+    #distribute socials
+    fullStats = [False]*len(socials)
+    randfunc = weightedsocials
+    x = 0
+    while x < attributeAmount[rankIndex] + extraSocial and len(socials) > 0:
+        temp = randfunc(1, len(socials)) - 1
+        if socials[temp][1] < limit[rankIndex]:
+            socials[temp] = (socials[temp][0], socials[temp][1] + 1)
+            x = x + 1
+        else:
+            fullStats[temp] = socials.pop(temp)
+
+    for index, val in enumerate(fullStats):
+        if val:
+            socials.insert(index, val)
+
+    #distribute skills
+    fullStats = [False]*len(skills)
+    randfunc = weightedskill
+    lastAmt = 0
+    for rankStep in range(rankIndex+1):
+        currentAmt = skillAmount[rankStep] - lastAmt
+        lastAmt = skillAmount[rankStep]
+        skillWeightTmp = skillWeight[:]
+        for index, val in enumerate(fullStats):
+            if val:
+                skills.insert(index, val)
+        fullStats = [False]*len(skills)
+        while currentAmt > 0:
+            temp = randfunc(1, len(skills)) - 1
+            if skills[temp][1] < limit[rankStep]:
+                skills[temp] = (skills[temp][0], skills[temp][1] + 1)
+                currentAmt -= 1
+            else:
+                fullStats[temp] = skills.pop(temp)
+                if skillWeightTmp:
+                    skillWeightTmp.pop(temp)
+    for index, val in enumerate(fullStats):
+        if val:
+            skills.insert(index, val)
+
+    return attributes, socials, skills
+
+async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
+                         exact_rank : bool = False, boss : bool = False) -> str:
     guild = await getGuilds(ctx)
     msg = ''
     rankrandom = False
@@ -1513,22 +1628,7 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list, exact_r
 
     #exceptions for master rank: 6 extra social, HP + 2, DEF/S.DEF + 2
 
-    #total attributes at a rank (base/social)
-    #attributes are limited by poke
-    attributeAmount = [0,2,4,6,8,8,14]
-    #total skill points at a rank
-    skillAmount = [5,9,12,14,15,15,16]
-    #highest any single skill can be
-    limit = [1,2,3,4,5,5,5]
-
     for pokeamount in range(number):
-        #initialize base stats
-
-        #no limits on socials (except max of 5)
-        socials = bot.socials[:]
-        #limited by rank
-        skills = bot.skills[:]
-
         if not exact_rank:
             #get a poke from the list
             nextpoke = random.choice(pokelist)
@@ -1559,8 +1659,6 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list, exact_r
                     statlist = await pkmnstatshelper(nextpoke)
                 foundrank = statlist[20].title()
 
-        rankIndex = ranks.index(rank)
-
         # to differentiate between naturally learned moves at an evolution
         naturalMoves = await pkmnlearnshelper(nextpoke, rank)
         #get all potential moves, up to the rank
@@ -1587,59 +1685,38 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list, exact_r
         baseattr = [x for x in attributes]
         maxattr = [0] + [int(statlist[x]) for x in range(5, 14, 2)]
 
-        #pls dont crash the bot if something is messed up
-        sanity = 30
+        if boss: #we need insight for # of moves
+            attrNum = len(baseattr)
+            moveMax = maxattr[5] - baseattr[5]
+            numMoves = 0
+            for _ in range(attributeAmount[rank]):
+                if random.random() < 1/attrNum:
+                    numMoves += 1
+                if numMoves == moveMax:
+                    break
+            numMoves += 2
+        else: #generate stats randomly
+            attributes, socials, skills = await calcStats(rank, attributes, maxattr, [])
+            numMoves = attributes[5] + 2 #insight + 2
 
-        #distribute socials
-        x = 0
-        if rank == 'Master':
-            extraSocial = 6
-        else:
-            extraSocial = 0
-        while x < attributeAmount[rankIndex] + extraSocial and sanity > 0:
-            temp = random.randint(1,len(socials))-1
-            if socials[temp][1] < limit[rankIndex]:
-                socials[temp] = (socials[temp][0], socials[temp][1] + 1)
-                x = x + 1
-            else:
-                sanity = sanity - 1
-
-        sanity = 30
-        #distribute skills
-        x = 0
-        while x < skillAmount[rankIndex] and sanity > 0:
-            temp = random.randint(1,len(skills))-1
-            if skills[temp][1] < limit[rankIndex]:
-                skills[temp] = (skills[temp][0], skills[temp][1] + 1)
-                x = x + 1
-            else:
-                sanity = sanity - 1
-
-        sanity = 30
-        #only legendaries learn 'master' moves --> ensure its not a legendary
-        if 'Master' not in movelist:
-            #distribute stats last bc of legendaries
-            x = 0
-            while x < attributeAmount[rankIndex] and sanity > 0:
-                #between 2 and max bc HP is at #0
-                temp = random.randint(2,len(attributes))-1
-                if attributes[temp] < maxattr[temp]:
-                    attributes[temp] = attributes[temp] + 1
-                    x = x + 1
-                else:
-                    sanity = sanity - 1
+#todo: guarantee a (attacking?) move from the pokemon's rank
 
         #cut the movelist down to this number
         newMoves = []
-        #convert to a set and back to remove duplicates
+        #flatten, then convert to a set and back to remove duplicates
         movelist = list(set([item for sublist in list(movelist.values()) for item in set(sublist)]))
-        for x in range(attributes[5] + 2):
-            if len(movelist) == 0:
+        for x in range(numMoves):
+            if len(movelist) == 0: #usually legendaries
                 break
             temp = random.choice(movelist)
             newMoves.append(temp)
             movelist.remove(temp)
         movelist = newMoves
+
+        if boss: #allocate stats since we didn't before (and adjust insight accordingly)
+            insightAdded = numMoves - 2
+            baseattr[5] += insightAdded
+            attributes, socials, skills = await calcStats(rank, baseattr, maxattr, movelist, insightAdded)
 
         #base 14, second 15, hidden 16, event 17
         totalchance = pokebotsettings[guild][0] + pokebotsettings[guild][1] + pokebotsettings[guild][2]
@@ -1658,9 +1735,8 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list, exact_r
             item = pkmn_random_driver(pokebotsettings[guild][6])
         else:
             item = 'None'
-        #calculate hp
+        #calculate hp (base hp + vitality)
         attributes[0] = attributes[0] + attributes[3]
-
 
         #combine all the info into a dict()
 
@@ -1686,7 +1762,7 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list, exact_r
         if gender == '':
             gender = 'M' if random.random() < .5 else 'F'
 
-        #if there's only one number then skip this
+        #if there's only one pokemon generated then skip this
         if number != 1:
             msg += f'**{pokeamount+1}**.\n\n'
         msg += f'__{nextpoke}__' \
