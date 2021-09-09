@@ -1504,9 +1504,6 @@ async def calcStats(rank : str, attr : list, maxAttr : list,
         return [x/tmp for x in array]
 
     def weightedchoice(low, high, weights, number = 1, replace = True) -> int:
-        # print(high-low, len(weights))
-        # print(weights)
-        # print(sum(weights))
         try:
             final_list = choice(list(range(low, high)), number, p = weights, replace = replace)
         except:
