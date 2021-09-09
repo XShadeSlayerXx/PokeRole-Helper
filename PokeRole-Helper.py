@@ -1507,12 +1507,6 @@ async def calcStats(rank : str, attr : list, maxAttr : list,
         final_list = choice(list(range(low, high)), number, p = weights, replace = replace)
         return final_list
 
-    # def weightedchoices(low, high, weights, number) -> list:
-    #     # print(high-low, len(weights))
-    #     # print(weights)
-    #     final_list = random.choices(list(range(low, high)), weights = weights, k = number)
-    #     return final_list
-
     attrWeight = [1] * len(attributes)
     socialWeight = [1] * len(socials)
     skillWeight = [3] * 4 + [1] * ( len(skills) - 4 ) # first 4 skills are combat
@@ -1530,7 +1524,6 @@ async def calcStats(rank : str, attr : list, maxAttr : list,
         # iterate over all moves, and add 1 to the equivalent attr/skill for each instance
         # this will be the weighted function
         for move, desc in list(movelist.items()):
-            # print(move, desc)
             # print(desc[3], desc[4], desc[5], desc[6])
             #index 3, 4 & 5 are attributes, 6 is skills
             #(5 could be a social stat)
@@ -1544,9 +1537,6 @@ async def calcStats(rank : str, attr : list, maxAttr : list,
                 socialWeight[social_names.index(desc[5])] += bias_amt
             if desc[6] in skill_names: #check skills
                 skillWeight[skill_names.index(desc[6])] += bias_amt
-    # print('attr ', attrWeight)
-    # print('social ', socialWeight)
-    # print('skill ', skillWeight)
     attrWeight = attrWeight[:len(attributes)] #remove insight if needed, for normalization purposes
 
     # allocate attributes
@@ -1556,36 +1546,25 @@ async def calcStats(rank : str, attr : list, maxAttr : list,
     while x < attributeAmount[rankIndex] - attrMod and len(attributes) > 0:
         attrWeight = normalize(attrWeight)
         temp = weightedchoice(0, len(attributes), attrWeight)[0]
-        # print('len- ',len(attributes),' : place- ', temp)
-        # print('#, attr < max attr: ', temp, attributes[temp], maxattr[temp])
         if attributes[temp] < maxattr[temp]:
             attributes[temp] = attributes[temp] + 1
             x = x + 1
         else:
-            # print('attr ', attributes)
-            # print('attr W ', attrWeight)
             attrWeight.pop(temp)
             maxattr.pop(temp)
             tmpStat = attributes.pop(temp) #find the exact place
-            # print('slice: ', fullStats[:temp+1])
             temp = temp + sum([0 if not x else 1 for x in fullStats[:temp+1]])
             while fullStats[temp]: # is there a more elegant way to do this?
                 temp += 1           # best i can see is to have an offset array otherwise
-            # print('new index: ', temp)
             fullStats[temp] = tmpStat
-            # print('fullStats: ', fullStats)
     if x < attributeAmount[rankIndex]:
         leftover = x
     else:
         leftover = 0
-    # print('Attributes after: ', attributes)
-    # print('fullStats after: ', fullStats)
     for index, val in enumerate(fullStats):
         if val:
             attributes.insert(index, val)
-    # print('Attribute + fullStats: ', attributes)
     attributes = [bhp] + attributes
-    # print('Attributes + bhp: ', attributes)
 
     #distribute socials
     fullStats = [False]*len(socials)
@@ -1609,18 +1588,11 @@ async def calcStats(rank : str, attr : list, maxAttr : list,
             socials.insert(index, val)
 
     #distribute skills
-    # fullStats = [False]*len(skills)
     lastAmt = 0
     skillWeight = normalize(skillWeight)
     for rankStep in range(rankIndex+1):
         currentAmt = skillAmount[rankStep] - lastAmt
-        # print('# points: ',currentAmt)
         lastAmt = skillAmount[rankStep]
-        # skillWeightTmp = skillWeight[:]
-        # for index, val in enumerate(fullStats):
-        #     if val:
-        #         skills.insert(index, val)
-        # fullStats = [False]*len(skills)
         points = weightedchoice(0, len(skills), skillWeight, number = currentAmt, replace = False)
         # champion only test
         if len(points) == 1:
@@ -1628,18 +1600,9 @@ async def calcStats(rank : str, attr : list, maxAttr : list,
             if skills[tmp][1] == 5: #champion skill trying to reach 6 points smh
                 newWeight = skillWeight[:tmp] + [0] + skillWeight[tmp+1:]
                 #retry but set the offending skill to 0 weight
-                points = weightedchoice(0, len(skills), skillWeight, number = currentAmt, replace = False)
-        # print('point dist: ', points)
+                points = weightedchoice(0, len(skills), newWeight, number = currentAmt, replace = False)
         for temp in points:
-            # if skills[temp][1] < limit[rankStep]:
             skills[temp] = (skills[temp][0], skills[temp][1] + 1)
-            #     currentAmt -= 1
-            # else:
-            #     fullStats[temp] = skills.pop(temp)
-            #     skillWeightTmp.pop(temp)
-    # for index, val in enumerate(fullStats):
-    #     if val:
-    #         skills.insert(index, val)
 
     try:
         attributes.append(insight)
