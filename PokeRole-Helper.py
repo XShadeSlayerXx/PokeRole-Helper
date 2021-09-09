@@ -52,7 +52,7 @@ database = None
 restartError = True
 
 ranks = ['Starter', 'Beginner', 'Amateur', 'Ace', 'Pro', 'Master', 'Champion']
-rankBias = [0, 25, 50, 75, 85, 100, 100]
+rankBias = [2, 4, 8, 16, 32, 64, 128]
 natures = ['Hardy (9)','Lonely (5)','Brave (9)','Adamant (4)','Naughty (6)',
            'Bold (9)','Docile (7)','Relaxed (8)','Impish (7)',
            'Lax (8)', 'Timid (4)', 'Hasty (7)', 'Serious (4)', 'Jolly (10)',
@@ -1484,10 +1484,11 @@ async def move_aggregator(poke : str, rank : str) -> dict:
     return movelist
 
 async def calcStats(rank : str, attr : list, maxAttr : list,
-                    movelist : dict, attrMod : int = 0) -> (list, list, list):
+                    movelist : dict, attrMod : int = 0) -> (list, list, list, int):
     #initialize base stats
-    attributes = attr[:]
-    maxattr = maxAttr[:]
+    bhp = attr[0]
+    attributes = attr[1:]
+    maxattr = maxAttr[1:]
     #no limits on socials (except max of 5)
     socials = bot.socials[:]
     extraSocial = 6 if rank == 'Master' else 0
@@ -1495,124 +1496,156 @@ async def calcStats(rank : str, attr : list, maxAttr : list,
     skills = bot.skills[:]
     rankIndex = ranks.index(rank)
 
-    def weightedrand(low, high):
-        return random.randint(low, high)
+    def normalize(array) -> list:
+        tmp = sum(array)
+        return [x/tmp for x in array]
 
-    def weightedattr(low, high):
-        return random.randint(low, high)
+    def weightedchoice(low, high, weights, number = 1, replace = True) -> int:
+        # print(high-low, len(weights))
+        # print(weights)
+        # print(sum(weights))
+        final_list = choice(list(range(low, high)), number, p = weights, replace = replace)
+        return final_list
 
-    def weightedsocials(low, high):
-        return random.randint(low, high)
+    # def weightedchoices(low, high, weights, number) -> list:
+    #     # print(high-low, len(weights))
+    #     # print(weights)
+    #     final_list = random.choices(list(range(low, high)), weights = weights, k = number)
+    #     return final_list
 
-    def weightedskill(low, high):
-        return random.randint(low, high)
+    attrWeight = [1] * len(attributes)
+    socialWeight = [1] * len(socials)
+    skillWeight = [3] * 4 + [1] * ( len(skills) - 4 ) # first 4 skills are combat
 
+    skill_names = [x[0].upper() for x in skills]
     if movelist:
         #if we have a movelist, then don't mess with insight
         insight = attributes[-1]
         attributes = attributes[:-1]
-        attr_names = [None, 'STRENGTH', 'DEXTERITY', 'VITALITY', 'SPECIAL']
-        #todo: social names next
-        # and then skill names
-        attrWeight = [0]*len(attributes)
-        socialWeight = [0]*len(socials)
-        skillWeight = [0]*len(skills)
+        attr_names = ['STRENGTH', 'DEXTERITY', 'VITALITY', 'SPECIAL']
+        social_names = ['TOUGH', 'COOL', 'BEAUTY', 'CLEVER', 'CUTE']
+
+        bias_amt = rankBias[rankIndex]
         #define all attributes and skills in separate lists (initially 0)
         # iterate over all moves, and add 1 to the equivalent attr/skill for each instance
         # this will be the weighted function
         for move, desc in list(movelist.items()):
-            print(move, desc)
-            print(desc[3], desc[4], desc[5], desc[6])
+            # print(move, desc)
+            # print(desc[3], desc[4], desc[5], desc[6])
             #index 3, 4 & 5 are attributes, 6 is skills
             #(5 could be a social stat)
-            if desc[3] in attr_names:
-                attrWeight[attr_names.index(desc[3])] += 1
+            if desc[3] in attr_names: #check attributes...
+                attrWeight[attr_names.index(desc[3])] += bias_amt
             if desc[4] in attr_names:
-                attrWeight[attr_names.index(desc[4])] += 1
+                attrWeight[attr_names.index(desc[4])] += bias_amt
             if desc[5] in attr_names:
-                attrWeight[attr_names.index(desc[5])] += 1
-            if desc[5] in attr_names: #check social
-                attrWeight[attr_names.index(desc[5])] += 1
-            if desc[6] in attr_names:
-                attrWeight[attr_names.index(desc[5])] += 1
-        print('attr ', attrWeight)
-        print('social ', socialWeight)
-        print('skill ', skillWeight)
-    else:
-        attrWeight = [1]*len(attributes)
-        socialWeight = [1]*len(socials)
-        skillWeight = [1]*len(skills)
+                attrWeight[attr_names.index(desc[5])] += bias_amt
+            if desc[5] in social_names: #check social
+                socialWeight[social_names.index(desc[5])] += bias_amt
+            if desc[6] in skill_names: #check skills
+                skillWeight[skill_names.index(desc[6])] += bias_amt
+    # print('attr ', attrWeight)
+    # print('social ', socialWeight)
+    # print('skill ', skillWeight)
+    attrWeight = attrWeight[:len(attributes)] #remove insight if needed, for normalization purposes
 
     # allocate attributes
-    fullStats = [False]*len(attributes)
-    randfunc = weightedattr
+    fullStats = [False]*(len(attributes)+1)
     x = 0 #count allocated stats
     #need "- attrMod" because insight may already be allocated
-    while x < attributeAmount[rankIndex] - attrMod and len(attributes) > 1:
-        #between 2 and max bc HP is at #0
-        temp = randfunc(2, len(attributes)) - 1
+    while x < attributeAmount[rankIndex] - attrMod and len(attributes) > 0:
+        attrWeight = normalize(attrWeight)
+        temp = weightedchoice(0, len(attributes), attrWeight)[0]
+        # print('len- ',len(attributes),' : place- ', temp)
+        # print('#, attr < max attr: ', temp, attributes[temp], maxattr[temp])
         if attributes[temp] < maxattr[temp]:
             attributes[temp] = attributes[temp] + 1
             x = x + 1
         else:
+            # print('attr ', attributes)
+            # print('attr W ', attrWeight)
             attrWeight.pop(temp)
             maxattr.pop(temp)
-            tmpStat = attributes.pop(temp)
-            temp = temp + sum([0 if not x else 1 for x in fullStats[:temp]])
-            while fullStats[temp]:
-                temp += 1
+            tmpStat = attributes.pop(temp) #find the exact place
+            # print('slice: ', fullStats[:temp+1])
+            temp = temp + sum([0 if not x else 1 for x in fullStats[:temp+1]])
+            while fullStats[temp]: # is there a more elegant way to do this?
+                temp += 1           # best i can see is to have an offset array otherwise
+            # print('new index: ', temp)
             fullStats[temp] = tmpStat
-
+            # print('fullStats: ', fullStats)
+    if x < attributeAmount[rankIndex]:
+        leftover = x
+    else:
+        leftover = 0
+    # print('Attributes after: ', attributes)
+    # print('fullStats after: ', fullStats)
     for index, val in enumerate(fullStats):
         if val:
             attributes.insert(index, val)
+    # print('Attribute + fullStats: ', attributes)
+    attributes = [bhp] + attributes
+    # print('Attributes + bhp: ', attributes)
 
     #distribute socials
     fullStats = [False]*len(socials)
-    randfunc = weightedsocials
     x = 0
     while x < attributeAmount[rankIndex] + extraSocial and len(socials) > 0:
-        temp = randfunc(1, len(socials)) - 1
+        socialWeight = normalize(socialWeight)
+        temp = weightedchoice(0, len(socials), socialWeight)[0]
         if socials[temp][1] < limit[rankIndex]:
             socials[temp] = (socials[temp][0], socials[temp][1] + 1)
             x = x + 1
         else:
-            fullStats[temp] = socials.pop(temp)
+            socialWeight.pop(temp)
+            tmpStat = socials.pop(temp)
+            temp = temp + sum([0 if not x else 1 for x in fullStats[:temp + 1]])
+            while fullStats[temp]:  # is there a more elegant way to do this?
+                temp += 1  # best i can see is to have an offset array otherwise
+            fullStats[temp] = tmpStat
 
     for index, val in enumerate(fullStats):
         if val:
             socials.insert(index, val)
 
     #distribute skills
-    fullStats = [False]*len(skills)
-    randfunc = weightedskill
+    # fullStats = [False]*len(skills)
     lastAmt = 0
+    skillWeight = normalize(skillWeight)
     for rankStep in range(rankIndex+1):
         currentAmt = skillAmount[rankStep] - lastAmt
+        # print('# points: ',currentAmt)
         lastAmt = skillAmount[rankStep]
-        skillWeightTmp = skillWeight[:]
-        for index, val in enumerate(fullStats):
-            if val:
-                skills.insert(index, val)
-        fullStats = [False]*len(skills)
-        while currentAmt > 0:
-            temp = randfunc(1, len(skills)) - 1
-            if skills[temp][1] < limit[rankStep]:
-                skills[temp] = (skills[temp][0], skills[temp][1] + 1)
-                currentAmt -= 1
-            else:
-                fullStats[temp] = skills.pop(temp)
-                if skillWeightTmp:
-                    skillWeightTmp.pop(temp)
-    for index, val in enumerate(fullStats):
-        if val:
-            skills.insert(index, val)
+        # skillWeightTmp = skillWeight[:]
+        # for index, val in enumerate(fullStats):
+        #     if val:
+        #         skills.insert(index, val)
+        # fullStats = [False]*len(skills)
+        points = weightedchoice(0, len(skills), skillWeight, number = currentAmt, replace = False)
+        # champion only test
+        if len(points) == 1:
+            tmp = points[0]
+            if skills[tmp][1] == 5: #champion skill trying to reach 6 points smh
+                newWeight = skillWeight[:tmp] + [0] + skillWeight[tmp+1:]
+                #retry but set the offending skill to 0 weight
+                points = weightedchoice(0, len(skills), skillWeight, number = currentAmt, replace = False)
+        # print('point dist: ', points)
+        for temp in points:
+            # if skills[temp][1] < limit[rankStep]:
+            skills[temp] = (skills[temp][0], skills[temp][1] + 1)
+            #     currentAmt -= 1
+            # else:
+            #     fullStats[temp] = skills.pop(temp)
+            #     skillWeightTmp.pop(temp)
+    # for index, val in enumerate(fullStats):
+    #     if val:
+    #         skills.insert(index, val)
 
     try:
         attributes.append(insight)
     except:
         pass
-    return attributes, socials, skills
+    return attributes, socials, skills, leftover
 
 async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
                          exact_rank : bool = False, boss : bool = False) -> str:
@@ -1714,16 +1747,15 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
 
         if boss: #we need insight for # of moves
             attrNum = len(baseattr)
-            moveMax = maxattr[5] - baseattr[5]
-            numMoves = 0
+            numMoves = baseattr[5]
             for _ in range(attributeAmount[ranks.index(rank.title())]):
                 if random.random() < 1/attrNum:
                     numMoves += 1
-                if numMoves == moveMax:
+                if numMoves == maxattr[5]:
                     break
             numMoves += 2
         else: #generate stats randomly
-            attributes, socials, skills = await calcStats(rank, attributes, maxattr, {})
+            attributes, socials, skills, _ = await calcStats(rank, attributes, maxattr, {})
             numMoves = attributes[5] + 2 #insight + 2
 
 #todo: guarantee a (attacking?) move from the pokemon's rank
@@ -1732,22 +1764,33 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
         newMoves = []
         #flatten, then convert to a set and back to remove duplicates
         movelist = list(set([item for sublist in list(movelist.values()) for item in set(sublist)]))
-        for x in range(numMoves):
+        for _ in range(numMoves):
             if len(movelist) == 0: #usually legendaries
                 break
             temp = random.choice(movelist)
             newMoves.append(temp)
             movelist.remove(temp)
-        movelist = newMoves
 
         move_descs = {}
-        for move in movelist:
+        for move in newMoves:
             move_descs[move] = await pkmnmovehelper(move)
 
         if boss: #allocate stats since we didn't before (and adjust insight accordingly)
-            insightAdded = numMoves - 2
-            baseattr[5] += insightAdded
-            attributes, socials, skills = await calcStats(rank, baseattr, maxattr, move_descs, insightAdded)
+            insightAdded = numMoves - 2 - baseattr[5]
+            attributes, socials, skills, leftover = await calcStats(rank, baseattr, maxattr, move_descs, insightAdded)
+            attributes[5] += insightAdded
+
+            extraPoints = min(leftover, (maxattr[5]-attributes[5]))
+            attributes[5] += extraPoints
+
+            for _ in range(extraPoints): # repeated loop, yeah, yeah, i know
+                if len(movelist) == 0:
+                    break
+                temp = random.choice(movelist)
+                newMoves.append(temp)
+                movelist.remove(temp)
+                move_descs[temp] = await pkmnmovehelper(temp)
+        movelist = newMoves
 
         #base 14, second 15, hidden 16, event 17
         totalchance = pokebotsettings[guild][0] + pokebotsettings[guild][1] + pokebotsettings[guild][2]
@@ -2005,7 +2048,7 @@ async def habitat_pkmn_search(ctx, number : typing.Optional[int] = 1,
     for x in msglist:
         await ctx.send(x)
 
-@bot.command(name = 'sEncounter', aliases = ['boss', 'se'],
+@bot.command(name = 'boss', aliases = ['sEncounter', 'se'],
              brief = 'Gets # poke at listed rank from a given list with smart stats',
              help = 'Simple: %se poke(, poke2, list)\n'
                     '%sEncounter [1-6] [1-6 upper bound] [rank/base] <list of pokemon>\n'
