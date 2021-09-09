@@ -1514,7 +1514,7 @@ async def calcStats(rank : str, attr : list, maxAttr : list,
         # iterate over all moves, and add 1 to the equivalent attr/skill for each instance
         # this will be the weighted function
         for move in movelist:
-            # print(move)
+            print(move)
             pass
     else:
         attrWeight = [1]*len(attributes)
@@ -1689,7 +1689,7 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
             attrNum = len(baseattr)
             moveMax = maxattr[5] - baseattr[5]
             numMoves = 0
-            for _ in range(attributeAmount[rank]):
+            for _ in range(attributeAmount[ranks.index(rank.title())]):
                 if random.random() < 1/attrNum:
                     numMoves += 1
                 if numMoves == moveMax:
@@ -1875,17 +1875,18 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
 @bot.command(name = 'encounter', aliases = ['e', 'pokemon'],
              brief = 'Gets # poke at listed rank from a given list',
              help = 'Simple: %e poke(, poke2, list)\n'
-                    '%encounter [1-6] [1-6 upper bound] [rank/base/random] <list of pokemon>\n'
+                    '%encounter [1-6] [1-6 upper bound] [rank/base] <list of pokemon>\n'
                     '"base" means pokemon generated are at suggested ranks\n'
-                    'e.g. %encounter 2 random eevee, squirtle, pidgey, list1')
+                    'e.g. %encounter 2 amateur eevee, squirtle, pidgey, list1')
 async def pkmn_search_encounter(ctx, number : typing.Optional[int] = 1,
                                 numberMax : typing.Optional[int] = None,
                                 rank : typing.Optional[ensure_rank] = 'Base',
-                                *, pokelist : (lambda x : x.split(', '))):
+                                *, pokelist : (lambda x : x.split(', ')),
+                                boss = False):
     #pokelist = pokelist.split(', ')
     if numberMax is not None:
         number = random.randint(number, numberMax)
-    msg = await pkmn_encounter(ctx, number, rank, pokelist)
+    msg = await pkmn_encounter(ctx, number, rank, pokelist, boss = boss)
     msglist = [msg]
     while len(msglist[-1]) > 1995:
         tempmsg = msglist[-1]
@@ -1949,7 +1950,7 @@ async def weighted_pkmn_search(ctx, number : typing.Optional[int] = 1,
                     'Same as %encounter, but draws from the %habitat pools\n'
                     'Note: specifying a rank will only pull from pokemon with that suggested rank.\n'
                     'e.g. %hEncounter 2 beginner tide pools, field biomes\n')
-async def weighted_pkmn_search(ctx, number : typing.Optional[int] = 1,
+async def habitat_pkmn_search(ctx, number : typing.Optional[int] = 1,
                                 numberMax : typing.Optional[int] = None,
                                 rank : typing.Optional[ensure_rank] = 'Base',
                                *, pokelist : sep_biomes):
@@ -1971,6 +1972,30 @@ async def weighted_pkmn_search(ctx, number : typing.Optional[int] = 1,
         msglist.append(tempmsg[temp:])
     for x in msglist:
         await ctx.send(x)
+
+@bot.command(name = 'sEncounter', aliases = ['boss', 'se'],
+             brief = 'Gets # poke at listed rank from a given list with smart stats',
+             help = 'Simple: %se poke(, poke2, list)\n'
+                    '%sEncounter [1-6] [1-6 upper bound] [rank/base] <list of pokemon>\n'
+                    '"base" means pokemon generated are at suggested ranks\n'
+                    'e.g. %sEncounter 2 amateur eevee, squirtle, pidgey, list1')
+async def smart_pkmn_search(ctx, number : typing.Optional[int] = 1,
+                                numberMax : typing.Optional[int] = None,
+                                rank : typing.Optional[ensure_rank] = 'Base',
+                                *, pokelist : (lambda x : x.split(', '))):
+    await pkmn_search_encounter(ctx = ctx, number = number, numberMax =  numberMax,
+                                rank = rank, pokelist =  pokelist, boss = True)
+    # if numberMax is not None:
+    #     number = random.randint(number, numberMax)
+    # msg = await pkmn_encounter(ctx, number, rank, pokelist, boss = True)
+    # msglist = [msg]
+    # while len(msglist[-1]) > 1995:
+    #     tempmsg = msglist[-1]
+    #     temp = tempmsg.rindex('\n', 1500, 1995)
+    #     msglist[-1] = tempmsg[:temp]
+    #     msglist.append(tempmsg[temp:])
+    # for x in msglist:
+    #     await ctx.send(x)
 
 #####
 
