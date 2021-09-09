@@ -1903,10 +1903,13 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
                     dmgArray = [sum([random.randint(0,1) for _ in range(totalDmg)]) for _ in range(numRolls)]
                     totalAcc = (allAttr[found[5]] or 0) + (allAttr[found[6]] or 0)
                     accArray = [sum([random.randint(0,1) for _ in range(totalAcc)])-accMod for _ in range(numRolls)]
-                    msg += f'**Dmg Mods**: {(found[3] or "None")} + {(found[4] or "None")} ' \
-                           f'+ {found[2]} = ({totalDmg}'
-                    msg += f'{" STAB" if found[0].capitalize() in (statlist[1],statlist[2]) else ""})'
-                    msg += f' {dmgArray}\n' if pokebotsettings[guild][8] else '\n'
+                    if found[1].capitalize() != 'Support':
+                        msg += f'**Dmg Mods**: {(found[3] or "None")} + {(found[4] or "None")} ' \
+                               f'+ {found[2]} = ({totalDmg}'
+                        msg += f'{" STAB" if found[0].capitalize() in (statlist[1],statlist[2]) else ""})'
+                        msg += f' {dmgArray}\n' if pokebotsettings[guild][8] else '\n'
+                    else:
+                        msg += f'**Dmg Mods**: None\n'
                     msg += f'**Acc Mods**: {(found[5] or "None")} + {(found[6] or "None")} = '
                     msg += f'({(allAttr[found[5]] or 0)+(allAttr[found[6]] or 0)}'
                     msg += f" - {accMod} Successes)" if accMod != 0 else ")"
