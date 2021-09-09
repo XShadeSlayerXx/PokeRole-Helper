@@ -1484,7 +1484,8 @@ async def move_aggregator(poke : str, rank : str) -> dict:
     return movelist
 
 async def calcStats(rank : str, attr : list, maxAttr : list,
-                    movelist : dict, attrMod : int = 0) -> (list, list, list, int):
+                    movelist : dict = {}, additionalIns : int = 0,
+                    additionalVit : int = 0) -> (list, list, list, int):
     #initialize base stats
     bhp = attr[0]
     attributes = attr[1:]
@@ -1495,6 +1496,8 @@ async def calcStats(rank : str, attr : list, maxAttr : list,
     #limited by rank
     skills = bot.skills[:]
     rankIndex = ranks.index(rank)
+    pointsToAllocate = attributeAmount[rankIndex] - ( additionalIns + additionalVit )
+    attributes[2] += additionalVit
 
     def normalize(array) -> list:
         tmp = sum(array)
@@ -1545,7 +1548,7 @@ async def calcStats(rank : str, attr : list, maxAttr : list,
     fullStats = [False]*(len(attributes)+1)
     x = 0 #count allocated stats
     #need "- attrMod" because insight may already be allocated
-    while x < attributeAmount[rankIndex] - attrMod and len(attributes) > 0:
+    while x < pointsToAllocate and len(attributes) > 0:
         attrWeight = normalize(attrWeight)
         temp = weightedchoice(0, len(attributes), attrWeight)[0]
         if attributes[temp] < maxattr[temp]:
@@ -1559,7 +1562,7 @@ async def calcStats(rank : str, attr : list, maxAttr : list,
             while fullStats[temp]: # is there a more elegant way to do this?
                 temp += 1           # best i can see is to have an offset array otherwise
             fullStats[temp] = tmpStat
-    if x < attributeAmount[rankIndex] - attrMod:
+    if x < pointsToAllocate:
         leftover = attributeAmount[rankIndex] - x
     else:
         leftover = 0
@@ -1711,17 +1714,22 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
         baseattr = [x for x in attributes]
         maxattr = [0] + [int(statlist[x]) for x in range(5, 14, 2)]
 
+        numVitality = 0
         if boss: #we need insight for # of moves
             attrNum = len(baseattr)
             numMoves = baseattr[5]
             for _ in range(attributeAmount[ranks.index(rank.title())]):
-                if random.random() < 1/attrNum:
+                randnum = random.random()
+                if randnum < 1/(attrNum*3) and baseattr[3] + numVitality < maxattr[3]: #chance for vitality
+                    numVitality += 1
+                    continue
+                if randnum < 1/attrNum: #chance for insight
                     numMoves += 1
                 if numMoves == maxattr[5]:
                     break
             numMoves += 2
         else: #generate stats randomly
-            attributes, socials, skills, _ = await calcStats(rank, attributes, maxattr, {})
+            attributes, socials, skills, _ = await calcStats(rank, attributes, maxattr)
             numMoves = attributes[5] + 2 #insight + 2
 
 #todo: guarantee a (attacking?) move from the pokemon's rank
@@ -1743,7 +1751,8 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
 
         if boss: #allocate stats since we didn't before (and adjust insight accordingly)
             insightAdded = numMoves - 2 - baseattr[5]
-            attributes, socials, skills, leftover = await calcStats(rank, baseattr, maxattr, move_descs, insightAdded)
+            attributes, socials, skills, leftover = await calcStats(rank, baseattr, maxattr,
+                                                                    move_descs, insightAdded, numVitality)
             attributes[5] += insightAdded
 
             extraPoints = min(leftover, (maxattr[5]-attributes[5]))
