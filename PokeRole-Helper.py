@@ -1484,7 +1484,7 @@ async def move_aggregator(poke : str, rank : str) -> dict:
     return movelist
 
 async def calcStats(rank : str, attr : list, maxAttr : list,
-                    movelist : list, attrMod : int = 0) -> (list, list, list):
+                    movelist : dict, attrMod : int = 0) -> (list, list, list):
     #initialize base stats
     attributes = attr[:]
     maxattr = maxAttr[:]
@@ -1508,16 +1508,39 @@ async def calcStats(rank : str, attr : list, maxAttr : list,
         return random.randint(low, high)
 
     if movelist:
+        #if we have a movelist, then don't mess with insight
+        insight = attributes[-1]
+        attributes = attributes[:-1]
+        attr_names = [None, 'STRENGTH', 'DEXTERITY', 'VITALITY', 'SPECIAL']
+        #todo: social names next
+        # and then skill names
         attrWeight = [0]*len(attributes)
+        socialWeight = [0]*len(socials)
         skillWeight = [0]*len(skills)
         #define all attributes and skills in separate lists (initially 0)
         # iterate over all moves, and add 1 to the equivalent attr/skill for each instance
         # this will be the weighted function
-        for move in movelist:
-            print(move)
-            pass
+        for move, desc in list(movelist.items()):
+            print(move, desc)
+            print(desc[3], desc[4], desc[5], desc[6])
+            #index 3, 4 & 5 are attributes, 6 is skills
+            #(5 could be a social stat)
+            if desc[3] in attr_names:
+                attrWeight[attr_names.index(desc[3])] += 1
+            if desc[4] in attr_names:
+                attrWeight[attr_names.index(desc[4])] += 1
+            if desc[5] in attr_names:
+                attrWeight[attr_names.index(desc[5])] += 1
+            if desc[5] in attr_names: #check social
+                attrWeight[attr_names.index(desc[5])] += 1
+            if desc[6] in attr_names:
+                attrWeight[attr_names.index(desc[5])] += 1
+        print('attr ', attrWeight)
+        print('social ', socialWeight)
+        print('skill ', skillWeight)
     else:
         attrWeight = [1]*len(attributes)
+        socialWeight = [1]*len(socials)
         skillWeight = [1]*len(skills)
 
     # allocate attributes
@@ -1585,6 +1608,10 @@ async def calcStats(rank : str, attr : list, maxAttr : list,
         if val:
             skills.insert(index, val)
 
+    try:
+        attributes.append(insight)
+    except:
+        pass
     return attributes, socials, skills
 
 async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
@@ -1696,7 +1723,7 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
                     break
             numMoves += 2
         else: #generate stats randomly
-            attributes, socials, skills = await calcStats(rank, attributes, maxattr, [])
+            attributes, socials, skills = await calcStats(rank, attributes, maxattr, {})
             numMoves = attributes[5] + 2 #insight + 2
 
 #todo: guarantee a (attacking?) move from the pokemon's rank
@@ -1713,10 +1740,14 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
             movelist.remove(temp)
         movelist = newMoves
 
+        move_descs = {}
+        for move in movelist:
+            move_descs[move] = await pkmnmovehelper(move)
+
         if boss: #allocate stats since we didn't before (and adjust insight accordingly)
             insightAdded = numMoves - 2
             baseattr[5] += insightAdded
-            attributes, socials, skills = await calcStats(rank, baseattr, maxattr, movelist, insightAdded)
+            attributes, socials, skills = await calcStats(rank, baseattr, maxattr, move_descs, insightAdded)
 
         #base 14, second 15, hidden 16, event 17
         totalchance = pokebotsettings[guild][0] + pokebotsettings[guild][1] + pokebotsettings[guild][2]
@@ -1830,7 +1861,8 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
             #add the moves + their desc
             for x in movelist:
                 try:
-                    found = await pkmnmovehelper(x)
+                    # found = await pkmnmovehelper(x)
+                    found = move_descs[x]
                     if found[8][-9:-1] == 'Accuracy':
                         try:
                             accMod = int(found[8][-11])
