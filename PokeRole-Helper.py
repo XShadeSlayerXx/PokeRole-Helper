@@ -1524,7 +1524,7 @@ async def calcStats(rank : str, attr : list, maxAttr : list,
         attr_names = ['STRENGTH', 'DEXTERITY', 'VITALITY', 'SPECIAL']
         social_names = ['TOUGH', 'COOL', 'BEAUTY', 'CLEVER', 'CUTE']
 
-        attributes[attr_names.index('VITALITY')] += bias_amt * 2
+        attrWeight[attr_names.index('VITALITY')] += bias_amt * 2
 
         #define all attributes and skills in separate lists (initially 0)
         # iterate over all moves, and add 1 to the equivalent attr/skill for each instance
