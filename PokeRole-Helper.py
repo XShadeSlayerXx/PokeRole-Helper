@@ -2144,7 +2144,7 @@ async def tracker(ctx, cmd = '', *, mc = ''):
 #####
 
 @bot.command(name = 'feedback',
-             aliases = ['fb', 'report', 'typo'],
+             aliases = ['fb', 'report', 'typo', 'bug'],
              help = 'Send feedback/suggestions/bug reports straight to my creator!')
 async def feedback(ctx, *, info):
     await bot.appinfo.owner.send(f'{ctx.author.name}: {info}')
