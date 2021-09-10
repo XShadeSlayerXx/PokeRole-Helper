@@ -52,7 +52,7 @@ database = None
 restartError = True
 
 ranks = ['Starter', 'Beginner', 'Amateur', 'Ace', 'Pro', 'Master', 'Champion']
-rankBias = [2, 6, 10, 14, 18, 22, 26]
+rankBias = [1, 3, 5, 7, 9, 10, 11]
 natures = ['Hardy (9)','Lonely (5)','Brave (9)','Adamant (4)','Naughty (6)',
            'Bold (9)','Docile (7)','Relaxed (8)','Impish (7)',
            'Lax (8)', 'Timid (4)', 'Hasty (7)', 'Serious (4)', 'Jolly (10)',
@@ -1510,9 +1510,11 @@ async def calcStats(rank : str, attr : list, maxAttr : list,
             final_list = choice(list(range(low, high)), number, replace = replace)
         return final_list
 
+    bias_amt = rankBias[rankIndex]
+
     attrWeight = [1] * len(attributes)
     socialWeight = [1] * len(socials)
-    skillWeight = [3] * 5 + [1] * ( len(skills) - 5 ) # first 4 skills are combat + alert for initiative
+    skillWeight = [bias_amt//2] * 5 + [1] * ( len(skills) - 5 ) # first 4 skills are combat + alert for initiative
 
     skill_names = [x[0].upper() for x in skills]
     if movelist:
@@ -1522,7 +1524,6 @@ async def calcStats(rank : str, attr : list, maxAttr : list,
         attr_names = ['STRENGTH', 'DEXTERITY', 'VITALITY', 'SPECIAL']
         social_names = ['TOUGH', 'COOL', 'BEAUTY', 'CLEVER', 'CUTE']
 
-        bias_amt = rankBias[rankIndex]
         #define all attributes and skills in separate lists (initially 0)
         # iterate over all moves, and add 1 to the equivalent attr/skill for each instance
         # this will be the weighted function
@@ -1545,6 +1546,8 @@ async def calcStats(rank : str, attr : list, maxAttr : list,
     fullStats = [False]*(len(attributes)+1)
     x = 0 #count allocated stats
     #need "- attrMod" because insight may already be allocated
+    if rank == 'Champion':
+        maxattr = [x+2 for x in maxattr]
     while x < pointsToAllocate and len(attributes) > 0:
         attrWeight = normalize(attrWeight)
         temp = weightedchoice(0, len(attributes), attrWeight)[0]
@@ -1717,7 +1720,7 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
             numMoves = baseattr[5]
             for _ in range(attributeAmount[ranks.index(rank.title())]):
                 randnum = random.random()
-                if randnum < 1/(attrNum*3) and baseattr[3] + numVitality < maxattr[3]: #chance for vitality
+                if randnum < 1/(attrNum*2) and baseattr[3] + numVitality < maxattr[3]: #chance for vitality
                     numVitality += 1
                     continue
                 if randnum < 1/attrNum: #chance for insight
@@ -1751,8 +1754,11 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
             attributes, socials, skills, leftover = await calcStats(rank, baseattr, maxattr,
                                                                     move_descs, insightAdded, numVitality)
             attributes[5] += insightAdded
-
-            extraPoints = min(leftover, (maxattr[5]-attributes[5]))
+            if rank == 'Champion':
+                lowerBound = maxattr[5]-attributes[5]+2
+            else:
+                lowerBound = maxattr[5]-attributes[5]
+            extraPoints = min(leftover, lowerBound)
             attributes[5] += extraPoints
 
             for _ in range(extraPoints): # repeated loop, yeah, yeah, i know
