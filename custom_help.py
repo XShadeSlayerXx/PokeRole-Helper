@@ -72,7 +72,8 @@ class Help(commands.Cog):
         if not which:
 
             custom_categories = {
-                'Reference' : sorted(['ability', 'move', 'pokelearns', 'stats', 'shop', 'item', 'weather', 'status']),
+                'Reference' : sorted(['ability', 'move', 'pokelearns',
+                                      'stats', 'shop', 'item', 'weather', 'status', 'rank']),
                 'Lists' : sorted(['filter', 'list', 'lists', 'listsub']),
                 'Encounters' : sorted(['encounter', 'wEncounter', 'random', 'hEncounter', 'boss']),
                 'Misc': sorted([
