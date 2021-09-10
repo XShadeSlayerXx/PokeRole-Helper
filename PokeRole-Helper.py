@@ -1524,6 +1524,8 @@ async def calcStats(rank : str, attr : list, maxAttr : list,
         attr_names = ['STRENGTH', 'DEXTERITY', 'VITALITY', 'SPECIAL']
         social_names = ['TOUGH', 'COOL', 'BEAUTY', 'CLEVER', 'CUTE']
 
+        attributes[attr_names.index('VITALITY')] += bias_amt * 2
+
         #define all attributes and skills in separate lists (initially 0)
         # iterate over all moves, and add 1 to the equivalent attr/skill for each instance
         # this will be the weighted function
@@ -1714,15 +1716,15 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
         baseattr = [x for x in attributes]
         maxattr = [0] + [int(statlist[x]) for x in range(5, 14, 2)]
 
-        numVitality = 0
+        # numVitality = 0
         if boss: #we need insight for # of moves
             attrNum = len(baseattr)
             numMoves = baseattr[5]
             for _ in range(attributeAmount[ranks.index(rank.title())]):
                 randnum = random.random()
-                if randnum < 1/(attrNum*2) and baseattr[3] + numVitality < maxattr[3]: #chance for vitality
-                    numVitality += 1
-                    continue
+                # if randnum < 1/(attrNum*2) and baseattr[3] + numVitality < maxattr[3]: #chance for vitality
+                #     numVitality += 1
+                #     continue
                 if randnum < 1/attrNum: #chance for insight
                     numMoves += 1
                 if numMoves == maxattr[5]:
@@ -1752,7 +1754,7 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
         if boss: #allocate stats since we didn't before (and adjust insight accordingly)
             insightAdded = numMoves - 2 - baseattr[5]
             attributes, socials, skills, leftover = await calcStats(rank, baseattr, maxattr,
-                                                                    move_descs, insightAdded, numVitality)
+                                                                    move_descs, insightAdded)#, numVitality)
             attributes[5] += insightAdded
             if rank == 'Champion':
                 lowerBound = maxattr[5]-attributes[5]+2
