@@ -52,7 +52,7 @@ database = None
 restartError = True
 
 ranks = ['Starter', 'Beginner', 'Amateur', 'Ace', 'Pro', 'Master', 'Champion']
-rankBias = [2, 4, 8, 16, 32, 64, 128]
+rankBias = [2, 6, 10, 14, 18, 22, 26]
 natures = ['Hardy (9)','Lonely (5)','Brave (9)','Adamant (4)','Naughty (6)',
            'Bold (9)','Docile (7)','Relaxed (8)','Impish (7)',
            'Lax (8)', 'Timid (4)', 'Hasty (7)', 'Serious (4)', 'Jolly (10)',
