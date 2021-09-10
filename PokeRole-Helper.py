@@ -2147,6 +2147,12 @@ async def tracker(ctx, cmd = '', *, mc = ''):
 
     save_obj(pokeStatus, 'pokeStatus')
 
+@bot.command(name = 'rank',
+             aliases = ['ranks'],
+             help = 'Displays all bot recognized ranks.')
+async def rankDisplay(ctx):
+    await ctx.send(' - ' + '\n- '.join(ranks))
+
 #####
 
 @bot.command(name = 'feedback',
