@@ -11,17 +11,105 @@ fileprefix = r'./pokeMap/tiles/'
 eventprefix = r'./pokeMap/event_icons/'
 BKGD_CROSS_PATH = r'./pokeMap/cross.png'
 
+cannotRotate = [
+    'big-cliff.png',
+    'cliff.png',
+    'crosswalk-pit.png',
+    'empty-cliffs.png',
+    'entrance.png',
+    'exit.png',
+    'hook_overlook.png',
+    'ridged-intersection.png',
+    'staircase.png',
+    'up-pit-left.png'
+]
+
 MAX_MAP_SIZE = 11
 TILE_WIDTH = 174
-# FLIP_CHANCE = .5
-FLIP_CHANCE = 0
+FLIP_CHANCE = .25
+# FLIP_CHANCE = 0
 ENQUEUE_CHANCE = .4
+# ENQUEUE_CHANCE = 1
 BKGD_COLOR = 0x828282
 #FILL_COLOR = 0xb7b7b7
 TILE_GLOW = 14
 
 #TODO:
 # allow mixing tiles? combine 2 and choose the lightest colors for new tiles?
+
+class Tile:
+    def __init__(self, path : str, directions = None):#, canRotate : bool = True):
+        if directions is None:
+            directions = set()
+        self.directions = set(directions)
+        self.canRotate = path not in cannotRotate
+        self.image = fileprefix + path
+        if not self.directions:
+            self.directions = self.findDirections()
+
+    def checkSubset(self, other : list):
+        return set(other) <= self.directions
+
+    def findDirections(self):
+        file = self.image #fileprefix + name
+        with Image.open(file) as tempImg:
+            pixels = tempImg.load()
+            width, height = tempImg.size
+        goodSides = set()
+        width -= 1
+        height -= 1
+
+        bad = False
+
+        for x in [0, .5, 1]:
+            for y in [0, .5, 1]:
+                if pixels[math.floor(x * width), math.floor(y * height)] == (184,184,184,255):
+                    self.canRotate = False
+                    bad = True
+                    continue
+                #check for whitespace
+                if pixels[math.floor(x * width), math.floor(y * height)] == (255, 255, 255, 255):
+                    slot = getAngle(y, x)
+                    if slot not in [-1]:
+                        #the center of the piece is irrelevant for now
+                        goodSides.add(slot)
+                        tileMaps[slot].append(self)
+                    # pixels[math.floor(x * width), math.floor(y * height)] = (255, 0, 0, 255)
+        # im = Image.new("RGBA", (width+1, height+1))
+        # tmpList = [pixels[x, y] for y in range(height+1) for x in range(width+1)]
+        # print(goodSides)
+        # im.putdata(tmpList)
+        # im.show()
+        # input()
+
+        # self.canRotate = self.check2d(pixels)
+
+        return goodSides
+
+    # @staticmethod
+    # def check2d(pixel_list, width = TILE_WIDTH, height = TILE_WIDTH):
+    #     color = 184
+    #     for y in range(height):
+    #         for x in range(width):
+    #             if pixel_list[x, y] == (color, color, color, 255):
+    #                 return False
+    #     return True
+
+angleMatrix = {(0, 0): 315,
+               (0, .5): 0,
+               (0, 1): 45,
+               (.5, 0): 270,
+               (.5, .5): -1,
+               (.5, 1): 90,
+               (1, 0): 225,
+               (1, .5): 180,
+               (1, 1): 135}
+
+def getAngle(x, y):
+    return angleMatrix[(x, y)]
+
+
+
 
 #which events should be shown on the map?
 event_list = [
@@ -66,18 +154,18 @@ tiles = []
 #TODO: hardcode these for now? (rename the pictures to be descriptive?)
 #organize the tiles based on which directions are available via index
 tileMaps = {
-    0 : [], #center. TODO: do something with these?
-    1 : [], #UP
-    2 : [], #UP-RIGHT
-    3 : [], #RIGHT
-    4 : [], #DOWN-RIGHT
-    -1 : [], #DOWN
-    -2 : [], #DOWN-LEFT
-    -3 : [], #LEFT
-    -4 : [] #UP-LEFT
+    # -1 : [], #center. TODO: do something with these?
+    0 : [], #UP
+    45 : [], #UP-RIGHT
+    90 : [], #RIGHT
+    135 : [], #DOWN-RIGHT
+    # 180 : [], #DOWN #it's literally empty
+    225 : [], #DOWN-LEFT
+    270 : [], #LEFT
+    315 : [] #UP-LEFT
 }
 
-tileSlots = [-4, 1, 2, -3, 0, 3, -2, -1, 4]
+tileSlots = [315, 0, 45, 270, -1, 90, 225, 180, 135]
 rotationMatrix = [1, 2, 3, 4, -1, -2, -3, -4]
 
 def blend_hex(h1, h2):
@@ -92,8 +180,11 @@ def blend_hex(h1, h2):
     final = (h1 + h2) // 2
     return final
 
-def get_random_tile(which = 0):
-    return random.choice(tileMaps[which])
+def get_random_tile(which = None):
+    if which is None:
+        # which = random.choice([x for x in tileMaps.keys() if x is not -1])
+        which = random.choice(list(tileMaps.keys()))
+    return random.choice(tileMaps[which%360])
 
 def new_angle(origin, rotation):
     newIndex = (rotationMatrix.index(origin)+rotation) % len(rotationMatrix)
@@ -120,28 +211,29 @@ def load_tiles():
     #     pass
 
     for file in filenames:
-        file = fileprefix + file
-        tempImg = Image.open(file)
-        tileIndex = len(tiles)
-        goodSides = []
-        pixels = tempImg.load()
-        width, height = tempImg.size
-        width -= 1
-        height -= 1
-
-        for x in [0, .5, 1]:
-            for y in [0, .5, 1]:
-                #check for whitespace
-                if pixels[math.floor(x*width), math.floor(y*height)] == (255, 255, 255, 255):
-                    slot = which_slot(x, y)
-                    tileMaps[slot].append(tileIndex)
-                    if slot not in [-1, 0, 1]:
-                        #the center of the piece is irrelevant
-                        goodSides.append(slot)
-
-        tiles.append((file, goodSides))
-
-    tileMaps[-1].append(18)
+        tiles.append(Tile(path = file))
+    #     file = fileprefix + file
+    #     tempImg = Image.open(file)
+    #     tileIndex = len(tiles)
+    #     goodSides = []
+    #     pixels = tempImg.load()
+    #     width, height = tempImg.size
+    #     width -= 1
+    #     height -= 1
+    #
+    #     for x in [0, .5, 1]:
+    #         for y in [0, .5, 1]:
+    #             #check for whitespace
+    #             if pixels[math.floor(x*width), math.floor(y*height)] == (255, 255, 255, 255):
+    #                 slot = which_slot(x, y)
+    #                 tileMaps[slot].append(tileIndex)
+    #                 if slot not in [-1, 0, 1]:
+    #                     #the center of the piece is irrelevant
+    #                     goodSides.append(slot)
+    #
+    #     tiles.append((file, goodSides))
+    #
+    # tileMaps[-1].append(18)
     #print(tiles,'\n',tileMaps)
     # for x in tileMaps:
     #     print(x, tileMaps[x])
@@ -170,14 +262,16 @@ def separateEvents(*events):
     return newEvents
 
 def form_map(size):
+    xStart = 5
+    yStart = 6
     # extend the y direction by 1 in order to include the event legend
-    map = [[None for _x in range(MAX_MAP_SIZE)] for _y in range(MAX_MAP_SIZE+1)]
+    map_tiles = [[None for _x in range(MAX_MAP_SIZE)] for _y in range(MAX_MAP_SIZE + 1)]
     queue = []
     requeue = []
     tile = get_random_tile()
-    map[5][6] = [tile, False]
-    for side in tiles[tile][1]:
-        queue.insert(0,[5, 5, side])
+    map_tiles[xStart][yStart] = [tile, False]
+    for side in tile.directions:
+        queue.insert(0,[xStart, yStart, side]) #5, 5??????
     while size > 1:
         if queue:
             bundle = queue.pop()
@@ -190,18 +284,31 @@ def form_map(size):
         nextY = coordy + changeY
         if not -1 < nextX < MAX_MAP_SIZE or \
                 not 0 < nextY < MAX_MAP_SIZE+1 or \
-                (map[nextX][nextY] and map[nextX][nextY] is not None):
+                (map_tiles[nextX][nextY] and map_tiles[nextX][nextY] is not None):
             #out of bounds or taken
             continue
-        if random.random() > FLIP_CHANCE:
+        if random.random() > FLIP_CHANCE and (-tileDir)%360 != 180:
             randTile = get_random_tile(-tileDir)
             rotation = None
-            sides = tiles[randTile][1]
+            sides = randTile.directions
         else:
-            rotation = random.choice(range(7))+1
-            randTile = get_random_tile(rotationMatrix[rotation])
-            sides = new_tile_angles(randTile, rotation)
-        map[nextX][nextY] = [randTile, rotation]
+            #can rotate by 90, 180, or 270 degrees. when applicable, can upgrade from 90 -> 45
+            rotation = random.choice(list(range(90,360,90)))
+            need_to_continue = True
+            while need_to_continue:
+                while (rotation-tileDir)%360 == 180:
+                    rotation = random.choice(list(range(90,360,90)))
+                # print('rot:',rotation,' ~ dir:', tileDir)
+                # randTile = get_random_tile(rotationMatrix[rotation])
+                randTile = get_random_tile((rotation-tileDir)%360)
+                # rotation = rotation
+                # sides = new_tile_angles(randTile, rotation)
+                sides = [(x-rotation)%360 for x in randTile.directions]
+                # print('oldSides: ',randTile.directions,' ~ newSides: ',sides)
+                if randTile.canRotate:
+                    need_to_continue = False
+
+        map_tiles[nextX][nextY] = [randTile, rotation]
         size -= 1
 
         for side in sides:
@@ -211,7 +318,7 @@ def form_map(size):
             else:
                 requeue.insert(0, [nextX, nextY, side])
 
-    return map
+    return map_tiles
 
 def populate_map(dungeon, events, size):
     evets, wets = list(zip(*events))
@@ -232,7 +339,8 @@ def create_map(dungeon, legend):
     for x in range(MAX_MAP_SIZE):
         for y in range(MAX_MAP_SIZE):
             if dungeon[x][y] is not None:
-                tile_image = Image.open(tiles[dungeon[x][y][0]][0])
+                tile_image = Image.open(dungeon[x][y][0].image)
+                # tile_image = Image.open(tiles[dungeon[x][y][0]][0])
                 # if the image should be flipped
                 if dungeon[x][y][1] is not None:
                     cross_tmp = BKGD_CROSS.copy()
@@ -279,6 +387,8 @@ class Maps(commands.Cog):
     def __init__(self, bot):
         load_tiles()
         self.bot = bot
+        # for x, y in tileMaps.items():
+        #     print(x, y)
 
     @commands.command(
         name = 'dungeon',
