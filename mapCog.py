@@ -68,26 +68,8 @@ class Tile:
                         #the center of the piece is irrelevant for now
                         goodSides.add(slot)
                         tileMaps[slot].append(self)
-                    # pixels[math.floor(x * width), math.floor(y * height)] = (255, 0, 0, 255)
-        # im = Image.new("RGBA", (width+1, height+1))
-        # tmpList = [pixels[x, y] for y in range(height+1) for x in range(width+1)]
-        # print(goodSides)
-        # im.putdata(tmpList)
-        # im.show()
-        # input()
-
-        # self.canRotate = self.check2d(pixels)
 
         return goodSides
-
-    # @staticmethod
-    # def check2d(pixel_list, width = TILE_WIDTH, height = TILE_WIDTH):
-    #     color = 184
-    #     for y in range(height):
-    #         for x in range(width):
-    #             if pixel_list[x, y] == (color, color, color, 255):
-    #                 return False
-    #     return True
 
 angleMatrix = {(0, 0): 315,
                (0, .5): 0,
@@ -101,9 +83,6 @@ angleMatrix = {(0, 0): 315,
 
 def getAngle(x, y):
     return angleMatrix[(x, y)]
-
-
-
 
 #which events should be shown on the map?
 event_list = [
@@ -232,40 +211,14 @@ def load_tiles():
     # for x in tileMaps:
     #     print(x, tileMaps[x])
 
-# def separateEvents(*events):
-#     newEvents = []
-#     nothingTotal = 100
-#     partial = 0
-#     for i, x in enumerate(events):
-#         if i % 2 == 0:
-#             if i == len(events):
-#                 newEvents.append((x, nothingTotal))
-#                 return newEvents
-#             else:
-#                 partial = x
-#         else:
-#             nothingTotal -= x
-#             newEvents.append((partial, x))
-#
-#     trailingPercents = (len(event_list)-len(newEvents))/len(event_list)
-#     additions = [x[0] for x in event_list if x not in [y[0] for y in newEvents]]
-#
-#     for add in additions:
-#         newEvents.append((add, trailingPercents))
-#
-#     return newEvents
-
 def form_map(size):
     xStart = 5
-    # xStart = 0
     yStart = 6
-    # yStart = MAX_MAP_SIZE - 1
     # extend the y direction by 1 in order to include the event legend
     map_tiles = [[None for _x in range(MAX_MAP_SIZE)] for _y in range(MAX_MAP_SIZE + 1)]
     queue = []
     requeue = []
     tile = get_random_tile()
-    # tile = Tile('entrance.png')
     map_tiles[xStart][yStart] = [tile, False]
     tmpDirs = list(tile.directions)
     random.shuffle(tmpDirs)
@@ -300,13 +253,8 @@ def form_map(size):
             while need_to_continue:
                 while (rotation-tileDir)%360 == 180:
                     rotation = random.choice(list(range(90,360,90)))
-                # print('rot:',rotation,' ~ dir:', tileDir)
-                # randTile = get_random_tile(rotationMatrix[rotation])
                 randTile = get_random_tile((rotation-tileDir)%360)
-                # rotation = rotation
-                # sides = new_tile_angles(randTile, rotation)
                 sides = [(x-rotation)%360 for x in randTile.directions]
-                # print('oldSides: ',randTile.directions,' ~ newSides: ',sides)
                 if randTile.canRotate:
                     need_to_continue = False
 
@@ -316,7 +264,6 @@ def form_map(size):
         tmpDirs = list(sides)
         random.shuffle(tmpDirs)
         for side in tmpDirs:#sides:
-            #if random.random() < (size-len(queue))/100:
             if random.random() < ENQUEUE_CHANCE:
                 where = random.randrange(len(queue)+1)
                 queue.insert(where, [nextX, nextY, side])
