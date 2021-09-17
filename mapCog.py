@@ -26,7 +26,7 @@ cannotRotate = [
 
 MAX_MAP_SIZE = 11
 TILE_WIDTH = 174
-FLIP_CHANCE = .25
+FLIP_CHANCE = .2
 # FLIP_CHANCE = 0
 ENQUEUE_CHANCE = .4
 # ENQUEUE_CHANCE = 1
@@ -59,14 +59,8 @@ class Tile:
         width -= 1
         height -= 1
 
-        bad = False
-
         for x in [0, .5, 1]:
             for y in [0, .5, 1]:
-                if pixels[math.floor(x * width), math.floor(y * height)] == (184,184,184,255):
-                    self.canRotate = False
-                    bad = True
-                    continue
                 #check for whitespace
                 if pixels[math.floor(x * width), math.floor(y * height)] == (255, 255, 255, 255):
                     slot = getAngle(y, x)
@@ -263,12 +257,15 @@ def separateEvents(*events):
 
 def form_map(size):
     xStart = 5
+    # xStart = 0
     yStart = 6
+    # yStart = MAX_MAP_SIZE - 1
     # extend the y direction by 1 in order to include the event legend
     map_tiles = [[None for _x in range(MAX_MAP_SIZE)] for _y in range(MAX_MAP_SIZE + 1)]
     queue = []
     requeue = []
     tile = get_random_tile()
+    # tile = Tile('entrance.png')
     map_tiles[xStart][yStart] = [tile, False]
     for side in tile.directions:
         queue.insert(0,[xStart, yStart, side]) #5, 5??????
@@ -282,13 +279,13 @@ def form_map(size):
         changeX, changeY = abs_coord(tileDir)
         nextX = coordx + changeX
         nextY = coordy + changeY
-        if not -1 < nextX < MAX_MAP_SIZE or \
-                not 0 < nextY < MAX_MAP_SIZE+1 or \
+        if not -1 < nextX < MAX_MAP_SIZE-1 or \
+                not 0 < nextY < MAX_MAP_SIZE or \
                 (map_tiles[nextX][nextY] and map_tiles[nextX][nextY] is not None):
             #out of bounds or taken
             continue
-        if random.random() > FLIP_CHANCE and (-tileDir)%360 != 180:
-            randTile = get_random_tile(-tileDir)
+        if random.random() > FLIP_CHANCE and tileDir != 0:
+            randTile = get_random_tile(tileDir+180)
             rotation = None
             sides = randTile.directions
         else:
