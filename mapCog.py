@@ -250,7 +250,9 @@ def form_map(size):
             #can rotate by 90, 180, or 270 degrees. when applicable, can upgrade from 90 -> 45
             rotation = random.choice(list(range(90,360,90)))
             need_to_continue = True
-            while need_to_continue:
+            sanity = 200
+            while need_to_continue and sanity > 0:
+                sanity -= 1
                 while (rotation-tileDir)%360 == 180:
                     rotation = random.choice(list(range(90,360,90)))
                 randTile = get_random_tile((rotation-tileDir)%360)
