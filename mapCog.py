@@ -24,6 +24,26 @@ cannotRotate = [
     'up-pit-left.png'
 ]
 
+background_colors = [
+    ('cyan','aquamarine'),
+    ('crimson','salmon'),
+    ('hotpink','pink'),
+    ('tomato','darkorange'),
+    ('gold','khaki'),
+    ('plum','lavender'),
+    ('Fuchsia','darkviolet'),
+    ('indigo','purple'),
+    ('slateblue','thistle'),
+    ('green','springgreen'),
+    ('darkolivegreen','olivegreen'),
+    ('teal','lightseagreen'),
+    ('aqua','steelblue'),
+    ('deepskyblue','navy'),
+    ('royalblue','darkred'),
+    ('firebrick','darkslateblue'),
+    ('lime','turquoise')
+]
+
 MAX_MAP_SIZE = 11
 TILE_WIDTH = 174
 FLIP_CHANCE = .05
@@ -301,7 +321,8 @@ def create_map(dungeon, legend):
     max_size = (TILE_WIDTH + 1) * MAX_MAP_SIZE
     lowX, lowY, highX, highY = max_size, max_size, 0, 0
     #dungeonMap = Image.new(mode = 'RGB', size = (max_size, max_size), color = BKGD_COLOR)
-    dungeonMap = generate_gradient('cyan', 'aquamarine', max_size, max_size)
+    bkg_clr = random.choice(background_colors)
+    dungeonMap = generate_gradient(bkg_clr[0], bkg_clr[1], max_size, max_size)
     BKGD_CROSS = Image.open(BKGD_CROSS_PATH).convert('RGBA')
     for x in range(MAX_MAP_SIZE):
         for y in range(MAX_MAP_SIZE):
