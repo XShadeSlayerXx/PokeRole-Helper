@@ -1,7 +1,8 @@
 from discord.ext import commands
 from discord import File
 from typing import Optional
-from PIL import Image
+from PIL import Image, ImageDraw
+import numpy as np
 
 import random
 import os
@@ -35,7 +36,7 @@ background_colors = [
     ('indigo','purple'),
     ('slateblue','thistle'),
     ('green','springgreen'),
-    ('darkolivegreen','olivegreen'),
+    ('darkolivegreen','olive'),
     ('teal','lightseagreen'),
     ('aqua','steelblue'),
     ('deepskyblue','navy'),
@@ -317,26 +318,39 @@ def generate_gradient(colour1: str, colour2: str, width: int, height: int) -> Im
     base.paste(top, (0, 0), mask)
     return base
 
+def create_alpha_mask(side_width, border, transparency) -> Image:
+    tmp = Image.new('RGBA', (TILE_WIDTH, TILE_WIDTH), (0,0,0,transparency))
+    draw = ImageDraw.Draw(tmp, "RGBA")
+    draw.rectangle(((border,border), (side_width-border, side_width-border)),(0,0,0,255))
+    return tmp
+
 def create_map(dungeon, legend):
+    offset_amt = 20
+    # paste the iamges slightly closer together, and take the higher white or dark sections from overlap?
+    #   or simply blend them together on a transparent background, and paste this onto a gradient image before crop
     max_size = (TILE_WIDTH + 1) * MAX_MAP_SIZE
+    TILE_OFFSET = TILE_WIDTH - TILE_WIDTH//offset_amt    # 5% smaller
     lowX, lowY, highX, highY = max_size, max_size, 0, 0
-    #dungeonMap = Image.new(mode = 'RGB', size = (max_size, max_size), color = BKGD_COLOR)
+    dungeonMap = Image.new(mode = 'RGBA', size = (max_size, max_size), color = (131, 131, 131, 0)) #BKGD_COLOR)
     bkg_clr = random.choice(background_colors)
-    dungeonMap = generate_gradient(bkg_clr[0], bkg_clr[1], max_size, max_size)
-    BKGD_CROSS = Image.open(BKGD_CROSS_PATH).convert('RGBA')
+    # dungeonMap = generate_gradient(bkg_clr[0], bkg_clr[1], max_size, max_size)
+    gradient_map = generate_gradient(bkg_clr[0], bkg_clr[1], max_size, max_size)
+    # BKGD_CROSS = Image.open(BKGD_CROSS_PATH).convert('RGBA')
+    ALPHA_TILE_MASK = create_alpha_mask(TILE_WIDTH, offset_amt//2, 127)
     for x in range(MAX_MAP_SIZE):
         for y in range(MAX_MAP_SIZE):
             if dungeon[x][y] is not None:
                 tile_image = Image.open(dungeon[x][y][0].image)
                 # tile_image = Image.open(tiles[dungeon[x][y][0]][0])
                 # if the image should be flipped
-                if dungeon[x][y][1] is not None:
-                    cross_tmp = BKGD_CROSS.copy()
-                    tile_image = Image.alpha_composite(cross_tmp, tile_image.rotate(dungeon[x][y][1]*45))
+                # if dungeon[x][y][1] is not None:
+                #     cross_tmp = BKGD_CROSS.copy()
+                #     tile_image = Image.alpha_composite(cross_tmp, tile_image.rotate(dungeon[x][y][1]*45))
                 if legend:
                     color = dungeon[x][y][2]
                     tile_image = Image.blend(tile_image, Image.new('RGBA', tile_image.size, color), .2)
-                dungeonMap.paste(tile_image, (x*TILE_WIDTH, y*TILE_WIDTH))
+                # dungeonMap.paste(tile_image, (x*TILE_WIDTH, y*TILE_WIDTH))
+                dungeonMap.paste(tile_image, (x*TILE_OFFSET, y*TILE_OFFSET), ALPHA_TILE_MASK)
                 if x > highX:
                     highX = x
                 if x < lowX:
@@ -346,11 +360,22 @@ def create_map(dungeon, legend):
                 if y < lowY:
                     lowY = y
 
+    #make the image opaque
+    np_dungeon = np.asarray(dungeonMap)
+    # np_dungeon[:, :, 3] = (255 * (np_dungeon[:, :, 3] > 100).any(axis = 2)).astype(np.uint8)
+    np_dungeon[:, :, 3] = (255 * (np_dungeon[:, :, 3] > 100)).astype(np.uint8)
+    # np_dungeon[:, :, :3] = (255 * (np_dungeon[:, :, :3] == 193).any(axis = 2)).astype(np.uint8)
+    # np_dungeon[:, :, :3] = np_dungeon[:, :, :3] if (255 * (np_dungeon[:, :, :3] == 193)).astype(np.uint8)
+    dungeonMap = Image.fromarray(np_dungeon)
+
+    gradient_map.paste(dungeonMap, mask = dungeonMap)
+    dungeonMap = gradient_map
+
     highX += 1
     highY += 1
 
     if legend:
-        lowY -= 1
+        lowY -= 1 #put this right over the rest of the map
         widt = highX - lowX
         if widt < len(legend) - 1:
             highX += len(legend) - widt - 1
@@ -365,7 +390,8 @@ def create_map(dungeon, legend):
             tmp.paste(event_img, img_size)
             dungeonMap.paste(tmp, ((lowX + offset)*TILE_WIDTH, (lowY*TILE_WIDTH)))
 
-    box = (lowX * TILE_WIDTH, lowY * TILE_WIDTH, highX * TILE_WIDTH, highY * TILE_WIDTH)
+    # box = (lowX * TILE_WIDTH, lowY * TILE_WIDTH, highX * TILE_WIDTH, highY * TILE_WIDTH)
+    box = (lowX * TILE_OFFSET, lowY * TILE_OFFSET, highX * TILE_OFFSET, highY * TILE_OFFSET)
     newDungeon = dungeonMap.crop(box = box)
 
     # newDungeon.show()
