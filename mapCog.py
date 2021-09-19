@@ -362,10 +362,14 @@ def create_map(dungeon, legend):
 
     #make the image opaque
     np_dungeon = np.asarray(dungeonMap)
-    # np_dungeon[:, :, 3] = (255 * (np_dungeon[:, :, 3] > 100).any(axis = 2)).astype(np.uint8)
     np_dungeon[:, :, 3] = (255 * (np_dungeon[:, :, 3] > 100)).astype(np.uint8)
-    # np_dungeon[:, :, :3] = (255 * (np_dungeon[:, :, :3] == 193).any(axis = 2)).astype(np.uint8)
-    # np_dungeon[:, :, :3] = np_dungeon[:, :, :3] if (255 * (np_dungeon[:, :, :3] == 193)).astype(np.uint8)
+    red, green, blue, _ = np_dungeon.T
+
+    # keep 184, 131, 9, 71
+    # change 193, 162, 178
+    gray_areas = np.logical_or(red == 193, red == 162, red == 177)
+
+    np_dungeon[..., :-1][gray_areas.T] = (255, 255, 255)
     dungeonMap = Image.fromarray(np_dungeon)
 
     gradient_map.paste(dungeonMap, mask = dungeonMap)
