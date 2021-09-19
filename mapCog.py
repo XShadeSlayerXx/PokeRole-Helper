@@ -433,12 +433,12 @@ class Maps(commands.Cog):
             newEvents = None
         dungeon = create_map(dungeonMap, newEvents)
 
-        dungeon.save(f'Dungeon-Size:{size}-Seed:{seed}.png')
+        dungeon.save(f'Dungeon-Size-{size}-Seed-{seed}.png')
 
         #content = f'*{seed}*'
-        await ctx.send(file = File(f'Dungeon-Size:{size}-Seed:{seed}.png'))
+        await ctx.send(file = File(f'Dungeon-Size-{size}-Seed-{seed}.png'))
 
-        os.remove(f'Dungeon-Size:{size}-Seed:{seed}.png')
+        os.remove(f'Dungeon-Size-{size}-Seed-{seed}.png')
 
 
 def setup(bot):
