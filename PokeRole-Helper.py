@@ -1945,14 +1945,7 @@ async def pkmn_search_encounter(ctx, number : typing.Optional[int] = 1,
     if numberMax is not None:
         number = random.randint(number, numberMax)
     msg = await pkmn_encounter(ctx, number, rank, pokelist, boss = boss)
-    msglist = [msg]
-    while len(msglist[-1]) > 1995:
-        tempmsg = msglist[-1]
-        temp = tempmsg.rindex('\n', 1500, 1995)
-        msglist[-1] = tempmsg[:temp]
-        msglist.append(tempmsg[temp:])
-    for x in msglist:
-        await ctx.send(x)
+    await send_big_msg(ctx, msg)
 
 @bot.command(name = 'wEncounter', aliases = ['we'],
              brief = 'Weighted encounter. %help wEncounter',
@@ -1992,14 +1985,7 @@ async def weighted_pkmn_search(ctx, number : typing.Optional[int] = 1,
                 which += 1
                 rand -= odds[which]
             msg += await pkmn_encounter(ctx, 1, rank, pokelist[which])
-    msglist = [msg]
-    while len(msglist[-1]) > 1995:
-        tempmsg = msglist[-1]
-        temp = tempmsg.rindex('\n',1500,1995)
-        msglist[-1] = tempmsg[:temp]
-        msglist.append(tempmsg[temp:])
-    for x in msglist:
-        await ctx.send(x)
+    await send_big_msg(ctx, msg)
 
 @bot.command(name = 'hEncounter', aliases = ['he'],
              brief = 'Habitat encounter. %help hEncounter',
@@ -2022,14 +2008,7 @@ async def habitat_pkmn_search(ctx, number : typing.Optional[int] = 1,
     for x in range(len(msg)):
         out += f'\n**{x+1}**.\n{msg[x]}'
     # msg = '\n\n'.join(msg)
-    msglist = [out]
-    while len(msglist[-1]) > 1995:
-        tempmsg = msglist[-1]
-        temp = tempmsg.rindex('\n', 1500, 1995)
-        msglist[-1] = tempmsg[:temp]
-        msglist.append(tempmsg[temp:])
-    for x in msglist:
-        await ctx.send(x)
+    await send_big_msg(ctx, out)
 
 @bot.command(name = 'boss', aliases = ['sEncounter', 'se'],
              brief = 'Gets # poke at listed rank from a given list with smart stats',
@@ -2043,17 +2022,6 @@ async def smart_pkmn_search(ctx, number : typing.Optional[int] = 1,
                                 *, pokelist : (lambda x : x.split(', '))):
     await pkmn_search_encounter(ctx = ctx, number = number, numberMax =  numberMax,
                                 rank = rank, pokelist =  pokelist, boss = True)
-    # if numberMax is not None:
-    #     number = random.randint(number, numberMax)
-    # msg = await pkmn_encounter(ctx, number, rank, pokelist, boss = True)
-    # msglist = [msg]
-    # while len(msglist[-1]) > 1995:
-    #     tempmsg = msglist[-1]
-    #     temp = tempmsg.rindex('\n', 1500, 1995)
-    #     msglist[-1] = tempmsg[:temp]
-    #     msglist.append(tempmsg[temp:])
-    # for x in msglist:
-    #     await ctx.send(x)
 
 #####
 
