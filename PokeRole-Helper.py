@@ -1831,7 +1831,8 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
         msg += f'**Ability:** {ability}\n'
 
         #item
-        msg += f'**Item:** {item}\n'
+        if pokebotsettings[guild][6]:
+            msg += f'**Item:** {item}\n'
 
         #⬤⦿⭘
         just = 0
