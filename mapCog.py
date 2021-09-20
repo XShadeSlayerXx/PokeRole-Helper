@@ -361,7 +361,7 @@ def create_map(dungeon, legend):
                     lowY = y
 
     #make the image opaque
-    np_dungeon = np.asarray(dungeonMap)
+    np_dungeon = np.array(dungeonMap)
     np_dungeon[:, :, 3] = (255 * (np_dungeon[:, :, 3] > 100)).astype(np.uint8)
     red, green, blue, _ = np_dungeon.T
 
