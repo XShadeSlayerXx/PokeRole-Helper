@@ -3,6 +3,7 @@ from discord import File
 from typing import Optional
 from PIL import Image, ImageDraw
 import numpy as np
+from sys import maxsize as MAXSIZE
 
 import random
 import os
@@ -421,9 +422,8 @@ class Maps(commands.Cog):
     )
     async def make_map(self, ctx, size : int, events : Optional[bool] = False, seed: Optional[int] = None):#, *events):
         if seed is None:
-            random.seed()
-        else:
-            random.seed(seed)
+            seed = random.randrange(MAXSIZE)
+        random.seed(seed)
 
         size = sorted((5,size,100))[1]
 
