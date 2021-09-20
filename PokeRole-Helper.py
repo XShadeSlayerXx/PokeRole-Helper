@@ -195,13 +195,22 @@ def lookup_poke(arg : str) -> str:
                      include_unknown = True)[0]
     return suggestion.term
 
-async def send_big_msg(ctx, arg : str):
+async def send_big_msg(ctx, arg : str, codify : bool = False):
+    if codify:
+        arg = arg.replace('`','') #remove all backticks since they're irrelevant
+        arg = arg.replace('*__','-')
+        arg = arg.replace('__','')
+        arg = arg.replace('*','')
     while arg != '' and arg != []:
         try:
-            last_newline = arg.rindex('\n', 5, 1996)
+            last_newline = arg.rindex('\n', 5, 1990)
         except:
-            last_newline = 1996
-        await ctx.send(arg[:last_newline])
+            last_newline = 1990
+        if codify:
+            msg = f'```{arg[:last_newline]}```'
+        else:
+            msg = arg[:last_newline]
+        await ctx.send(msg)
         #plus 1 to go over the '\n'
         arg = arg[last_newline+1:]
 
@@ -536,7 +545,7 @@ async def docs(ctx):
 #[ability1, ability2, ability3, shiny, show_move_desc, show ability desc, the item list used in encounter,
 # display lists pokemon by rank or odds]
 async def instantiateSettings(where : str):
-    defaults = [50,49,1,.00012, True, True, False, True, False, 0]
+    defaults = [50,49,1,.00012, True, True, False, True, False, 0, False]
     if where not in pokebotsettings:
         pokebotsettings[where] = defaults
         return
@@ -552,6 +561,7 @@ async def instantiateSettings(where : str):
                     '(ability_hidden_chance value)\n'
                     '(shiny_chance value)\n'
                     '(pre_evo_moves Yes/No/Lower)\n'
+                    '(code_block True/False)\n'
                     '(show_move_description True/False)\n'
                     '(encounter_item <listname>)\n'
                     '(display_list Rank/Odds)\n'
@@ -617,6 +627,11 @@ async def settings(ctx, setting='', value=''):
             pokebotsettings[guild][9] = 2 # lower rank pre-evo
         else:
             await ctx.send('Setting "pre_evo_moves" may be True, False, or Lower (Rank Pre-Evo Moves)')
+    elif setting in ['code', 'block', 'code_block']:
+        if value[0].lower() in ['y', 't']:
+            pokebotsettings[guild][10] = True
+        else:
+            pokebotsettings[guild][10] = False
     temp = pokebotsettings[guild]
     if temp[9] == 0:
         pre_evo='Same Rank'
@@ -628,12 +643,13 @@ async def settings(ctx, setting='', value=''):
                    f'Current settings:\n(Ability1/Ability2/AbilityHidden)\n**{temp[0],temp[1],temp[2]}**\n'
                    f'Shiny chance: {temp[3]} out of 1, **{temp[3]*100}%**\n'
                    f'Allow previous evolution moves in `%encounter`? **{pre_evo}**\n'
+                   f'Display `%encounter` text in a code block format: **{temp[10]}\n**'
                    f'Show move descriptions in %encounter: **{temp[4]}**\n'
                    f'Show ability description in %encounter: **{temp[5]}**\n'
                    f'Items in %encounter? **{temp[6]}**\n'
                    f'display_list by odds or rank? **{temp[7]}**\n'
                    f'arbitrary encounter random_rolls? **{temp[8]}**\n'
-                   f'"%help settings" for help')
+                   f'\n"%help settings" for help')
     save_obj(pokebotsettings, 'pokebotsettings')
 
 #######
@@ -1619,8 +1635,9 @@ async def calcStats(rank : str, attr : list, maxAttr : list,
     return attributes, socials, skills, leftover
 
 async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
-                         exact_rank : bool = False, boss : bool = False) -> str:
-    guild = await getGuilds(ctx)
+                         exact_rank : bool = False, boss : bool = False, guild = None) -> str:
+    if guild is None:
+        guild = await getGuilds(ctx)
     msg = ''
     rankrandom = False
     rankbase = False
@@ -1943,10 +1960,15 @@ async def pkmn_search_encounter(ctx, number : typing.Optional[int] = 1,
                                 *, pokelist : (lambda x : x.split(', ')),
                                 boss = False):
     #pokelist = pokelist.split(', ')
+    guild = await getGuilds(ctx)
     if numberMax is not None:
         number = random.randint(number, numberMax)
-    msg = await pkmn_encounter(ctx, number, rank, pokelist, boss = boss)
-    await send_big_msg(ctx, msg)
+    msg = await pkmn_encounter(ctx, number, rank, pokelist, boss = boss, guild = guild)
+    if pokebotsettings[guild][10]:
+        codify = True
+    else:
+        codify = False
+    await send_big_msg(ctx, msg, codify = codify)
 
 @bot.command(name = 'wEncounter', aliases = ['we'],
              brief = 'Weighted encounter. %help wEncounter',
@@ -1964,6 +1986,7 @@ async def weighted_pkmn_search(ctx, number : typing.Optional[int] = 1,
     #separate the pokelist string into a list of tuples (int(chance), str(pokemon, pokemon))
     #pokelist = re.findall(pokeweight, pokelist)
     #make the values useable
+    guild = await getGuilds(ctx)
     if numberMax is not None:
         number = random.randint(number, numberMax)
     odds = [int(x) for x,y in pokelist]
@@ -1986,7 +2009,11 @@ async def weighted_pkmn_search(ctx, number : typing.Optional[int] = 1,
                 which += 1
                 rand -= odds[which]
             msg += await pkmn_encounter(ctx, 1, rank, pokelist[which])
-    await send_big_msg(ctx, msg)
+    if pokebotsettings[guild][10]:
+        codify = True
+    else:
+        codify = False
+    await send_big_msg(ctx, msg, codify)
 
 @bot.command(name = 'hEncounter', aliases = ['he'],
              brief = 'Habitat encounter. %help hEncounter',
@@ -1999,6 +2026,7 @@ async def habitat_pkmn_search(ctx, number : typing.Optional[int] = 1,
                                 numberMax : typing.Optional[int] = None,
                                 rank : typing.Optional[ensure_rank] = 'Base',
                                *, pokelist : sep_biomes):
+    guild = await getGuilds(ctx)
     if numberMax is not None:
         number = random.randint(number, numberMax)
     msg = []
@@ -2009,7 +2037,11 @@ async def habitat_pkmn_search(ctx, number : typing.Optional[int] = 1,
     for x in range(len(msg)):
         out += f'\n**{x+1}**.\n{msg[x]}'
     # msg = '\n\n'.join(msg)
-    await send_big_msg(ctx, out)
+    if pokebotsettings[guild][10]:
+        codify = True
+    else:
+        codify = False
+    await send_big_msg(ctx, out, codify)
 
 @bot.command(name = 'boss', aliases = ['sEncounter', 'se'],
              brief = 'Gets # poke at listed rank from a given list with smart stats',
