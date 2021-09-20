@@ -420,12 +420,15 @@ class Maps(commands.Cog):
         e.g. `!dungeon 20 True 12345` will create a dungeon with 20 tiles, events, and the seed will be 12345.
         Events: """ + ', '.join([x[0] for x in event_list])
     )
-    async def make_map(self, ctx, size : int, events : Optional[bool] = False, seed: Optional[int] = None):#, *events):
+    async def make_map(self, ctx, size : int = None, events : Optional[bool] = False, seed: Optional[int] = None):#, *events):
         if seed is None:
             seed = random.randrange(MAXSIZE)
         random.seed(seed)
 
-        size = sorted((5,size,100))[1]
+        if size is None:
+            size = random.randrange(10,40)
+        else:
+            size = sorted((5,size,100))[1]
 
         # newEvents = separateEvents(events)
         dungeonMap = form_map(size)
