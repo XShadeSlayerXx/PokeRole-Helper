@@ -2152,9 +2152,50 @@ async def tracker(ctx, cmd = '', *, mc = ''):
 
 @bot.command(name = 'rank',
              aliases = ['ranks'],
-             help = 'Displays all bot recognized ranks.')
-async def rankDisplay(ctx):
-    await ctx.send(' - ' + '\n- '.join(ranks))
+             help = 'Displays all bot recognized ranks.\n'
+                    'Note that all Pokemon ranks are suggested, and their base attributes are listed at the '
+                    'Starter rank.')
+async def rankDisplay(ctx, rank : str = None):
+    if rank: rank = rank.title()
+    rank_info = {
+        'Starter' : [['Get your Trainer\'s License', 'Get your first Pokemon'],
+                     ['5 Skill Points (Skill Limit 1)', 'Can target a Max of 2 Pokemon (including itself)']],
+        'Beginner' : [['Successfully understand your Pokemon\'s gestures', 'Train a Pokemon', 'Catch your second Pokemon', 'Win your first Official Battle against a Trainer'],
+                      ['2 more Points to distribute on Attributes (total: 2)', '2 more points to distribute on Social Attributes (total: 2)', '4 more Skill Points to distribute (Skill Limit 2) (apply previous ranks\' points in order)', 'Can Target a Max of 2 Pokemon (including itself)']],
+        'Amateur' : [['Evolve a Pokemon', 'Win your first Badge', 'Increase a Pokemon\'s Loyalty & Happiness'],
+                     ['2 more Points to distribute on Attributes (total: 4)', '2 more Points to distribute on Social Attributes (total: 4)', '3 more Skill Points to distribute (Skill Limit 3) (apply previous ranks\' points in order)', 'Can Target a Max of 3 Pokemon (including itself)']],
+        'Ace' : [['Win 8 badges',
+                  'Get a full party of 6 evolved Pokemon',
+                  'Defeat your Rival'],
+                 ['2 more Points to distribute on Attributes (total: 6)',
+                  '2 more Points to distribute on Social Attributes (total: 6)',
+                  '2 more Skill Points to distribute (Skill Limit 4) (apply previous ranks\' points in order)',
+                  'Can Target a Max of 5 Pokemon (including itself)']],
+        'Pro' : [['Get a Pokemon-related job',
+                  'Clear the Victory Road',
+                  'Catch a Professional-Rank Pokemono'],
+                 ['2 more Points to distribute on Attributes (total: 8)',
+                  '2 more Points to distribute on Social Attributes (total: 8)',
+                  '1 more Skill Points to distribute (Skill Limit 5) (apply previous ranks\' points in order)',
+                  'Can Target a Max of 6 Pokemon (including itself)']],
+        'Master' : [['Find and study all Pokemon species in your Region'],
+                    ['6 more Points to distribute on Social Attributes (total: 14)',
+                     'Roll 2 additional dice on all Skill Rolls',
+                     'Passive Traits such as HP, Will, Initiative, DEF/S.DEF are increased by 2']],
+        'Champion' : [['Defeat the Champion in the League\'s Challenge'],
+                      ['6 more Points to distribute on Social Attributes (total: 14)',
+                       'Can raise Attributes up to 2 Points beyond the Limit'
+                       '1 more Skill Point to distribute']]
+    }
+    if rank not in rank_info:
+        await ctx.send(' - ' + '\n- '.join(list(rank_info.keys())))
+    else:
+        msg = f'**{rank} Rank**\n' \
+              f'*Recommended Achievements*\n- '
+        msg += '\n- '.join(rank_info[rank][0])
+        msg += f'\n\n*Benefits*\n- '
+        msg += '\n- '.join(rank_info[rank][1])
+        await ctx.send(msg)
 
 #####
 
