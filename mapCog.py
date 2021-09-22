@@ -55,6 +55,8 @@ ENQUEUE_CHANCE = .7
 BKGD_COLOR = 0x828282
 #FILL_COLOR = 0xb7b7b7
 TILE_GLOW = 14
+TILE_OPACITY = 255
+# TILE_OPACITY = 180
 
 #TODO:
 # allow mixing tiles? combine 2 and choose the lightest colors for new tiles?
@@ -332,7 +334,7 @@ def create_map(dungeon, legend):
     max_size = (TILE_WIDTH + 1) * MAX_MAP_SIZE
     TILE_OFFSET = TILE_WIDTH - TILE_WIDTH//offset_amt    # 5% smaller
     lowX, lowY, highX, highY = max_size, max_size, 0, 0
-    dungeonMap = Image.new(mode = 'RGBA', size = (max_size, max_size), color = (131, 131, 131, 0)) #BKGD_COLOR)
+    dungeonMap = Image.new(mode = 'RGBA', size = (max_size, max_size), color = (130, 130, 130, 0)) #BKGD_COLOR)
     bkg_clr = random.choice(background_colors)
     # dungeonMap = generate_gradient(bkg_clr[0], bkg_clr[1], max_size, max_size)
     gradient_map = generate_gradient(bkg_clr[0], bkg_clr[1], max_size, max_size)
@@ -364,6 +366,8 @@ def create_map(dungeon, legend):
     #make the image opaque
     np_dungeon = np.array(dungeonMap)
     np_dungeon[:, :, 3] = (255 * (np_dungeon[:, :, 3] > 100)).astype(np.uint8)
+    if TILE_OPACITY < 255:
+        np_dungeon[:, :, 3][np_dungeon[:, :, 0] == 131] = TILE_OPACITY #this currently changes the tile background alpha value
     red, green, blue, _ = np_dungeon.T
 
     # keep 184, 131, 9, 71
