@@ -697,7 +697,7 @@ class Maps(commands.Cog):
         @self.is_button_owner()
         async def on_lock_button(inter):
             self.author_only = not self.author_only
-            await self.msg.edit(content = inter.message.content,
+            await inter.reply(content = content, type = ResponseType.UpdateMessage,
                                 components = Make_WASD(self.author_only))
 
         @self.on_click.timeout
