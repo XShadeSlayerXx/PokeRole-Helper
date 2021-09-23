@@ -467,7 +467,7 @@ def Make_WASD(lock : bool = True):
                 ),
                 Button(
                     style = ButtonStyle.gray,
-                    label = ('lock' if lock else 'unlock') + ' movement',
+                    label = ('unlock' if lock else 'lock') + ' movement',
                     custom_id = 'lock'
 
                 )
@@ -697,7 +697,7 @@ class Maps(commands.Cog):
         @self.is_button_owner()
         async def on_lock_button(inter):
             self.author_only = not self.author_only
-            await inter.reply(content = content, type = ResponseType.UpdateMessage,
+            await inter.reply(content = inter.message.content, type = ResponseType.UpdateMessage,
                                 components = Make_WASD(self.author_only))
 
         @self.on_click.timeout
