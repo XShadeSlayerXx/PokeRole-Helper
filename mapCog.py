@@ -516,30 +516,30 @@ def Modify_Dungeon_Message(msg : str, what : str, howMuch : int = None,
         all = msg.split(' - ', maxsplit = 1)
         coords = all[0].split(',')
         # y coord excluding paranthesis
-        y_axis = int(coords[1][:-1])
+        y_axis = int(coords[1][:-1]) - 1
         y_axis = (y_axis - 1) % edge
-        result = coords[0] + ',' + str(y_axis) + ') - ' + all[1]
+        result = coords[0] + ',' + str(y_axis + 1) + ') - ' + all[1]
     elif what == 'down':
         all = msg.split(' - ', maxsplit = 1)
         coords = all[0].split(',')
         # y coord excluding paranthesis
-        y_axis = int(coords[1][:-1])
+        y_axis = int(coords[1][:-1]) - 1
         y_axis = (y_axis + 1) % edge
-        result = coords[0] + ',' + str(y_axis) + ') - ' + all[1]
+        result = coords[0] + ',' + str(y_axis + 1) + ') - ' + all[1]
     elif what == 'left':
         all = msg.split(' - ', maxsplit = 1)
         coords = all[0].split(',')
         # x coord excluding paranthesis
-        x_axis = int(coords[0][1:])
+        x_axis = int(coords[0][1:]) - 1
         x_axis = (x_axis - 1) % edge
-        result = '('+ str(x_axis) + ',' + coords[1] + ' - ' + all[1]
+        result = '('+ str(x_axis + 1) + ',' + coords[1] + ' - ' + all[1]
     elif what == 'right':
         all = msg.split(' - ', maxsplit = 1)
         coords = all[0].split(',')
         # x coord excluding paranthesis
-        x_axis = int(coords[0][1:])
+        x_axis = int(coords[0][1:]) - 1
         x_axis = (x_axis + 1) % edge
-        result = '('+ str(x_axis) + ',' + coords[1] + ' - ' + all[1]
+        result = '('+ str(x_axis + 1) + ',' + coords[1] + ' - ' + all[1]
     else:
         print(f'Error: Unknown Button {what} passed in.')
     return result
@@ -549,6 +549,8 @@ def Separate_Params(msg : str):
     eventsize = all[1].split('\n')
     coords = all[0][1:-1].split(',')
     x, y = int(coords[0]), int(coords[1])
+    x -= 1
+    y -= 1
     event = eventsize[0][7:]
     # size = int(eventsize[1][6:])
     # seed = int(all[2][6:])
@@ -654,8 +656,6 @@ class Maps(commands.Cog):
         @self.on_click.matching_id('dungeon')
         async def on_dungeon_button(inter):
             x, y, event = Separate_Params(inter.message.content)
-            x += 1
-            y += 1
             if event in ['random']:
                 event = random.choice(list(event_icons.keys()))
             content = f'({x},{y}) - Event: {event}'
