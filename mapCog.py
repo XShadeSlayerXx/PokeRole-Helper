@@ -640,24 +640,46 @@ class Maps(commands.Cog):
             if inter.author.id == self.button_owner or not self.author_only:
                 content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id, edge = height)
                 await inter.reply(content = content, type = ResponseType.UpdateMessage)
+            else:
+                await inter.create_response(content = 'The Movement buttons are reserved '
+                                                      'for whoever ran the original message, unless they\'re '
+                                                      'unlocked.',
+                                            ephemeral = True)
 
         @self.on_click.matching_id('down')
         async def on_left_button(inter):
             if inter.author.id == self.button_owner or not self.author_only:
                 content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id, edge = height)
                 await inter.reply(content = content, type = ResponseType.UpdateMessage)
+            else:
+                await inter.create_response(content = 'The Movement buttons are reserved '
+                                                      'for whoever ran the original message, unless they\'re '
+                                                      'unlocked.',
+                                            ephemeral = True)
 
         @self.on_click.matching_id('left')
         async def on_left_button(inter):
             if inter.author.id == self.button_owner or not self.author_only:
                 content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id, edge = width)
                 await inter.reply(content = content, type = ResponseType.UpdateMessage)
+            else:
+                await inter.create_response(content = 'The Movement buttons are reserved '
+                                                      'for whoever ran the original message, unless they\'re '
+                                                      'unlocked.',
+                                            ephemeral = True)
 
         @self.on_click.matching_id('right')
         async def on_left_button(inter):
             if inter.author.id == self.button_owner or not self.author_only:
                 content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id, edge = width)
                 await inter.reply(content = content, type = ResponseType.UpdateMessage)
+            else:
+                await inter.create_response(content = 'The Movement buttons are reserved '
+                                                      'for whoever ran the original message, unless they\'re '
+                                                      'unlocked.',
+                                            ephemeral = True)
+
+        self.on_click.not_from_user()
 
         @self.on_click.matching_id('event')
         async def on_left_button(inter):
@@ -665,6 +687,10 @@ class Maps(commands.Cog):
                 #event_order
                 content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id)
                 await inter.reply(content = content, type = ResponseType.UpdateMessage)
+            else:
+                await inter.create_response(content = 'The Event, Update, Delete, and Lock buttons are reserved '
+                                                      'for whoever ran the original message.',
+                                            ephemeral = True)
 
         @self.on_click.matching_id('dungeon')
         async def on_dungeon_button(inter):
@@ -684,6 +710,10 @@ class Maps(commands.Cog):
                 self.prev_msg = await Pillow_reply(inter = inter, content = content,
                                          image = tmp_dungeon, filename = filename,
                                               include_descriptions = False)
+            else:
+                await inter.create_response(content = 'The Event, Update, Delete, and Lock buttons are reserved '
+                                                      'for whoever ran the original message.',
+                                            ephemeral = True)
 
         @self.on_click.matching_id('delete')
         async def on_delete_button(inter):
@@ -692,6 +722,10 @@ class Maps(commands.Cog):
                 if self.prev_msg:
                     await self.prev_msg.delete()
                     self.prev_msg = None
+            else:
+                await inter.create_response(content = 'The Event, Update, Delete, and Lock buttons are reserved '
+                                                      'for whoever ran the original message.',
+                                            ephemeral = True)
 
         @self.on_click.matching_id('lock')
         async def on_lock_button(inter):
@@ -699,6 +733,10 @@ class Maps(commands.Cog):
                 self.author_only = not self.author_only
                 await inter.reply(content = inter.message.content, type = ResponseType.UpdateMessage,
                                     components = Make_WASD(self.author_only))
+            else:
+                await inter.create_response(content = 'The Event, Update, Delete, and Lock buttons are reserved '
+                                                      'for whoever ran the original message.',
+                                            ephemeral = True)
 
         @self.on_click.timeout
         async def on_timeout():
