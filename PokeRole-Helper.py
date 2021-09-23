@@ -16,6 +16,7 @@ from collections import OrderedDict as ODict
 import requests
 from numpy.random import choice
 from bisect import bisect
+from dislash import InteractionClient
 
 from dbhelper import Database
 
@@ -28,6 +29,7 @@ dev_env = (True if len(sys.argv) > 1 else False)
 cmd_prefix = ('./' if dev_env else '%')
 
 bot = commands.Bot(command_prefix = cmd_prefix)
+inter_client = InteractionClient(bot)
 
 #note that 'custom help' needs to load last
 cogs = ['mapCog', 'diceCog', 'miscCommands', 'questCog', 'custom_help']
