@@ -592,8 +592,8 @@ class Maps(commands.Cog):
         self.prev_msg = None
 
     @slash_command(
-        desciption="dungeon test",
-        guild_ids = TEST_GUILDS,
+        desciption="dungeon",
+        # guild_ids = TEST_GUILDS,
         options = [
             Option('size', 'Number of dungeon tiles between 5 and 100', OptionType.INTEGER),
             Option('seed', 'RNG seed (integer)', OptionType.STRING)
