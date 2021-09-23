@@ -654,6 +654,8 @@ class Maps(commands.Cog):
         @self.on_click.matching_id('dungeon')
         async def on_dungeon_button(inter):
             x, y, event = Separate_Params(inter.message.content)
+            x += 1
+            y += 1
             if event in ['random']:
                 event = random.choice(list(event_icons.keys()))
             content = f'({x},{y}) - Event: {event}'
