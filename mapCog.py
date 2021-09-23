@@ -4,7 +4,7 @@ from typing import Optional
 from PIL import Image, ImageDraw
 import numpy as np
 from sys import maxsize as MAXSIZE
-from dislash import slash_command, ActionRow, Button, ButtonStyle, ResponseType, Option, OptionType
+from dislash import slash_command, ActionRow, Button, ButtonStyle, ResponseType, Option, OptionType, check
 from io import BytesIO
 
 import random
@@ -423,7 +423,7 @@ def create_map(dungeon, legend):
 
     return newDungeon, TILE_OFFSET
 
-def Make_WASD():
+def Make_WASD(lock : bool = True):
     rows = [
         ActionRow(
             Button(
@@ -464,6 +464,12 @@ def Make_WASD():
                     style = ButtonStyle.red,
                     label = 'delete',
                     custom_id = 'delete'
+                ),
+                Button(
+                    style = ButtonStyle.green,
+                    label = ('lock' if lock else 'unlock') + ' movement',
+                    custom_id = 'lock'
+
                 )
             )
     ]
@@ -578,6 +584,8 @@ class Maps(commands.Cog):
         self.timeout = 1 * 60 * 10 # 10 minutes
         # self.timeout = 1 * 10
         self.prev_msg = None
+        self.author_only = True
+        self.button_owner = None
 
     @slash_command(
         desciption="Create a dungeon with control buttons from {size} and {seed}.",
@@ -615,6 +623,8 @@ class Maps(commands.Cog):
                       f'The dungeon controls will timeout after {self.timeout//60} minutes of inactivity.'
         await inter.reply(content = timeout_msg, ephemeral = True)
 
+        self.button_owner = inter.author.id
+
         self.msg = await Pillow_reply(inter = inter, content = content,
                            image = dungeon, filename = filename)
 
@@ -624,6 +634,7 @@ class Maps(commands.Cog):
 
         # inter = await msg.wait_for_button()
         @self.on_click.matching_id('up')
+        @self.can_use_button()
         async def on_left_button(inter):
             # print(inter.message.content)
             # print(inter.component)
@@ -631,27 +642,32 @@ class Maps(commands.Cog):
             await inter.reply(content = content, type = ResponseType.UpdateMessage)
 
         @self.on_click.matching_id('down')
+        @self.can_use_button()
         async def on_left_button(inter):
             content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id, edge = height)
             await inter.reply(content = content, type = ResponseType.UpdateMessage)
 
         @self.on_click.matching_id('left')
+        @self.can_use_button()
         async def on_left_button(inter):
             content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id, edge = width)
             await inter.reply(content = content, type = ResponseType.UpdateMessage)
 
         @self.on_click.matching_id('right')
+        @self.can_use_button()
         async def on_left_button(inter):
             content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id, edge = width)
             await inter.reply(content = content, type = ResponseType.UpdateMessage)
 
         @self.on_click.matching_id('event')
+        @self.is_button_owner()
         async def on_left_button(inter):
             #event_order
             content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id)
             await inter.reply(content = content, type = ResponseType.UpdateMessage)
 
         @self.on_click.matching_id('dungeon')
+        @self.is_button_owner()
         async def on_dungeon_button(inter):
             x, y, event = Separate_Params(inter.message.content)
             if event in ['random']:
@@ -670,11 +686,19 @@ class Maps(commands.Cog):
                                           include_descriptions = False)
 
         @self.on_click.matching_id('delete')
+        @self.is_button_owner()
         async def on_delete_button(inter):
             await self.msg.delete()
             if self.prev_msg:
                 await self.prev_msg.delete()
                 self.prev_msg = None
+
+        @self.on_click.matching_id('lock')
+        @self.is_button_owner()
+        async def on_lock_button(inter):
+            self.author_only = not self.author_only
+            await self.msg.edit(content = self.msg.content,
+                                components = Make_WASD(self.author_only))
 
         @self.on_click.timeout
         async def on_timeout():
@@ -683,6 +707,16 @@ class Maps(commands.Cog):
                 self.prev_msg = None
             await self.msg.edit(content = '(Timed out)\n'+self.msg.content.split('\n')[1],
                            components = [])
+
+    def is_button_owner(self):
+        def predicate(inter):
+            return inter.author.id == self.button_owner
+        return check(predicate)
+
+    def can_use_button(self):
+        def predicate(inter):
+            return inter.author.id == self.button_owner or not self.author_only
+        return check(predicate)
 
     @commands.command(
         name = 'dungeon',
