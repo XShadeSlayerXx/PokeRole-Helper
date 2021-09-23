@@ -549,8 +549,6 @@ def Separate_Params(msg : str):
     eventsize = all[1].split('\n')
     coords = all[0][1:-1].split(',')
     x, y = int(coords[0]), int(coords[1])
-    x -= 1
-    y -= 1
     event = eventsize[0][7:]
     # size = int(eventsize[1][6:])
     # seed = int(all[2][6:])
