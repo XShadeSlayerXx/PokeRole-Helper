@@ -634,71 +634,71 @@ class Maps(commands.Cog):
 
         # inter = await msg.wait_for_button()
         @self.on_click.matching_id('up')
-        @self.can_use_button()
         async def on_left_button(inter):
             # print(inter.message.content)
             # print(inter.component)
-            content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id, edge = height)
-            await inter.reply(content = content, type = ResponseType.UpdateMessage)
+            if inter.author.id == self.button_owner or not self.author_only:
+                content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id, edge = height)
+                await inter.reply(content = content, type = ResponseType.UpdateMessage)
 
         @self.on_click.matching_id('down')
-        @self.can_use_button()
         async def on_left_button(inter):
-            content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id, edge = height)
-            await inter.reply(content = content, type = ResponseType.UpdateMessage)
+            if inter.author.id == self.button_owner or not self.author_only:
+                content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id, edge = height)
+                await inter.reply(content = content, type = ResponseType.UpdateMessage)
 
         @self.on_click.matching_id('left')
-        @self.can_use_button()
         async def on_left_button(inter):
-            content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id, edge = width)
-            await inter.reply(content = content, type = ResponseType.UpdateMessage)
+            if inter.author.id == self.button_owner or not self.author_only:
+                content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id, edge = width)
+                await inter.reply(content = content, type = ResponseType.UpdateMessage)
 
         @self.on_click.matching_id('right')
-        @self.can_use_button()
         async def on_left_button(inter):
-            content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id, edge = width)
-            await inter.reply(content = content, type = ResponseType.UpdateMessage)
+            if inter.author.id == self.button_owner or not self.author_only:
+                content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id, edge = width)
+                await inter.reply(content = content, type = ResponseType.UpdateMessage)
 
         @self.on_click.matching_id('event')
-        @self.is_button_owner()
         async def on_left_button(inter):
-            #event_order
-            content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id)
-            await inter.reply(content = content, type = ResponseType.UpdateMessage)
+            if inter.author.id == self.button_owner:
+                #event_order
+                content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id)
+                await inter.reply(content = content, type = ResponseType.UpdateMessage)
 
         @self.on_click.matching_id('dungeon')
-        @self.is_button_owner()
         async def on_dungeon_button(inter):
-            x, y, event = Separate_Params(inter.message.content)
-            if event in ['random']:
-                event = random.choice(list(event_icons.keys()))
-            content = f'({x},{y}) - Event: {event}'
-            filename = f'tmp_Size-{size}-Seed-{seed}.png'
-            tmp_dungeon = Add_Event(dungeon, event, x, y, TILE_OFFSET)
-            # tmp_dungeon.show()
-            timeout_msg = 'Updating...'
-            await inter.reply(content = timeout_msg, ephemeral = False, delete_after = 1)
-            if self.prev_msg:
-                await self.prev_msg.delete()
-                self.prev_msg = None
-            self.prev_msg = await Pillow_reply(inter = inter, content = content,
-                                     image = tmp_dungeon, filename = filename,
-                                          include_descriptions = False)
+            if inter.author.id == self.button_owner:
+                x, y, event = Separate_Params(inter.message.content)
+                if event in ['random']:
+                    event = random.choice(list(event_icons.keys()))
+                content = f'({x},{y}) - Event: {event}'
+                filename = f'tmp_Size-{size}-Seed-{seed}.png'
+                tmp_dungeon = Add_Event(dungeon, event, x, y, TILE_OFFSET)
+                # tmp_dungeon.show()
+                timeout_msg = 'Updating...'
+                await inter.reply(content = timeout_msg, ephemeral = False, delete_after = 1)
+                if self.prev_msg:
+                    await self.prev_msg.delete()
+                    self.prev_msg = None
+                self.prev_msg = await Pillow_reply(inter = inter, content = content,
+                                         image = tmp_dungeon, filename = filename,
+                                              include_descriptions = False)
 
         @self.on_click.matching_id('delete')
-        @self.is_button_owner()
         async def on_delete_button(inter):
-            await self.msg.delete()
-            if self.prev_msg:
-                await self.prev_msg.delete()
-                self.prev_msg = None
+            if inter.author.id == self.button_owner:
+                await self.msg.delete()
+                if self.prev_msg:
+                    await self.prev_msg.delete()
+                    self.prev_msg = None
 
         @self.on_click.matching_id('lock')
-        @self.is_button_owner()
         async def on_lock_button(inter):
-            self.author_only = not self.author_only
-            await inter.reply(content = inter.message.content, type = ResponseType.UpdateMessage,
-                                components = Make_WASD(self.author_only))
+            if inter.author.id == self.button_owner:
+                self.author_only = not self.author_only
+                await inter.reply(content = inter.message.content, type = ResponseType.UpdateMessage,
+                                    components = Make_WASD(self.author_only))
 
         @self.on_click.timeout
         async def on_timeout():
@@ -707,16 +707,6 @@ class Maps(commands.Cog):
                 self.prev_msg = None
             await self.msg.edit(content = '(Timed out)\n'+self.msg.content.split('\n')[1],
                            components = [])
-
-    def is_button_owner(self):
-        def predicate(inter):
-            return inter.author.id == self.button_owner
-        return check(predicate)
-
-    def can_use_button(self):
-        def predicate(inter):
-            return inter.author.id == self.button_owner or not self.author_only
-        return check(predicate)
 
     @commands.command(
         name = 'dungeon',
