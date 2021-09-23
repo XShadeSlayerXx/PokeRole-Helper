@@ -517,41 +517,29 @@ def Modify_Dungeon_Message(msg : str, what : str, howMuch : int = None,
         coords = all[0].split(',')
         # y coord excluding paranthesis
         y_axis = int(coords[1][:-1])
-        if y_axis != 1:
-            y_axis -= 1
-            result = coords[0] + ',' + str(y_axis) + ') - ' + all[1]
-        else:
-            result = msg
+        y_axis = (y_axis - 1) % edge
+        result = coords[0] + ',' + str(y_axis) + ') - ' + all[1]
     elif what == 'down':
         all = msg.split(' - ', maxsplit = 1)
         coords = all[0].split(',')
         # y coord excluding paranthesis
         y_axis = int(coords[1][:-1])
-        if y_axis < edge:
-            y_axis += 1
-            result = coords[0] + ',' + str(y_axis) + ') - ' + all[1]
-        else:
-            result = msg
+        y_axis = (y_axis + 1) % edge
+        result = coords[0] + ',' + str(y_axis) + ') - ' + all[1]
     elif what == 'left':
         all = msg.split(' - ', maxsplit = 1)
         coords = all[0].split(',')
         # x coord excluding paranthesis
         x_axis = int(coords[0][1:])
-        if x_axis != 1:
-            x_axis -= 1
-            result = '('+ str(x_axis) + ',' + coords[1] + ' - ' + all[1]
-        else:
-            result = msg
+        x_axis = (x_axis - 1) % edge
+        result = '('+ str(x_axis) + ',' + coords[1] + ' - ' + all[1]
     elif what == 'right':
         all = msg.split(' - ', maxsplit = 1)
         coords = all[0].split(',')
         # x coord excluding paranthesis
         x_axis = int(coords[0][1:])
-        if x_axis < edge:
-            x_axis += 1
-            result = '('+ str(x_axis) + ',' + coords[1] + ' - ' + all[1]
-        else:
-            result = msg
+        x_axis = (x_axis + 1) % edge
+        result = '('+ str(x_axis) + ',' + coords[1] + ' - ' + all[1]
     else:
         print(f'Error: Unknown Button {what} passed in.')
     return result
@@ -639,7 +627,7 @@ class Maps(commands.Cog):
         async def on_left_button(inter):
             # print(inter.message.content)
             # print(inter.component)
-            content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id)
+            content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id, edge = height)
             await inter.reply(content = content, type = ResponseType.UpdateMessage)
 
         @self.on_click.matching_id('down')
@@ -649,7 +637,7 @@ class Maps(commands.Cog):
 
         @self.on_click.matching_id('left')
         async def on_left_button(inter):
-            content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id)
+            content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id, edge = width)
             await inter.reply(content = content, type = ResponseType.UpdateMessage)
 
         @self.on_click.matching_id('right')
