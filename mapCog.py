@@ -527,7 +527,7 @@ def Modify_Dungeon_Message(msg : str, what : str, howMuch : int = None,
         coords = all[0].split(',')
         # y coord excluding paranthesis
         y_axis = int(coords[1][:-1])
-        if y_axis <= edge:
+        if y_axis < edge:
             y_axis += 1
             result = coords[0] + ',' + str(y_axis) + ') - ' + all[1]
         else:
@@ -547,7 +547,7 @@ def Modify_Dungeon_Message(msg : str, what : str, howMuch : int = None,
         coords = all[0].split(',')
         # x coord excluding paranthesis
         x_axis = int(coords[0][1:])
-        if x_axis <= edge:
+        if x_axis < edge:
             x_axis += 1
             result = '('+ str(x_axis) + ',' + coords[1] + ' - ' + all[1]
         else:
@@ -592,14 +592,14 @@ class Maps(commands.Cog):
         self.prev_msg = None
 
     @slash_command(
-        desciption="dungeon",
-        # guild_ids = TEST_GUILDS,
+        desciption="Create a dungeon with control buttons from {size} and {seed}.",
+        guild_ids = TEST_GUILDS,
         options = [
             Option('size', 'Number of dungeon tiles between 5 and 100', OptionType.INTEGER),
             Option('seed', 'RNG seed (integer)', OptionType.STRING)
         ]
     )
-    async def slash_dungeon(self, inter, size : int = None, seed : int = None):
+    async def dungeon(self, inter, size : int = None, seed : int = None):
         if seed is None:
             seed = random.randrange(MAXSIZE)
         random.seed(seed)
