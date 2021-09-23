@@ -588,6 +588,7 @@ class Maps(commands.Cog):
         self.button_owner = None
 
     @slash_command(
+        name = 'dungeon',
         desciption="Create a dungeon with control buttons from {size} and {seed}.",
         # guild_ids = TEST_GUILDS,
         options = [
@@ -678,8 +679,6 @@ class Maps(commands.Cog):
                                                       'for whoever ran the original message, unless they\'re '
                                                       'unlocked.',
                                             ephemeral = True)
-
-        self.on_click.not_from_user()
 
         @self.on_click.matching_id('event')
         async def on_left_button(inter):
