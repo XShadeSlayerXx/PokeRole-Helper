@@ -1445,6 +1445,11 @@ async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
                 style = ButtonStyle.green,
                 label = 'Abilities',
                 custom_id = 'abilities'
+            ),
+            Button(
+                style = ButtonStyle.gray,
+                label = 'Forms',
+                custom_id = 'forms'
             )
         )
     ]
@@ -1468,6 +1473,14 @@ async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
     @on_click.matching_id('abilities')
     async def on_ability_button(inter):
         await inter.reply(await getPokemonAbilities(pokemon))
+        inter.component.disabled = True
+        await msg.edit(components = inter.components)
+
+    @on_click.matching_id('forms')
+    async def on_form_button(inter):
+        output = await form_helper(pokemon)
+        if '\n' in output:
+            await inter.reply(await form_helper(pokemon))
         inter.component.disabled = True
         await msg.edit(components = inter.components)
 
@@ -2117,11 +2130,7 @@ async def smart_pkmn_search(ctx, number : typing.Optional[int] = 1,
 
 #####
 
-@bot.command(name = 'forms',
-             aliases = ['form'],
-             help = 'A way to find pokemon with forms or similar names.\n'
-                    '`%forms Lycanroc` (Capitalization should not matter)')
-async def form_finder(ctx, *, name : str = ''):
+async def form_helper(name):
     query = f'SELECT name FROM pkmnStats WHERE name LIKE "%{name}%" ' \
             f'AND generation BETWEEN 1 AND 8'
     result = database.custom_query(query)
@@ -2131,6 +2140,14 @@ async def form_finder(ctx, *, name : str = ''):
         msg = f'No pokemon with `{name}` were found. Try a shorter string?'
     else:
         msg = '- ' + '\n- '.join([x[0] for x in result])
+    return msg
+
+@bot.command(name = 'forms',
+             aliases = ['form'],
+             help = 'A way to find pokemon with forms or similar names.\n'
+                    '`%forms Lycanroc` (Capitalization should not matter)')
+async def form_finder(ctx, *, name : str = ''):
+    msg = await form_helper(name)
     await ctx.send(msg)
 
 #####
