@@ -29,7 +29,11 @@ dev_env = (True if len(sys.argv) > 1 else False)
 cmd_prefix = ('./' if dev_env else '%')
 
 bot = commands.Bot(command_prefix = cmd_prefix)
-inter_client = InteractionClient(bot)
+if dev_env:
+    inter_client = InteractionClient(bot, test_guilds = [669326419641237509], sync_commands = False)
+else:
+    inter_client = InteractionClient(bot)
+
 
 #note that 'custom help' needs to load last
 cogs = ['mapCog', 'diceCog', 'miscCommands', 'questCog', 'custom_help']
