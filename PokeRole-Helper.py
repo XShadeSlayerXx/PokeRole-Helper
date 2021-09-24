@@ -16,7 +16,7 @@ from collections import OrderedDict as ODict
 import requests
 from numpy.random import choice
 from bisect import bisect
-from dislash import InteractionClient, ActionRow, Button, ButtonStyle, ResponseType
+from dislash import InteractionClient, ActionRow, Button, ButtonStyle, ResponseType, Option, OptionType
 
 from dbhelper import Database
 
@@ -215,6 +215,26 @@ async def send_big_msg(ctx, arg : str, codify : bool = False):
         await ctx.send(msg)
         #plus 1 to go over the '\n'
         arg = arg[last_newline+1:]
+
+async def send_big_slash_msg(inter, arg : str, codify : bool = False):
+    if codify:
+        arg = arg.replace('`','') #remove all backticks since they're irrelevant
+        arg = arg.replace('*__','-')
+        arg = arg.replace('__','')
+        arg = arg.replace('*','')
+    while arg != '' and arg != []:
+        try:
+            last_newline = arg.rindex('\n', 5, 1990)
+        except:
+            last_newline = 1990
+        if codify:
+            msg = f'```{arg[:last_newline]}```'
+        else:
+            msg = arg[:last_newline]
+        await inter.reply(msg, type = ResponseType.ChannelMessage)
+        #plus 1 to go over the '\n'
+        arg = arg[last_newline+1:]
+
 
 def returnWeights(pokestr : str) -> list:
     try:
@@ -2129,6 +2149,21 @@ async def smart_pkmn_search(ctx, number : typing.Optional[int] = 1,
                                 *, pokelist : (lambda x : x.split(', '))):
     await pkmn_search_encounter(ctx = ctx, number = number, numberMax =  numberMax,
                                 rank = rank, pokelist =  pokelist, boss = True)
+
+@inter_client.slash_command(
+    name = 'encounter',
+    description = 'A smart encounter in your very own slash commands',
+    options = [
+        Option('pokemon', "Which pokemon?", OptionType.STRING, required = True),
+        Option('number', 'How many? (up to 6)', OptionType.INTEGER),
+        Option('rank', 'What rank?', OptionType.STRING)
+    ]
+)
+async def smart_pkmn_search(inter, number : int = 1,
+                                rank : ensure_rank = 'Base',
+                                *, pokemon : str):
+    await pkmn_search_encounter(ctx = inter, number = number, numberMax =  number,
+                                rank = rank, pokelist =  pokemon.split(', '), boss = True)
 
 #####
 
