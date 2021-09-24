@@ -16,7 +16,7 @@ from collections import OrderedDict as ODict
 import requests
 from numpy.random import choice
 from bisect import bisect
-from dislash import InteractionClient
+from dislash import InteractionClient, ActionRow, Button, ButtonStyle
 
 from dbhelper import Database
 
@@ -347,6 +347,23 @@ def pokesFromBiome(name : str) -> list:
         for pkmn in pkmnHabitats[name]:
             biomes.add(pkmn)
     return biomes
+
+async def getPokemonAbilities(pkmn):
+    query = f'SELECT ability, ability2, abilityhidden, abilityevent FROM pkmnStats WHERE name="{pkmn}"'
+    query = database.custom_query(query)[0]
+    ability = list(query)
+    while '' in ability:
+        ability.remove('')
+    ability_expanded = [(await pkmnabilitieshelper(x)) for x in ability]
+
+    output = ''
+    for name, (effect, desc) in zip(ability, ability_expanded):
+        output += f'**{name}:** {effect}\n'
+        if desc != "":
+            output += f'*{desc}*\n'
+        output += '\n'
+
+    return output[:-2]  #-2 to remove the trailing \n 's
 
 #######
 #decorators
@@ -1417,7 +1434,47 @@ async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
     output += f'**Can Evolve**: {(found[18] or "No")}\n'
     output += f'**Other Forms**: {(found[19] or "No")}\n'
 
-    await ctx.send(output)
+    buttons = [
+        ActionRow(
+            Button(
+                style = ButtonStyle.blurple,
+                label = 'Moves',
+                custom_id = 'moves'
+            ),
+            Button(
+                style = ButtonStyle.green,
+                label = 'Abilities',
+                custom_id = 'abilities'
+            )
+        )
+    ]
+
+    msg = await ctx.send(output, components = buttons)
+
+    on_click = msg.create_click_listener(timeout = 30)
+
+    @on_click.matching_id('moves')
+    async def on_move_button(inter):
+        moves = await pkmnlearnshelper(pokemon)
+
+        output = f'__{pokemon.title()}__\n'
+        for x in moves.keys():
+            output += f'**{x}**\n' + '  |  '.join(moves[x]) + '\n'
+
+        await inter.reply(output)
+        inter.component.disabled = True
+        await msg.edit(components = inter.components)
+
+    @on_click.matching_id('abilities')
+    async def on_ability_button(inter):
+        await inter.reply(await getPokemonAbilities(pokemon))
+        inter.component.disabled = True
+        await msg.edit(components = inter.components)
+
+    @on_click.timeout
+    async def on_timeout():
+        await msg.edit(components = [])
+
     #except:
     #    msg = f'{pokemon} wasn\'t found in the pokemon list.'
     #    if pokemon in pkmnLists:
@@ -2271,7 +2328,7 @@ if not dev_env:
             for name, (effect, desc) in zip(ability, ability_expanded):
                 output += f'**{name}:** {effect}\n'
                 if desc != "":
-                    output += f'-\n*{desc}*\n'
+                    output += f'*{desc}*\n'
                 output += '\n'
 
             await channel.send(output[:-2]) #-2 to remove the trailing \n 's
