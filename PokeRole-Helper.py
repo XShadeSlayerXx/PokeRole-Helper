@@ -17,6 +17,7 @@ import requests
 from numpy.random import choice
 from bisect import bisect
 from dislash import InteractionClient, ActionRow, Button, ButtonStyle, ResponseType, Option, OptionType, OptionChoice
+from dislash.interactions import SlashCommand
 
 from dbhelper import Database
 
@@ -30,7 +31,7 @@ cmd_prefix = ('./' if dev_env else '%')
 
 bot = commands.Bot(command_prefix = cmd_prefix)
 if dev_env:
-    inter_client = InteractionClient(bot, test_guilds = [669326419641237509], sync_commands = False)
+    inter_client = InteractionClient(bot, sync_commands = False)
 else:
     inter_client = InteractionClient(bot)
 
@@ -159,13 +160,36 @@ async def on_ready():
             save_obj(file[1], file[0])
     await instantiateHabitatsList()
 
-    # if dev_env:
-    #     for func in [smart_pkmn_search]:
-    #         await inter_client.register_guild_command(669326419641237509, func)
-
     if not dev_env:
         await bot.appinfo.owner.send(f'Connected Successfully')
     restartError = False
+
+if dev_env:
+    @inter_client.event
+    async def on_ready():
+        sc = []
+        test_guild = 669326419641237509
+        sc.append(
+            SlashCommand(
+                name = 'encounter',
+                description = 'A smart encounter in your very own slash commands',
+                options = [
+                    Option('pokemon', "Which pokemon?", OptionType.STRING, required = True),
+                    Option('number', 'How many? (up to 6)', OptionType.INTEGER),
+                    Option('rank', 'What rank?', OptionType.STRING, choices = [
+                        OptionChoice(x, x) for x in ranks
+                    ])
+                ]
+            )
+        )
+        registered = inter_client.get_guild_commands(test_guild)
+        registered_names = [x.name for x in registered]
+        for func in sc:
+            if func.name not in registered_names:
+                await inter_client.register_guild_command(test_guild, func)
+            else:
+                await inter_client.edit_guild_command_named(test_guild, func.name, func)
+
 
 #######
 #converters
