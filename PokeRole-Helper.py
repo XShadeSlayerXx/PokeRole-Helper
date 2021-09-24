@@ -2171,7 +2171,7 @@ async def smart_pkmn_search(inter, number : int = 1,
                                 rank : ensure_rank = 'Base',
                                 *, pokemon : str):
     await pkmn_search_encounter(ctx = inter, number = number, numberMax =  number,
-                                rank = rank, pokelist =  pokemon.split(', '), boss = True)
+                                rank = rank.title(), pokelist =  pokemon.split(', '), boss = True)
 
 #####
 
