@@ -589,7 +589,7 @@ class Maps(commands.Cog):
 
     @slash_command(
         name = 'dungeon',
-        description="Create a dungeon with control buttons from {size} and {seed}.",
+        description="Create a dungeon with control buttons from {size} and {seed}. (0, 0) is top-left.",
         # guild_ids = TEST_GUILDS,
         options = [
             Option('size', 'Number of dungeon tiles between 5 and 100', OptionType.INTEGER),
