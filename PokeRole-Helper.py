@@ -159,6 +159,10 @@ async def on_ready():
             save_obj(file[1], file[0])
     await instantiateHabitatsList()
 
+    # if dev_env:
+    #     for func in [smart_pkmn_search]:
+    #         await inter_client.register_guild_command(669326419641237509, func)
+
     if not dev_env:
         await bot.appinfo.owner.send(f'Connected Successfully')
     restartError = False
