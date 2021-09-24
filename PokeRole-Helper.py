@@ -1460,19 +1460,15 @@ async def pkmnstatshelper(poke : str):
     tmp = [f'#{tmp[0]}'] + tmp[2:]
     return tmp
 
-@bot.command(name = 'stats', aliases = ['s', 'info'], help = 'List a pokemon\'s stats. '
-                                                             'Emote on the message to expand the abilities!')
-async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
-    #try:
-    #deep[:] copy of coroutine, otherwise it kindly creates a shallow copy which breaks everything
+async def pkmn_stat_msg_helper(pokemon):
     try:
         found = (await pkmnstatshelper(pokemon))[:]
     except:
         pokemon = lookup_poke(pokemon)
         found = (await pkmnstatshelper(pokemon))[:]
     for x in range(4, 14, 2):
-        found[x+1] = "⭘"*(int(found[x+1])-int(found[x]))
-        found[x] = "⬤"*int(found[x])
+        found[x + 1] = "⭘" * (int(found[x + 1]) - int(found[x]))
+        found[x] = "⬤" * int(found[x])
 
     output = f'{found[0]} __{pokemon.title()}__\n'
     output += f'**Suggested Rank**: {found[20]}\n'
@@ -1481,7 +1477,7 @@ async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
         output += '\n'
     else:
         output += f' / {found[2].capitalize()}\n'
-    exStats = [f'`({len(found[x])}/{len(found[x])+len(found[x+1])})`' for x in range(4,14,2)]
+    exStats = [f'`({len(found[x])}/{len(found[x]) + len(found[x + 1])})`' for x in range(4, 14, 2)]
     output += f'**Base HP**: {found[3]}\n'
     output += f'**Strength**: {found[4]}{found[5]} {exStats[0]}\n'
     output += f'**Dexterity**: {found[6]}{found[7]} {exStats[1]}\n'
@@ -1489,11 +1485,11 @@ async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
     output += f'**Special**: {found[10]}{found[11]} {exStats[3]}\n'
     output += f'**Insight**: {found[12]}{found[13]} {exStats[4]}\n'
     output += f'**Ability**: {found[14]}'
-    if found[15] != '': #secondary
+    if found[15] != '':  #secondary
         output += f' / {found[15]}'
-    if found[16] != '': #hidden
+    if found[16] != '':  #hidden
         output += f' ({found[16]})'
-    if found[17] != '': #event
+    if found[17] != '':  #event
         output += f' <{found[17]}>'
     output += '\n'
     output += f'**Can Evolve**: {(found[18] or "No")}\n'
@@ -1518,6 +1514,13 @@ async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
             )
         )
     ]
+
+    return output, buttons
+
+@bot.command(name = 'stats', aliases = ['s', 'info'], help = 'List a pokemon\'s stats. '
+                                                             'Emote on the message to expand the abilities!')
+async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
+    output, buttons = await pkmn_stat_msg_helper(pokemon)
 
     msg = await ctx.send(output, components = buttons)
 
@@ -1555,11 +1558,54 @@ async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
     async def on_timeout():
         await msg.edit(components = [])
 
-    #except:
-    #    msg = f'{pokemon} wasn\'t found in the pokemon list.'
-    #    if pokemon in pkmnLists:
-    #        msg += '\nDid you mean: '+', '.join(pkmnLists[pokemon])+'?'
-    #    await ctx.send(msg)
+@inter_client.slash_command(
+    name = 'stats',
+    description = 'Display a pokemon\'s stats',
+    options = [
+        Option('pokemon', "Which pokemon?", OptionType.STRING, required = True)
+    ]
+)
+async def pkmn_search_stats(inter, *, pokemon):
+    pokemon = pkmn_cap(pokemon)
+    output, buttons = await pkmn_stat_msg_helper(pokemon)
+
+    msg = await inter.reply(output, components = buttons)
+
+    on_click = msg.create_click_listener(timeout = 30)
+
+    @on_click.matching_id('moves')
+    async def on_move_button(inter):
+        moves = await pkmnlearnshelper(pokemon)
+
+        output = f'__{pokemon.title()}__\n'
+        for x in moves.keys():
+            output += f'**{x}**\n' + '  |  '.join(moves[x]) + '\n'
+
+        await inter.reply(output)
+        inter.component.disabled = True
+        await msg.edit(components = inter.components)
+
+    @on_click.matching_id('abilities')
+    async def on_ability_button(inter):
+        await inter.reply(await getPokemonAbilities(pokemon))
+        inter.component.disabled = True
+        await msg.edit(components = inter.components)
+
+    @on_click.matching_id('forms')
+    async def on_form_button(inter):
+        output = await form_helper(pokemon)
+        if '\n' in output:
+            await inter.reply(await form_helper(pokemon))
+        inter.component.disabled = True
+        await msg.edit(components = inter.components)
+        # this prevents the update from 'failing'
+        await inter.reply(type = ResponseType.UpdateMessage)
+
+    @on_click.timeout
+    async def on_timeout():
+        await msg.edit(components = [])
+
+
 
 #####
 
