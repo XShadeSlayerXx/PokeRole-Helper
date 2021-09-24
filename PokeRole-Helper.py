@@ -16,7 +16,7 @@ from collections import OrderedDict as ODict
 import requests
 from numpy.random import choice
 from bisect import bisect
-from dislash import InteractionClient, ActionRow, Button, ButtonStyle, ResponseType, Option, OptionType
+from dislash import InteractionClient, ActionRow, Button, ButtonStyle, ResponseType, Option, OptionType, OptionChoice
 
 from dbhelper import Database
 
@@ -2164,7 +2164,9 @@ async def smart_pkmn_search(ctx, number : typing.Optional[int] = 1,
     options = [
         Option('pokemon', "Which pokemon?", OptionType.STRING, required = True),
         Option('number', 'How many? (up to 6)', OptionType.INTEGER),
-        Option('rank', 'What rank?', OptionType.STRING)
+        Option('rank', 'What rank?', OptionType.STRING, choices = [
+            OptionChoice(x, x) for x in ranks
+        ])
     ]
 )
 async def smart_pkmn_search(inter, number : int = 1,
