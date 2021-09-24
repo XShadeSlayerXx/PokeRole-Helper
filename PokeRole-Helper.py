@@ -16,7 +16,7 @@ from collections import OrderedDict as ODict
 import requests
 from numpy.random import choice
 from bisect import bisect
-from dislash import InteractionClient, ActionRow, Button, ButtonStyle
+from dislash import InteractionClient, ActionRow, Button, ButtonStyle, ResponseType
 
 from dbhelper import Database
 
@@ -1483,6 +1483,8 @@ async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
             await inter.reply(await form_helper(pokemon))
         inter.component.disabled = True
         await msg.edit(components = inter.components)
+        # this prevents the update from 'failing'
+        await inter.reply(type = ResponseType.UpdateMessage)
 
     @on_click.timeout
     async def on_timeout():
