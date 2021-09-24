@@ -185,6 +185,7 @@ if dev_env:
         registered = inter_client.get_guild_commands(test_guild)
         registered_names = [x.name for x in registered]
         for func in sc:
+            func.description = "testbot " + func.description
             if func.name not in registered_names:
                 await inter_client.register_guild_command(test_guild, func)
             else:
