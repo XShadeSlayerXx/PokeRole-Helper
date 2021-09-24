@@ -31,10 +31,9 @@ cmd_prefix = ('./' if dev_env else '%')
 
 bot = commands.Bot(command_prefix = cmd_prefix)
 if dev_env:
-    inter_client = InteractionClient(bot, sync_commands = False)
+    inter_client = InteractionClient(bot, test_guilds = [669326419641237509], sync_commands = False)
 else:
     inter_client = InteractionClient(bot)
-
 
 #note that 'custom help' needs to load last
 cogs = ['mapCog', 'diceCog', 'miscCommands', 'questCog', 'custom_help']
@@ -182,14 +181,27 @@ if dev_env:
                 ]
             )
         )
+        sc.append(
+            SlashCommand(
+                name = 'stats',
+                description = 'Display a pokemon\'s stats',
+                options = [
+                    Option('pokemon', "Which pokemon?", OptionType.STRING, required = True)
+                ]
+            )
+        )
         registered = inter_client.get_guild_commands(test_guild)
         registered_names = [x.name for x in registered]
+        sc_names = [x.name for x in sc]
         for func in sc:
             func.description = "testbot " + func.description
             if func.name not in registered_names:
                 await inter_client.register_guild_command(test_guild, func)
             else:
                 await inter_client.edit_guild_command_named(test_guild, func.name, func)
+        for name in registered_names:
+            if name not in sc_names:
+                await inter_client.delete_guild_command_named(test_guild, name)
 
 
 #######
