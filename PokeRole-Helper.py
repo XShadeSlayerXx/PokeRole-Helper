@@ -173,7 +173,7 @@ if dev_env:
                 name = 'encounter',
                 description = 'A smart encounter in your very own slash commands',
                 options = [
-                    Option('pokemon', "Which pokemon?", OptionType.STRING, required = True),
+                    Option('pokemon', "Which pokemon?", OptionType.STRING),
                     Option('number', 'How many? (up to 6)', OptionType.INTEGER),
                     Option('rank', 'What rank?', OptionType.STRING, choices = [
                         OptionChoice(x, x) for x in ranks
@@ -2250,7 +2250,7 @@ async def smart_pkmn_search(ctx, number : typing.Optional[int] = 1,
     name = 'encounter',
     description = 'A smart encounter in your very own slash commands',
     options = [
-        Option('pokemon', "Which pokemon?", OptionType.STRING, required = True),
+        Option('pokemon', "Which pokemon?", OptionType.STRING),
         Option('number', 'How many? (up to 6)', OptionType.INTEGER),
         Option('rank', 'What rank?', OptionType.STRING, choices = [
             OptionChoice(x, x) for x in ranks
@@ -2259,7 +2259,15 @@ async def smart_pkmn_search(ctx, number : typing.Optional[int] = 1,
 )
 async def smart_pkmn_search(inter, number : int = 1,
                                 rank : ensure_rank = 'Base',
-                                *, pokemon : str):
+                                *, pokemon : str = ''):
+    if pokemon == '':
+        if rank == 'Base':
+            rank = random.choice(['Starter'*2, 'Beginner'*5, 'Amateur'*7, 'Ace', 'Pro'])
+        # random poke from database at rank
+        query = f'SELECT name FROM pkmnStats WHERE rank="{rank}"' \
+                f' AND generation BETWEEN 1 AND 8 ORDER BY RANDOM() LIMIT 1'
+        pokemon = database.custom_query(query)[0][0]
+
     await pkmn_search_encounter(ctx = inter, number = number, numberMax =  number,
                                 rank = rank.title(), pokelist =  pokemon.split(', '), boss = True)
 
