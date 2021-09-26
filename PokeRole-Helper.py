@@ -168,25 +168,25 @@ if dev_env:
     async def on_ready():
         sc = []
         test_guild = 669326419641237509
+        # sc.append(
+        #     SlashCommand(
+        #         name = 'encounter',
+        #         description = 'A smart encounter in your very own slash commands',
+        #         options = [
+        #             Option('pokemon', "Which pokemon?", OptionType.STRING),
+        #             Option('number', 'How many? (up to 6)', OptionType.INTEGER),
+        #             Option('rank', 'What rank?', OptionType.STRING, choices = [
+        #                 OptionChoice(x, x) for x in ranks
+        #             ])
+        #         ]
+        #     )
+        # )
         sc.append(
             SlashCommand(
-                name = 'encounter',
-                description = 'A smart encounter in your very own slash commands',
-                options = [
-                    Option('pokemon', "Which pokemon?", OptionType.STRING),
-                    Option('number', 'How many? (up to 6)', OptionType.INTEGER),
-                    Option('rank', 'What rank?', OptionType.STRING, choices = [
-                        OptionChoice(x, x) for x in ranks
-                    ])
-                ]
-            )
-        )
-        sc.append(
-            SlashCommand(
-                name = 'stats',
+                name = 'feedback',
                 description = 'Display a pokemon\'s stats',
                 options = [
-                    Option('pokemon', "Which pokemon?", OptionType.STRING, required = True)
+                    Option('info', "Which pokemon?", OptionType.STRING, required = True)
                 ]
             )
         )
@@ -528,7 +528,7 @@ async def guildcheck(ctx):
 @commands.is_owner()
 @bot.command(name = 'checkfuncs', hidden = True)
 async def functionChecks(ctx, which : typing.Optional[int] = 0):
-    funcs = [[pkmn_search_ability, {'abilityname':'Static'}, 'ability'],
+    funcs = [[pkmn_search_ability, {'ability':'Static'}, 'ability'],
              [pkmn_search_stats, {'pokemon':'Bulbasaur'}, 'stats'],
              [pkmn_search_move, {'movename':'Tackle'}, 'move'],
              [pkmn_search_learns, {'pokemon':'Bulbasaur'}, 'learns'],
@@ -1389,17 +1389,18 @@ async def pkmn_search_ability(ctx, *, abilityname : pkmn_cap):
         Option('ability', "Which ability?", OptionType.STRING, required = True)
     ]
 )
-async def pkmn_search_ability(inter, *, abilityname : pkmn_cap):
+async def pkmn_search_ability(inter, *, ability):
+    ability = pkmn_cap(ability)
     try:
-        found = await pkmnabilitieshelper(abilityname)
+        found = await pkmnabilitieshelper(ability)
 
-        output = f'**{abilityname}:** {found[0]}'
+        output = f'**{ability}:** {found[0]}'
         if found[1] != '':
             output += f'\n*{found[1]}*'
 
         await inter.reply(output)
     except:
-        await inter.reply(f'{abilityname} wasn\'t found in the ability list.')
+        await inter.reply(f'{ability} wasn\'t found in the ability list.')
 
 #######
 
@@ -1443,8 +1444,9 @@ async def pkmn_search_move(ctx, *, movename : pkmn_cap):
         Option('move', "Which move?", OptionType.STRING, required = True)
     ]
 )
-async def pkmn_search_move_slash(inter, *, movename : pkmn_cap):
-    await inter.reply(await move_backend(movename))
+async def pkmn_search_move_slash(inter, *, move):
+    move = pkmn_cap(move)
+    await inter.reply(await move_backend(move))
 
 
 @bot.command(name = 'metronome',
@@ -1721,8 +1723,9 @@ async def pkmn_search_learns(ctx, *, pokemon : pkmn_cap):
         Option('pokemon', "Which pokemon?", OptionType.STRING, required = True)
     ]
 )
-async def pkmn_search_learns_slash(inter, *, pokemon : pkmn_cap):
+async def pkmn_search_learns_slash(inter, *, pokemon):
     #known moves is insight + 2
+    pokemon = pkmn_cap(pokemon)
     try:
         try:
             moves = await pkmnlearnshelper(pokemon)
@@ -2504,7 +2507,7 @@ async def feedback(ctx, *, info):
     name = 'feedback',
     description = 'Send feedback/suggestions/bug reports/etc straight to my creator!',
     options = [
-        Option('message', "", OptionType.STRING, required = True)
+        Option('info', "", OptionType.STRING, required = True)
     ]
 )
 async def feedback_slash(inter, *, info):
