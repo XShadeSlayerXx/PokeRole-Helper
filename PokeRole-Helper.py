@@ -1411,8 +1411,7 @@ async def pkmnmovehelper(move):
         move = move.replace(' ', '-')
         return list(database.query_table('pkmnMoves', 'name', move)[0])[1:]
 
-@bot.command(name = 'move', aliases = ['m'], help = 'List a pokemon move traits')
-async def pkmn_search_move(ctx, *, movename : pkmn_cap):
+async def move_backend(movename):
     try:
         found = await pkmnmovehelper(movename)
 
@@ -1427,9 +1426,26 @@ async def pkmn_search_move(ctx, *, movename : pkmn_cap):
         output += f'**Acc Mods**: {(found[5] or "None")} + {(found[6] or "None")}\n'
         output += f'**Effect**: {found[8]}'
 
-        await ctx.send(output)
+       return output
     except:
-        await ctx.send(f'{movename} wasn\'t found in the move list.')
+        return f'{movename} wasn\'t found in the move list.'
+
+
+@bot.command(name = 'move', aliases = ['m'], help = 'List a pokemon move traits')
+async def pkmn_search_move(ctx, *, movename : pkmn_cap):
+    await ctx.send(await move_backend(movename))
+
+
+@inter_client.slash_command(
+    name = 'move',
+    description = 'List a pokemon move traits',
+    options = [
+        Option('Move', "Which move?", OptionType.STRING, required = True)
+    ]
+)
+async def pkmn_search_move_slash(inter, *, movename : pkmn_cap):
+    await inter.reply(await move_backend(movename))
+
 
 @bot.command(name = 'metronome',
              aliases = ['mtr'],
