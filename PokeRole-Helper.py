@@ -1376,11 +1376,30 @@ async def pkmn_search_ability(ctx, *, abilityname : pkmn_cap):
 
         output = f'**{abilityname}:** {found[0]}'
         if found[1] != '':
-            output += f'\n-\n*{found[1]}*'
+            output += f'\n*{found[1]}*'
 
         await ctx.send(output)
     except:
         await ctx.send(f'{abilityname} wasn\'t found in the ability list.')
+
+@inter_client.slash_command(
+    name = 'ability',
+    description = 'Display an ability\'s info',
+    options = [
+        Option('Ability', "Which ability?", OptionType.STRING, required = True)
+    ]
+)
+async def pkmn_search_ability(inter, *, abilityname : pkmn_cap):
+    try:
+        found = await pkmnabilitieshelper(abilityname)
+
+        output = f'**{abilityname}:** {found[0]}'
+        if found[1] != '':
+            output += f'\n*{found[1]}*'
+
+        await inter.reply(output)
+    except:
+        await inter.reply(f'{abilityname} wasn\'t found in the ability list.')
 
 #######
 
