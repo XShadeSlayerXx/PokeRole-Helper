@@ -1662,6 +1662,17 @@ async def pkmn_search_learns(ctx, *, pokemon : pkmn_cap):
             output += f'**{x}**\n' + '  |  '.join(moves[x]) + '\n'
 
         await ctx.send(output)
+
+        # TODO: add a select menu for the ranks?
+        # when they select a rank, add another select menu for specific moves from the message?
+        # should be relatively easy with a .replace('*'), .split('\n'), .index(rank), (rank+1).split(' | ')
+        #   could probably store the moves in the custom_id for quick lookup ngl
+        #
+        # this one sends a message for the move and stores the follow-up's message id.
+        #
+        # future move lookups would edit the followup message, with an extra newline between moves.
+
+
     except:
         msg = f'{pokemon} wasn\'t found in the pokeLearns list.'
         if pokemon in pkmnLists:
