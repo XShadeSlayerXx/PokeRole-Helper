@@ -1571,7 +1571,7 @@ async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
         Option('pokemon', "Which pokemon?", OptionType.STRING, required = True)
     ]
 )
-async def pkmn_search_stats(inter, *, pokemon):
+async def pkmn_search_stats_slash(inter, *, pokemon):
     pokemon = pkmn_cap(pokemon)
     output, buttons = await pkmn_stat_msg_helper(pokemon)
 
@@ -1678,6 +1678,34 @@ async def pkmn_search_learns(ctx, *, pokemon : pkmn_cap):
         if pokemon in pkmnLists:
             msg += '\nDid you mean: '+', '.join(pkmnLists[pokemon])+'?'
         await ctx.send(msg)
+
+@inter_client.slash_command(
+    name = 'pokelearns',
+    description = 'Display the moves a pokemon can learn',
+    options = [
+        Option('pokemon', "Which pokemon?", OptionType.STRING, required = True)
+    ]
+)
+async def pkmn_search_learns_slash(inter, *, pokemon : pkmn_cap):
+    #known moves is insight + 2
+    try:
+        try:
+            moves = await pkmnlearnshelper(pokemon)
+        except:
+            pokemon = lookup_poke(pokemon)
+            moves = await pkmnlearnshelper(pokemon)
+        output = f'__{pokemon.title()}__\n'
+
+        for x in moves.keys():
+            output += f'**{x}**\n' + '  |  '.join(moves[x]) + '\n'
+
+        await inter.reply(output)
+
+    except:
+        msg = f'{pokemon} wasn\'t found in the pokeLearns list.'
+        if pokemon in pkmnLists:
+            msg += '\nDid you mean: '+', '.join(pkmnLists[pokemon])+'?'
+        await inter.reply(msg)
 
 #####
 
