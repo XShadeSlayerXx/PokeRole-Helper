@@ -2262,7 +2262,7 @@ async def smart_pkmn_search(inter, number : int = 1,
                                 *, pokemon : str = ''):
     if pokemon == '':
         if rank == 'Base':
-            rank = random.choice(['Starter'*2, 'Beginner'*5, 'Amateur'*7, 'Ace', 'Pro'])
+            rank = random.choice(['Starter']*2 + ['Beginner']*5 + ['Amateur']*7 + ['Ace', 'Pro'])
         # random poke from database at rank
         query = f'SELECT name FROM pkmnStats WHERE rank="{rank}"' \
                 f' AND generation BETWEEN 1 AND 8 ORDER BY RANDOM() LIMIT 1'
