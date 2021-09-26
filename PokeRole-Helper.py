@@ -2484,6 +2484,20 @@ async def feedback(ctx, *, info):
     await bot.appinfo.owner.send(f'{ctx.author.name}: {info}')
     await ctx.message.add_reaction('\N{HIBISCUS}')
 
+@inter_client.slash_command(
+    name = 'feedback',
+    description = 'Send feedback/suggestions/bug reports/etc straight to my creator!',
+    options = [
+        Option('message', "", OptionType.STRING, required = True)
+    ]
+)
+async def feedback_slash(inter, *, info):
+    await bot.appinfo.owner.send(f'{inter.author.name}: {info}')
+    await inter.reply("Thank you for your feedback!", ephemeral = True)
+    # await ctx.message.add_reaction('\N{HIBISCUS}')
+
+
+
 @bot.command(name = 'donate',
              help = 'Support me!')
 async def donate(ctx):
