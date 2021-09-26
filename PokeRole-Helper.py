@@ -261,7 +261,7 @@ async def send_big_msg(ctx, arg : str, codify : bool = False):
         #plus 1 to go over the '\n'
         arg = arg[last_newline+1:]
 
-async def send_big_slash_msg(inter, arg : str, codify : bool = False):
+async def send_big_slash_msg(inter, arg : str, codify : bool = False, offset : int = 0):
     which = True
     if codify:
         arg = arg.replace('`','') #remove all backticks since they're irrelevant
@@ -274,12 +274,13 @@ async def send_big_slash_msg(inter, arg : str, codify : bool = False):
         except:
             last_newline = 1990
         if codify:
-            msg = f'```{arg[:last_newline]}```'
+            msg = f'```{arg[offset:last_newline]}```'
         else:
-            msg = arg[:last_newline]
+            msg = arg[offset:last_newline]
         if which:
             await inter.reply(msg, type = ResponseType.ChannelMessage)
             which = not which
+            offset = 0
         else:
             await inter.followup(msg)
         #plus 1 to go over the '\n'
