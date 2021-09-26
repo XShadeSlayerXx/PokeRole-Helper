@@ -1,4 +1,5 @@
 from discord.ext import commands
+from dislash import slash_command, ActionRow, Button, ButtonStyle, ResponseType
 
 import random
 import re
@@ -13,14 +14,9 @@ class Dice(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.timeout = 60 * 2
 
-    @commands.command(
-        name = 'roll',
-        aliases = ['r'],
-        help = 'Roll a d6. You can type \'!roll 3d6\' for example to change # of dice and/or # of faces',
-        brief = '\'!roll\' or \'!roll 3d6\' for example'
-    )
-    async def rollDice(self, ctx, *, mc = ''):
+    async def dice_backend(self, ctx, *, mc = ''):
         name = ctx.author.display_name
         msg = f'{name} rolled '
         mc = mc.lower()
@@ -60,16 +56,57 @@ class Dice(commands.Cog):
                     msg += f' + {add} = {sum(total) + add}'
                 if numSuccesses is not None:
                     msg += (f'\n{numSuccesses} Successes' if numSuccesses != 1 else f'\n{numSuccesses} Success')
-                await ctx.send(msg)
+                return msg
             else:
                 try:
                     int(mc)
-                    await self.rollDice(ctx, mc = f'{mc}d6')
+                    await self.dice_backend(ctx, mc = f'{mc}d6')
                 except:
                     pass
         else:
             ran = random.randrange(6) + 1
-            await ctx.send(msg+f'a {ran}')
+            return msg + f'a {ran}'
+
+
+    @commands.command(
+        name = 'roll',
+        aliases = ['r'],
+        help = 'Roll a d6. You can type \'!roll 3d6\' for example to change # of dice and/or # of faces',
+        brief = '\'!roll\' or \'!roll 3d6\' for example'
+    )
+    async def rollDice(self, ctx, *, mc = ''):
+        msg = await self.dice_backend(ctx = ctx, mc = mc)
+
+        button = [ActionRow(Button(
+            style = ButtonStyle.gray,
+            label = 'Reroll',
+            custom_id = 'reroll'
+        ))]
+
+        sent = await ctx.send(msg, components = button)
+
+        on_click = sent.create_click_listener(timeout = self.timeout)
+        button_owner = ctx.author.id
+
+        @on_click.matching_id('reroll')
+        async def on_matching_reroll(inter):
+            if inter.author.id == button_owner:
+                if inter.message.content.count('\n') == 2:
+                    final = inter.message.content[inter.message.content.index('\n')+1:]
+                else:
+                    final = inter.message.content
+                extra = await self.dice_backend(ctx = ctx, mc = mc)
+                final += '\n' + extra
+                await sent.edit(content = final)
+                await inter.reply(type = ResponseType.UpdateMessage)
+            else:
+                await inter.create_response(content = 'The Reroll button is reserved '
+                                                      'for whoever ran the original message.',
+                                            ephemeral = True)
+
+        @on_click.timeout
+        async def on_timeout():
+            await sent.edit(components = [])
 
 def setup(bot):
     bot.add_cog(Dice(bot))
