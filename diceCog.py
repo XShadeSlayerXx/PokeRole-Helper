@@ -75,11 +75,16 @@ class Dice(commands.Cog):
         brief = '\'!roll\' or \'!roll 3d6\' for example'
     )
     async def rollDice(self, ctx, *, mc = ''):
+        try:
+            int(mc)
+            mc = f'{mc}d6'
+        except:
+            pass
         msg = await self.dice_backend(ctx = ctx, mc = mc)
 
         button = [ActionRow(Button(
             style = ButtonStyle.gray,
-            label = 'Reroll',
+            label = 'Roll Again',
             custom_id = 'reroll'
         ))]
 
@@ -91,8 +96,9 @@ class Dice(commands.Cog):
         @on_click.matching_id('reroll')
         async def on_matching_reroll(inter):
             if inter.author.id == button_owner:
-                if inter.message.content.count('\n') == 2:
-                    final = inter.message.content[inter.message.content.index('\n')+1:]
+                if inter.message.content.count('\n') > 6:
+                    first = inter.message.content.index('\n')
+                    final = inter.message.content[inter.message.content.index('\n', first+1)+1:]
                 else:
                     final = inter.message.content
                 extra = await self.dice_backend(ctx = ctx, mc = mc)
