@@ -1386,7 +1386,7 @@ async def pkmn_search_ability(ctx, *, abilityname : pkmn_cap):
     name = 'ability',
     description = 'Display an ability\'s info',
     options = [
-        Option('Ability', "Which ability?", OptionType.STRING, required = True)
+        Option('ability', "Which ability?", OptionType.STRING, required = True)
     ]
 )
 async def pkmn_search_ability(inter, *, abilityname : pkmn_cap):
@@ -1426,7 +1426,7 @@ async def move_backend(movename):
         output += f'**Acc Mods**: {(found[5] or "None")} + {(found[6] or "None")}\n'
         output += f'**Effect**: {found[8]}'
 
-       return output
+        return output
     except:
         return f'{movename} wasn\'t found in the move list.'
 
@@ -1440,7 +1440,7 @@ async def pkmn_search_move(ctx, *, movename : pkmn_cap):
     name = 'move',
     description = 'List a pokemon move traits',
     options = [
-        Option('Move', "Which move?", OptionType.STRING, required = True)
+        Option('move', "Which move?", OptionType.STRING, required = True)
     ]
 )
 async def pkmn_search_move_slash(inter, *, movename : pkmn_cap):
