@@ -182,25 +182,21 @@ if dev_env:
                     ]),
                     Option('rank', 'What rank?', OptionType.STRING, choices = [
                         OptionChoice(x, x) for x in ranks
-                    ])
+                    ]),
+                    Option('smart_stats', 'Use the improved stat distribution? (Default: True)?',
+                           OptionType.BOOLEAN)
                 ]
             )
         )
         sc.append(
             SlashCommand(
-                name = 'metronome',
-                description = 'Get a random move from any of them (with a few options)',
+                name = 'roll',
+                description = "Roll a single d6 by default. You can change the number of dice and/or the number of sides",
                 options = [
-                    Option('type', "Want a specific move typing?", OptionType.STRING, choices = [
-                        OptionChoice(x, x) for x in types
-                    ] + [OptionChoice('support', 'support')]),
-                    Option('power', "Power for the move? (exact if max_power isn't provided, inclusive otherwise)", OptionType.INTEGER, choices = [
-                        OptionChoice(str(x), str(x)) for x in range(11)
-                    ]),
-                    Option('max_power', "Maximum power on a move? (inclusive)", OptionType.INTEGER, choices = [
-                        OptionChoice(str(x), str(x)) for x in range(11)
-                    ]),
-                    Option('private', "Display the move in a private message? (Default: True)", OptionType.BOOLEAN)
+                    Option('sides', 'Number of sides each die has (up to 100)', OptionType.INTEGER),
+                    Option('dice', 'Number of dice to roll (up to 20)', OptionType.INTEGER),
+                    Option('flat_addition', 'Flat number to the roll', OptionType.INTEGER),
+                    Option('private', 'Send a private message to you in this chat? (default: False)', OptionType.BOOLEAN)
                 ]
             )
         )
@@ -2393,11 +2389,13 @@ async def smart_pkmn_search(ctx, number : typing.Optional[int] = 1,
         ]),
         Option('rank', 'What rank?', OptionType.STRING, choices = [
             OptionChoice(x, x) for x in ranks
-        ])
+        ]),
+        Option('smart_stats', 'Use the improved stat distribution? (Default: True)?',
+               OptionType.BOOLEAN)
     ]
 )
 async def smart_pkmn_search(inter, number : int = 1,
-                                rank : ensure_rank = 'Base',
+                                rank : ensure_rank = 'Base', smart_stats : bool = True,
                                 *, pokemon : str = ''):
     if pokemon == '':
         guild = await getGuilds(inter)
@@ -2415,11 +2413,11 @@ async def smart_pkmn_search(inter, number : int = 1,
         for count, pkm in enumerate([x[0] for x in pokemon]):
             msg += f'\t**{count+1}**\n\n'
             msg += await pkmn_encounter(ctx = inter, number = 1, rank = rank.title(),
-                                        pokelist =  [pkm], boss = True, guild = guild)
+                                        pokelist =  [pkm], boss = smart_stats, guild = guild)
         await send_big_msg(ctx = inter, arg = msg, codify = codify)
     else:
         await pkmn_search_encounter(ctx = inter, number = number, numberMax =  number,
-                                    rank = rank.title(), pokelist =  pokemon.split(', '), boss = True)
+                                    rank = rank.title(), pokelist =  pokemon.split(', '), boss = smart_stats)
 
 #####
 
