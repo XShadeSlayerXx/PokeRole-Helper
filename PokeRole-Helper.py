@@ -2522,7 +2522,7 @@ async def feedback(ctx, *, info):
     name = 'feedback',
     description = 'Send feedback/suggestions/bug reports/etc straight to my creator!',
     options = [
-        Option('info', "", OptionType.STRING, required = True)
+        Option('info', "Feedback here!", OptionType.STRING, required = True)
     ]
 )
 async def feedback_slash(inter, *, info):
