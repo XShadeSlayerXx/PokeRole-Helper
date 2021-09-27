@@ -188,18 +188,18 @@ if dev_env:
                 ]
             )
         )
-        sc.append(
-            SlashCommand(
-                name = 'roll',
-                description = "Roll a single d6 by default. You can change the number of dice and/or the number of sides",
-                options = [
-                    Option('sides', 'Number of sides each die has (up to 100)', OptionType.INTEGER),
-                    Option('dice', 'Number of dice to roll (up to 20)', OptionType.INTEGER),
-                    Option('flat_addition', 'Flat number to the roll', OptionType.INTEGER),
-                    Option('private', 'Send a private message to you in this chat? (default: False)', OptionType.BOOLEAN)
-                ]
-            )
-        )
+        # sc.append(
+        #     SlashCommand(
+        #         name = 'roll',
+        #         description = "Roll a single d6 by default. You can change the number of dice and/or the number of sides",
+        #         options = [
+        #             Option('sides', 'Number of sides each die has (up to 100)', OptionType.INTEGER),
+        #             Option('dice', 'Number of dice to roll (up to 20)', OptionType.INTEGER),
+        #             Option('flat_addition', 'Flat number to the roll', OptionType.INTEGER),
+        #             Option('private', 'Send a private message to you in this chat? (default: False)', OptionType.BOOLEAN)
+        #         ]
+        #     )
+        # )
         registered = inter_client.get_guild_commands(test_guild)
         registered_names = [x.name for x in registered]
         sc_names = [x.name for x in sc]
@@ -2405,6 +2405,10 @@ async def smart_pkmn_search(inter, number : int = 1,
             codify = False
         if rank == 'Base':
             rank = random.choice(['Starter']*2 + ['Beginner']*5 + ['Amateur']*7 + ['Ace', 'Pro'])
+        elif rank == 'Champion':
+            await inter.reply('Since there are no pokemon who naturally have the '
+                              'Champion rank, a random pokemon cannot be generated from this pool.', ephemeral = True)
+            return
         # random poke from database at rank
         query = f'SELECT name FROM pkmnStats WHERE rank="{rank}"' \
                 f' AND generation BETWEEN 1 AND 8 ORDER BY RANDOM() LIMIT {number}'
