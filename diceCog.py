@@ -162,8 +162,8 @@ class Dice(commands.Cog):
         name = 'roll',
         description = "Roll a single d6 by default. You can change the number of dice and/or the number of sides",
         options = [
-            Option('sides', 'Number of sides each die has (up to 100)', OptionType.INTEGER),
             Option('dice', 'Number of dice to roll (up to 20)', OptionType.INTEGER),
+            Option('sides', 'Number of sides each die has (up to 100)', OptionType.INTEGER),
             Option('flat_addition', 'Flat number to the roll', OptionType.INTEGER),
             Option('private', 'Send a private message to you in this chat? (default: False)', OptionType.BOOLEAN)
         ]
