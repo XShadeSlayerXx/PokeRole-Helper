@@ -2411,7 +2411,8 @@ async def smart_pkmn_search(inter, number : int = 1,
         pokemon = database.custom_query(query)
         msg = ''
         for count, pkm in enumerate([x[0] for x in pokemon]):
-            msg += f'\t**{count+1}**\n\n'
+            if count != 0:
+                msg += f'\t**{count+1}**\n\n'
             msg += await pkmn_encounter(ctx = inter, number = 1, rank = rank.title(),
                                         pokelist =  [pkm], boss = smart_stats, guild = guild)
         await send_big_msg(ctx = inter, arg = msg, codify = codify)
