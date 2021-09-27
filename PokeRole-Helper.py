@@ -168,19 +168,21 @@ if dev_env:
     async def on_ready():
         sc = []
         test_guild = 669326419641237509
-        # sc.append(
-        #     SlashCommand(
-        #         name = 'encounter',
-        #         description = 'A smart encounter in your very own slash commands',
-        #         options = [
-        #             Option('pokemon', "Which pokemon?", OptionType.STRING),
-        #             Option('number', 'How many? (up to 6)', OptionType.INTEGER),
-        #             Option('rank', 'What rank?', OptionType.STRING, choices = [
-        #                 OptionChoice(x, x) for x in ranks
-        #             ])
-        #         ]
-        #     )
-        # )
+        sc.append(
+            SlashCommand(
+                name = 'encounter',
+                description = 'Encounter 2 Ace Pikachu!',
+                options = [
+                    Option('pokemon', "Which pokemon?", OptionType.STRING),
+                    Option('number', 'How many? (up to 6)', OptionType.INTEGER, choices = [
+                        OptionChoice(str(x), x) for x in range(1, 7)
+                    ]),
+                    Option('rank', 'What rank?', OptionType.STRING, choices = [
+                        OptionChoice(x, x) for x in ranks
+                    ])
+                ]
+            )
+        )
         sc.append(
             SlashCommand(
                 name = 'feedback',
@@ -2339,15 +2341,26 @@ async def smart_pkmn_search(inter, number : int = 1,
                                 rank : ensure_rank = 'Base',
                                 *, pokemon : str = ''):
     if pokemon == '':
+        guild = await getGuilds(inter)
+        if pokebotsettings[guild][10]:
+            codify = True
+        else:
+            codify = False
         if rank == 'Base':
             rank = random.choice(['Starter']*2 + ['Beginner']*5 + ['Amateur']*7 + ['Ace', 'Pro'])
         # random poke from database at rank
         query = f'SELECT name FROM pkmnStats WHERE rank="{rank}"' \
-                f' AND generation BETWEEN 1 AND 8 ORDER BY RANDOM() LIMIT 1'
-        pokemon = database.custom_query(query)[0][0]
-
-    await pkmn_search_encounter(ctx = inter, number = number, numberMax =  number,
-                                rank = rank.title(), pokelist =  pokemon.split(', '), boss = True)
+                f' AND generation BETWEEN 1 AND 8 ORDER BY RANDOM() LIMIT {number}'
+        pokemon = database.custom_query(query)
+        msg = ''
+        for count, pkm in enumerate([x[0] for x in pokemon]):
+            msg += f'\t**{count+1}**\n\n'
+            msg += await pkmn_encounter(ctx = inter, number = 1, rank = rank.title(),
+                                        pokelist =  [pkm], boss = True, guild = guild)
+        await send_big_msg(ctx = inter, arg = msg, codify = codify)
+    else:
+        await pkmn_search_encounter(ctx = inter, number = number, numberMax =  number,
+                                    rank = rank.title(), pokelist =  pokemon.split(', '), boss = True)
 
 #####
 
