@@ -70,6 +70,9 @@ bot.skills = [('Brawl', 0), ('Channel', 0), ('Clash', 0), ('Evasion', 0),
           ('Alert', 0), ('Athletic', 0), ('Nature', 0), ('Stealth', 0),
           ('Allure', 0), ('Etiquette', 0), ('Intimidate', 0), ('Perform', 0)]
 
+types = ['normal', 'fire', 'water', 'grass', 'electric', 'ice', 'fighting', 'poison', 'ground',
+         'flying', 'psychic', 'bug', 'rock', 'ghost', 'dark', 'dragon', 'steel', 'fairy']
+
 #total attributes at a rank (base/social)
 #attributes are limited by poke
 attributeAmount = (0, 2, 4, 6, 8, 8, 14)
@@ -185,10 +188,19 @@ if dev_env:
         )
         sc.append(
             SlashCommand(
-                name = 'feedback',
-                description = 'Display a pokemon\'s stats',
+                name = 'metronome',
+                description = 'Get a random move from any of them (with a few options)',
                 options = [
-                    Option('info', "Which pokemon?", OptionType.STRING, required = True)
+                    Option('type', "Want a specific move typing?", OptionType.STRING, choices = [
+                        OptionChoice(x, x) for x in types
+                    ] + ['support']),
+                    Option('power', "Power for the move? (exact if max_power isn't provided, inclusive otherwise)", OptionType.INTEGER, choices = [
+                        OptionChoice(str(x), str(x)) for x in range(11)
+                    ]),
+                    Option('max_power', "Maximum power on a move? (inclusive)", OptionType.INTEGER, choices = [
+                        OptionChoice(str(x), str(x)) for x in range(11)
+                    ]),
+                    Option('private', "Display the move in a private message? (Default: True)", OptionType.BOOLEAN)
                 ]
             )
         )
@@ -1450,6 +1462,24 @@ async def pkmn_search_move_slash(inter, *, move):
     move = pkmn_cap(move)
     await inter.reply(await move_backend(move))
 
+async def metronome_backend(type, lower, higher):
+    custom_query = 'SELECT name FROM pkmnMoves'
+    if lower and higher:
+        custom_query += f' WHERE power BETWEEN {lower} and {higher}'
+    elif lower:
+        custom_query += f' WHERE power={lower}'
+    elif higher:
+        custom_query += f' WHERE power={higher}'
+    if type:
+        if type.upper() == 'SUPPORT':
+            custom_query += f' WHERE pwrtype="{type.upper()}"'
+        else:
+            custom_query += f' WHERE type="{type.lower()}"'
+
+    custom_query += ' ORDER BY RANDOM() LIMIT 1'
+    result = database.custom_query(custom_query)
+
+    return result[0][0]
 
 @bot.command(name = 'metronome',
              aliases = ['mtr'],
@@ -1469,30 +1499,60 @@ async def pkmn_search_move_slash(inter, *, move):
                 Any dragon type move. `support` instead of a type would give a random support move.""")
 async def metronome(ctx, *, parameters : str = ''):
     parameters = parameters.replace(' ', '')
-    custom_query = 'SELECT name FROM pkmnMoves'
+    # custom_query = 'SELECT name FROM pkmnMoves'
+    power = None
+    max_power = None
     if parameters == '':
         pass
     elif '<' in parameters:
         tmp = parameters.split('<')
-        lower = tmp[0]
-        higher = tmp[1]
-        custom_query += f' WHERE power BETWEEN {lower} and {higher}'
+        power = tmp[0]
+        max_power = tmp[1]
+        # custom_query += f' WHERE power BETWEEN {lower} and {higher}'
     elif parameters.isdigit():
-        custom_query += f' WHERE power={parameters}'
-    elif parameters.upper() == 'SUPPORT':
-        custom_query += f' WHERE pwrtype="{parameters.upper()}"'
-    else:
-        custom_query += f' WHERE type="{parameters.lower()}"'
+        power = parameters
+        # custom_query += f' WHERE power={parameters}'
+    type = parameters
+    # elif parameters.upper() == 'SUPPORT':
+    #     custom_query += f' WHERE pwrtype="{parameters.upper()}"'
+    # else:
+    #     custom_query += f' WHERE type="{parameters.lower()}"'
 
-    custom_query += ' ORDER BY RANDOM() LIMIT 1'
-    result = database.custom_query(custom_query)
+    # custom_query += ' ORDER BY RANDOM() LIMIT 1'
+    # result = database.custom_query(custom_query)
+
+    move = metronome_backend(type, power, max_power)
 
     try:
-        await pkmn_search_move(ctx = ctx, movename = result[0][0])
+        await pkmn_search_move(ctx = ctx, movename = move)
     except:
         await ctx.send(f'`{parameters}` was not recognized as a valid type (grass, water, etc) or power level (1, 2, 3 < 5, etc).\n'
                        f'*(This message self-destructs in 15 seconds)*',
                        delete_after = 15)
+
+
+@inter_client.slash_command(
+    name = 'metronome',
+    description = 'Get a random move from any of them (with a few options)',
+    options = [
+        Option('type', "Want a specific move typing?", OptionType.STRING, choices = [
+            OptionChoice(x, x) for x in types
+        ] + ['support']),
+        Option('power', "Power for the move? (exact if max_power isn't provided, inclusive otherwise)", OptionType.INTEGER, choices = [
+            OptionChoice(str(x), str(x)) for x in range(11)
+        ]),
+        Option('max_power', "Maximum power on a move? (inclusive)", OptionType.INTEGER, choices = [
+            OptionChoice(str(x), str(x)) for x in range(11)
+        ]),
+        Option('private', "Display the move in a private message? (Default: True)", OptionType.BOOLEAN)
+    ]
+)
+async def metronome_slash(inter, type : str = None, power : int = None, max_power : int = None, private : bool = True):
+    if power and max_power and power > max_power:
+        min_power, max_power = max_power, power
+    move = await metronome_backend(type = type, lower = power, higher = max_power)
+    move = await move_backend(movename = move)
+    await inter.reply(move, ephemeral = private)
 
 #####
 
