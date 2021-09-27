@@ -118,15 +118,6 @@ class Dice(commands.Cog):
         msg = ''
         if sides or dice or addition:
             # are we rolling random dice?
-            # if re.search(diceSplit, mc) is not None:
-            #     dice = mc.split('d')
-            #     if dice[0] == '':
-            #         dice[0] = 1
-            #     if add is not None:
-            #         place = dice[1].find('+')
-            #         dice[1] = dice[1][:place]
-            #     dice[0] = sorted((1, int(dice[0]), maxDice))[1]
-            #     dice[1] = sorted((2, int(dice[1]), maxPips))[1]
             total = [random.randrange(int(sides)) + 1 for _ in range(int(dice))]
             rolled = f'{dice}d{sides}'
             numSuccesses = None
@@ -148,12 +139,6 @@ class Dice(commands.Cog):
             if numSuccesses is not None:
                 msg += (f'\n{numSuccesses} Successes' if numSuccesses != 1 else f'\n{numSuccesses} Success')
             return msg
-            # else:
-            #     try:
-            #         int(mc)
-            #         await self.dice_backend(ctx, mc = f'{mc}d6')
-            #     except:
-            #         pass
         else:
             ran = random.randrange(6) + 1
             return msg + f'a {ran}'
