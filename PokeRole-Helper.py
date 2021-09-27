@@ -2328,10 +2328,12 @@ async def smart_pkmn_search(ctx, number : typing.Optional[int] = 1,
 
 @inter_client.slash_command(
     name = 'encounter',
-    description = 'A smart encounter in your very own slash commands',
+    description = 'Encounter 2 Ace Pikachu!',
     options = [
         Option('pokemon', "Which pokemon?", OptionType.STRING),
-        Option('number', 'How many? (up to 6)', OptionType.INTEGER),
+        Option('number', 'How many? (up to 6)', OptionType.INTEGER, choices = [
+            OptionChoice(str(x), x) for x in range(1, 7)
+        ]),
         Option('rank', 'What rank?', OptionType.STRING, choices = [
             OptionChoice(x, x) for x in ranks
         ])
