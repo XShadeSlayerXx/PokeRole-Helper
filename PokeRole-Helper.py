@@ -193,7 +193,7 @@ if dev_env:
                 options = [
                     Option('type', "Want a specific move typing?", OptionType.STRING, choices = [
                         OptionChoice(x, x) for x in types
-                    ] + ['support']),
+                    ] + [OptionChoice('support', 'support')]),
                     Option('power', "Power for the move? (exact if max_power isn't provided, inclusive otherwise)", OptionType.INTEGER, choices = [
                         OptionChoice(str(x), str(x)) for x in range(11)
                     ]),
@@ -1463,20 +1463,25 @@ async def pkmn_search_move_slash(inter, *, move):
     await inter.reply(await move_backend(move))
 
 async def metronome_backend(type, lower, higher):
-    custom_query = 'SELECT name FROM pkmnMoves'
+    have_and = True
+    custom_query = 'SELECT name FROM pkmnMoves '
     if lower and higher:
         custom_query += f' WHERE power BETWEEN {lower} and {higher}'
     elif lower:
         custom_query += f' WHERE power={lower}'
     elif higher:
         custom_query += f' WHERE power={higher}'
+    else:
+        have_and = False
     if type:
+        custom_query += ' AND' if have_and else ' WHERE'
         if type.upper() == 'SUPPORT':
-            custom_query += f' WHERE pwrtype="{type.upper()}"'
+            custom_query += f' pwrtype="{type.upper()}"'
         else:
-            custom_query += f' WHERE type="{type.lower()}"'
+            custom_query += f' type="{type.lower()}"'
 
     custom_query += ' ORDER BY RANDOM() LIMIT 1'
+    print(custom_query)
     result = database.custom_query(custom_query)
 
     return result[0][0]
@@ -1499,7 +1504,6 @@ async def metronome_backend(type, lower, higher):
                 Any dragon type move. `support` instead of a type would give a random support move.""")
 async def metronome(ctx, *, parameters : str = ''):
     parameters = parameters.replace(' ', '')
-    # custom_query = 'SELECT name FROM pkmnMoves'
     power = None
     max_power = None
     if parameters == '':
@@ -1508,20 +1512,14 @@ async def metronome(ctx, *, parameters : str = ''):
         tmp = parameters.split('<')
         power = tmp[0]
         max_power = tmp[1]
-        # custom_query += f' WHERE power BETWEEN {lower} and {higher}'
     elif parameters.isdigit():
         power = parameters
-        # custom_query += f' WHERE power={parameters}'
-    type = parameters
-    # elif parameters.upper() == 'SUPPORT':
-    #     custom_query += f' WHERE pwrtype="{parameters.upper()}"'
-    # else:
-    #     custom_query += f' WHERE type="{parameters.lower()}"'
-
-    # custom_query += ' ORDER BY RANDOM() LIMIT 1'
-    # result = database.custom_query(custom_query)
-
-    move = metronome_backend(type, power, max_power)
+    try:
+        type = None
+        int(parameters)
+    except:
+        type = parameters
+    move = await metronome_backend(type = type, lower = power, higher = max_power)
 
     try:
         await pkmn_search_move(ctx = ctx, movename = move)
@@ -1537,7 +1535,7 @@ async def metronome(ctx, *, parameters : str = ''):
     options = [
         Option('type', "Want a specific move typing?", OptionType.STRING, choices = [
             OptionChoice(x, x) for x in types
-        ] + ['support']),
+        ] + [OptionChoice('support', 'support')]),
         Option('power', "Power for the move? (exact if max_power isn't provided, inclusive otherwise)", OptionType.INTEGER, choices = [
             OptionChoice(str(x), str(x)) for x in range(11)
         ]),
