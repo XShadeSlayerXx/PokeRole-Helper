@@ -1481,7 +1481,6 @@ async def metronome_backend(type, lower, higher):
             custom_query += f' type="{type.lower()}"'
 
     custom_query += ' ORDER BY RANDOM() LIMIT 1'
-    print(custom_query)
     result = database.custom_query(custom_query)
 
     return result[0][0]
