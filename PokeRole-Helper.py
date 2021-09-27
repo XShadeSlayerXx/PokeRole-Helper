@@ -2602,7 +2602,7 @@ async def donate(ctx):
              aliases = ['inv'],
              help = 'Get the invite code')
 async def invite(ctx):
-    link = r'https://discord.com/oauth2/authorize?client_id=747930418702974983&scope=bot&permissions=2048'
+    link = R'https://discord.com/api/oauth2/authorize?client_id=747930418702974983&permissions=277025425472&scope=bot%20applications.commands'
     await ctx.send(embed = discord.Embed(title = 'Invite me!', url = link))
 
 #####
