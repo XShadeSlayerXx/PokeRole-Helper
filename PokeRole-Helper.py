@@ -31,9 +31,11 @@ cmd_prefix = ('./' if dev_env else '%')
 
 bot = commands.Bot(command_prefix = cmd_prefix)
 if dev_env:
+    #register slash commands
+    # inter_client = InteractionClient(bot)
     inter_client = InteractionClient(bot, test_guilds = [669326419641237509], sync_commands = False)
 else:
-    inter_client = InteractionClient(bot)
+    inter_client = InteractionClient(bot, sync_commands = False)
 
 #note that 'custom help' needs to load last
 cogs = ['mapCog', 'diceCog', 'miscCommands', 'questCog', 'custom_help']
