@@ -60,6 +60,9 @@ database = None
 restartError = True
 
 ranks = ['Starter', 'Beginner', 'Amateur', 'Ace', 'Pro', 'Master', 'Champion']
+def rank_dist():
+    return random.choice(['Starter']*2 + ['Beginner']*5 + ['Amateur']*7 + ['Ace', 'Pro'])
+
 rankBias = [1, 3, 5, 7, 9, 10, 11]
 natures = ['Hardy (9)','Lonely (5)','Brave (9)','Adamant (4)','Naughty (6)',
            'Bold (9)','Docile (7)','Relaxed (8)','Impish (7)',
@@ -2406,7 +2409,7 @@ async def smart_pkmn_search(inter, number : int = 1,
         else:
             codify = False
         if rank == 'Base':
-            rank = random.choice(['Starter']*2 + ['Beginner']*5 + ['Amateur']*7 + ['Ace', 'Pro'])
+            rank = rank_dist()
         elif rank == 'Champion':
             await inter.reply('Since there are no pokemon who naturally have the '
                               'Champion rank, a random pokemon cannot be generated from this pool.', ephemeral = True)
@@ -2673,5 +2676,6 @@ for cog in cogs:
 bot.expand_list = pokesFromList
 bot.big_msg = send_big_msg
 bot.dictionary = lookup_poke
+bot.rank_dist = rank_dist
 
 bot.run(token)
