@@ -661,6 +661,29 @@ async def instantiateSettings(where : str):
     pokebotsettings[where] += defaults[size:]
     save_obj(pokebotsettings, 'pokebotsettings')
 
+def print_settings(guild):
+    temp = pokebotsettings[guild]
+    if temp[9] == 0:
+        pre_evo='Same Rank'
+    elif temp[9] == 1:
+        pre_evo='No'
+    else:
+        pre_evo='Lower Rank'
+    if temp[7]:
+        odds = 'Rank'
+    else:
+        odds = 'Odds'
+    return(f'Current settings:\n(Ability1/Ability2/AbilityHidden)\n**{temp[0],temp[1],temp[2]}**\n'
+           f'Shiny chance: {temp[3]} out of 1, **{temp[3]*100}%**\n'
+           f'Allow previous evolution moves in `%encounter`? **{pre_evo}**\n'
+           f'Display `%encounter` text in a code block format: **{temp[10]}\n**'
+           f'Show move descriptions in %encounter: **{temp[4]}**\n'
+           f'Show ability description in %encounter: **{temp[5]}**\n'
+           f'Items in %encounter? **{temp[6]}**\n'
+           f'display_list by odds or rank? **{odds}**\n'
+           f'arbitrary encounter random_rolls? **{temp[8]}**\n'
+           f'\n"%help settings" for help')
+
 @bot.command(name = 'settings', aliases = ['setting'],
              help = '%settings <setting_name> [value]\n'
                     'e.g. %settings ability_one_chance 50\n'
@@ -671,6 +694,7 @@ async def instantiateSettings(where : str):
                     '(pre_evo_moves Yes/No/Lower)\n'
                     '(code_block True/False)\n'
                     '(show_move_description True/False)\n'
+                    '(show_ability_description True/False)\n'
                     '(encounter_item <listname>)\n'
                     '(display_list Rank/Odds)\n'
                     '(random_rolls True/False)')
@@ -742,25 +766,99 @@ async def settings(ctx, setting='', value=''):
             pokebotsettings[guild][10] = True
         else:
             pokebotsettings[guild][10] = False
-    temp = pokebotsettings[guild]
-    if temp[9] == 0:
-        pre_evo='Same Rank'
-    elif temp[9] == 1:
-        pre_evo='No'
-    else:
-        pre_evo='Lower Rank'
-    await ctx.send(f'{msg}'
-                   f'Current settings:\n(Ability1/Ability2/AbilityHidden)\n**{temp[0],temp[1],temp[2]}**\n'
-                   f'Shiny chance: {temp[3]} out of 1, **{temp[3]*100}%**\n'
-                   f'Allow previous evolution moves in `%encounter`? **{pre_evo}**\n'
-                   f'Display `%encounter` text in a code block format: **{temp[10]}\n**'
-                   f'Show move descriptions in %encounter: **{temp[4]}**\n'
-                   f'Show ability description in %encounter: **{temp[5]}**\n'
-                   f'Items in %encounter? **{temp[6]}**\n'
-                   f'display_list by odds or rank? **{temp[7]}**\n'
-                   f'arbitrary encounter random_rolls? **{temp[8]}**\n'
-                   f'\n"%help settings" for help')
+    await ctx.send(msg + print_settings(guild))
     save_obj(pokebotsettings, 'pokebotsettings')
+
+@inter_client.slash_command(
+    name = 'settings',
+    description = 'Change the settings',
+    options = [
+        Option('ability_one_chance',
+               "Chance for a generated pokemon to have its first ability (out of 100 total)",
+               OptionType.NUMBER
+        ),
+        Option('ability_two_chance',
+               "Chance for a generated pokemon to have its second ability (out of 100 total)",
+               OptionType.NUMBER
+        ),
+        Option('ability_hidden_chance',
+               "Chance for a generated pokemon to have its hidden ability (out of 100 total)",
+               OptionType.NUMBER
+        ),
+        Option('shiny_chance',
+               "Chance for a generated pokemon to be shiny (out of 100 total)",
+               OptionType.NUMBER
+        ),
+        Option('previous_evolution_moves',
+               "Should Pokemon generate with moves from their previous evolutions?",
+               OptionType.STRING, choices = [
+                    OptionChoice('Yes', value = 0),
+                    OptionChoice('No', value = 1),
+                    OptionChoice('Yes, but from 1 rank lower', value = 2),
+        ]),
+        Option('code_block_format',
+               "Display generated pokemon in a `code block`?",
+               OptionType.BOOLEAN
+        ),
+        Option('show_move_description',
+               "Expand move descriptions by default in generated pokemon?",
+               OptionType.BOOLEAN
+        ),
+        Option('show_ability_description',
+               "Expand ability descriptions by default in generated pokemon?",
+               OptionType.BOOLEAN
+        ),
+        Option('item_list_in_encounter',
+               "Which item list should be used in encounters? (type 'False' to clear)",
+               OptionType.STRING
+        ),
+        Option('display_lists_by',
+               "Choose to display specific lists by Rank or Odds",
+               OptionType.STRING,
+               choices = [
+                    OptionChoice('Rank', value = True),
+                    OptionChoice('Odds', value = False)
+        ]),
+        Option('random_rolls_in_encounter',
+               "Have 4 suggested rolls for Accuracy and Damage in encounters?",
+               OptionType.BOOLEAN
+        )
+    ]
+)
+async def settings_slash(
+        inter,
+        ability_one_chance: float = None,
+        ability_two_chance: float = None,
+        ability_hidden_chance: float = None,
+        shiny_chance: float = None,
+        previous_evolution_moves: int = None,
+        code_block_format: bool = None,
+        show_move_description: bool = None,
+        show_ability_description: bool = None,
+        item_list_in_encounter: str = None,
+        display_lists_by: str = None,
+        random_rolls_in_encounter: bool = None
+):
+    try:
+        guild = inter.guild.id
+        if guild == 245675629515767809: #prevent modifications to the main pokerole server
+            return
+    except:
+        guild = inter.author.id
+
+    if ability_one_chance: pokebotsettings[guild][0] = ability_one_chance
+    if ability_two_chance: pokebotsettings[guild][1] = ability_two_chance
+    if ability_hidden_chance: pokebotsettings[guild][2] = ability_hidden_chance
+    if shiny_chance: pokebotsettings[guild][3] = shiny_chance
+    if show_move_description: pokebotsettings[guild][4] = show_move_description
+    if show_ability_description: pokebotsettings[guild][5] = show_ability_description
+    if item_list_in_encounter: pokebotsettings[guild][6] = item_list_in_encounter
+    if display_lists_by: pokebotsettings[guild][7] = display_lists_by
+    if random_rolls_in_encounter: pokebotsettings[guild][8] = random_rolls_in_encounter
+    if previous_evolution_moves: pokebotsettings[guild][9] = previous_evolution_moves
+    if code_block_format: pokebotsettings[guild][10] = code_block_format
+
+    await inter.reply(print_settings(guild))
 
 #######
 
