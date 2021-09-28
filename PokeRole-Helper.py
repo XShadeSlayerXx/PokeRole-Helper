@@ -176,35 +176,38 @@ if dev_env:
     async def on_ready():
         sc = []
         test_guild = 669326419641237509
+        # sc.append(
+        #     SlashCommand(
+        #         name = 'encounter',
+        #         description = 'Encounter 2 Ace Pikachu!',
+        #         options = [
+        #             Option('pokemon', "Which pokemon?", OptionType.STRING),
+        #             Option('number', 'How many? (up to 6)', OptionType.INTEGER, choices = [
+        #                 OptionChoice(str(x), x) for x in range(1, 7)
+        #             ]),
+        #             Option('rank', 'What rank?', OptionType.STRING, choices = [
+        #                 OptionChoice(x, x) for x in ranks
+        #             ]),
+        #             Option('smart_stats', 'Use the improved stat distribution? (Default: True)?',
+        #                    OptionType.BOOLEAN)
+        #         ]
+        #     )
+        # )
         sc.append(
             SlashCommand(
-                name = 'encounter',
-                description = 'Encounter 2 Ace Pikachu!',
+                name = 'quest',
+                description = 'Generate some quests at a rank, from [pokemon]!',
                 options = [
-                    Option('pokemon', "Which pokemon?", OptionType.STRING),
-                    Option('number', 'How many? (up to 6)', OptionType.INTEGER, choices = [
-                        OptionChoice(str(x), x) for x in range(1, 7)
+                    Option('number', 'How many? (up to 5)', OptionType.INTEGER, choices = [
+                        OptionChoice(str(x), x) for x in range(1, 6)
                     ]),
                     Option('rank', 'What rank?', OptionType.STRING, choices = [
                         OptionChoice(x, x) for x in ranks
                     ]),
-                    Option('smart_stats', 'Use the improved stat distribution? (Default: True)?',
-                           OptionType.BOOLEAN)
+                    Option('pokemon', "Which pokemon?", OptionType.STRING)
                 ]
             )
         )
-        # sc.append(
-        #     SlashCommand(
-        #         name = 'roll',
-        #         description = "Roll a single d6 by default. You can change the number of dice and/or the number of sides",
-        #         options = [
-        #             Option('sides', 'Number of sides each die has (up to 100)', OptionType.INTEGER),
-        #             Option('dice', 'Number of dice to roll (up to 20)', OptionType.INTEGER),
-        #             Option('flat_addition', 'Flat number to the roll', OptionType.INTEGER),
-        #             Option('private', 'Send a private message to you in this chat? (default: False)', OptionType.BOOLEAN)
-        #         ]
-        #     )
-        # )
         registered = inter_client.get_guild_commands(test_guild)
         registered_names = [x.name for x in registered]
         sc_names = [x.name for x in sc]

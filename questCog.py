@@ -1,4 +1,5 @@
 from discord.ext import commands
+from dislash import slash_command, Option, OptionChoice, OptionType
 from dbhelper import Database
 import typing, math
 import pmd_quest_text as pmd
@@ -238,6 +239,47 @@ class Quests(commands.Cog):
         msg = self.quest_recursor(ctx = ctx, numQuests = numQuests, include_garmets = include_garmets, rank = rank,
                                   price = price, price_upper = price_upper, mc = mc)
         await self.bot.big_msg(ctx, msg)
+
+    @slash_command(
+        name = 'quest',
+        description = 'Generate some quests at a rank, from [pokemon]!',
+        options = [
+            Option('number', 'How many? (up to 5)', OptionType.INTEGER, choices = [
+                OptionChoice(str(x), x) for x in range(1, 6)
+            ]),
+            Option('rank', 'What rank?', OptionType.STRING, choices = [
+                OptionChoice(x, x) for x in ranks
+            ]),
+            Option('pokemon', "Which pokemon?", OptionType.STRING)
+        ]
+    )
+    async def generate_quest_slash(self, inter, number : int = 1, rank : str = '', pokemon : str = ''):
+        if rank == '':
+            rank = self.bot.rank_dist()
+        pokemon = pokemon.split(', ')
+        price = prices[ranks.index(rank)]
+        msg = ''
+        for _ in range(number):
+            # get a random pokemon if none provided
+            if pokemon == ['']:
+                poke = self.get_poke(rank)
+            #... otherwise select a random poke from the list
+            else:
+                poke = random.choice(pokemon)
+
+            query = f'SELECT name FROM pkmnStats WHERE name="{poke.title()}"'
+            query = self.db.custom_query(query)
+
+            try:
+                if not query:
+                    poke = random.choice(self.bot.expand_list(poke))
+            except:
+                query = f'SELECT name FROM pkmnStats WHERE name="{self.bot.dictionary(poke.title())}"'
+                poke = (self.db.custom_query(query))[0][0]
+
+
+            msg += '\n' + self.quest_output(False, poke, rank, (price, price)) + '\n'
+        await self.bot.big_msg(inter, msg)
 
     @generate_quest.error
     async def q_error(self, ctx, error):
