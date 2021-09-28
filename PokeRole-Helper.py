@@ -2637,39 +2637,39 @@ if not dev_env:
             msg += f'\n*Restarting... please give me a minute*'
         await ctx.send(msg, delete_after=15)
 
-if not dev_env:
-    @bot.event
-    async def on_raw_reaction_add(payload):
-        user = payload.user_id
-        if user == bot.user.id:
-            return
-        channel = await bot.fetch_channel(payload.channel_id)
-        message = await channel.fetch_message(payload.message_id)
-        if len(message.reactions) != 1 or message.reactions[0].count != 1:
-            return
-        if message.author != bot.user or message.content[0] != '#':
-            return
-        msg = message.content
-        try:
-            pkmn = msg[7:msg.find('\n')-2]
-            query = f'SELECT ability, ability2, abilityhidden, abilityevent FROM pkmnStats WHERE name="{pkmn}"'
-            query = database.custom_query(query)[0]
-            ability = list(query)
-            while '' in ability:
-                ability.remove('')
-            ability_expanded = [(await pkmnabilitieshelper(x)) for x in ability]
-
-            output = ''
-            for name, (effect, desc) in zip(ability, ability_expanded):
-                output += f'**{name}:** {effect}\n'
-                if desc != "":
-                    output += f'*{desc}*\n'
-                output += '\n'
-
-            await channel.send(output[:-2]) #-2 to remove the trailing \n 's
-
-        except:
-            pass
+# if not dev_env:
+#     @bot.event
+#     async def on_raw_reaction_add(payload):
+#         user = payload.user_id
+#         if user == bot.user.id:
+#             return
+#         channel = await bot.fetch_channel(payload.channel_id)
+#         message = await channel.fetch_message(payload.message_id)
+#         if len(message.reactions) != 1 or message.reactions[0].count != 1:
+#             return
+#         if message.author != bot.user or message.content[0] != '#':
+#             return
+#         msg = message.content
+#         try:
+#             pkmn = msg[7:msg.find('\n')-2]
+#             query = f'SELECT ability, ability2, abilityhidden, abilityevent FROM pkmnStats WHERE name="{pkmn}"'
+#             query = database.custom_query(query)[0]
+#             ability = list(query)
+#             while '' in ability:
+#                 ability.remove('')
+#             ability_expanded = [(await pkmnabilitieshelper(x)) for x in ability]
+#
+#             output = ''
+#             for name, (effect, desc) in zip(ability, ability_expanded):
+#                 output += f'**{name}:** {effect}\n'
+#                 if desc != "":
+#                     output += f'*{desc}*\n'
+#                 output += '\n'
+#
+#             await channel.send(output[:-2]) #-2 to remove the trailing \n 's
+#
+#         except:
+#             pass
 
 #####
 
