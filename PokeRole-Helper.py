@@ -2300,7 +2300,11 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
             d = int(socials[attr-1][1])
             socials[attr-1] = (socials[attr-1][0],'⬤'*d + '⭘'*(5-d))
         just += 12
-        msg += f'**Total HP:** {attributes[0]}\n'
+        bonus_hp = 2 if rank == ['Master', 'Champion'] else 0
+        msg += f'**Total HP:** {attributes[0]}'
+        if bonus_hp > 0:
+            msg += f' + {bonus_hp} (Master Rank)'
+        msg += '\n'
         msg += ('**Str:** '+fullattr[1]+totalNums[1]).ljust(just)+f' -- **{socials[0][0]}:**  {socials[0][1]}\n'
         msg += ('**Dex:** '+fullattr[2]+totalNums[2]).ljust(just)+f' -- **{socials[1][0]}:**  {socials[1][1]}\n'
         msg += ('**Vit:** '+fullattr[3]+totalNums[3]).ljust(just)+f' -- **{socials[2][0]}:**  {socials[2][1]}\n'
