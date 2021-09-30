@@ -18,6 +18,9 @@ from numpy.random import choice
 from bisect import bisect
 from dislash import InteractionClient, ActionRow, Button, ButtonStyle, ResponseType, Option, OptionType, OptionChoice
 from dislash.interactions import SlashCommand
+import PokeImageWriter
+from PIL import Image
+from io import BytesIO
 
 from dbhelper import Database
 
@@ -176,38 +179,39 @@ if dev_env:
     async def on_ready():
         sc = []
         test_guild = 669326419641237509
-        # sc.append(
-        #     SlashCommand(
-        #         name = 'encounter',
-        #         description = 'Encounter 2 Ace Pikachu!',
-        #         options = [
-        #             Option('pokemon', "Which pokemon?", OptionType.STRING),
-        #             Option('number', 'How many? (up to 6)', OptionType.INTEGER, choices = [
-        #                 OptionChoice(str(x), x) for x in range(1, 7)
-        #             ]),
-        #             Option('rank', 'What rank?', OptionType.STRING, choices = [
-        #                 OptionChoice(x, x) for x in ranks
-        #             ]),
-        #             Option('smart_stats', 'Use the improved stat distribution? (Default: True)?',
-        #                    OptionType.BOOLEAN)
-        #         ]
-        #     )
-        # )
         sc.append(
             SlashCommand(
-                name = 'quest',
-                description = 'Generate some quests at a rank, from [pokemon]!',
+                name = 'encounter',
+                description = 'Encounter 2 Ace Pikachu!',
                 options = [
-                    Option('number', 'How many? (up to 5)', OptionType.INTEGER, choices = [
-                        OptionChoice(str(x), x) for x in range(1, 6)
+                    Option('pokemon', "Which pokemon?", OptionType.STRING),
+                    Option('number', 'How many? (up to 6)', OptionType.INTEGER, choices = [
+                        OptionChoice(str(x), x) for x in range(1, 7)
                     ]),
                     Option('rank', 'What rank?', OptionType.STRING, choices = [
                         OptionChoice(x, x) for x in ranks
                     ]),
-                    Option('pokemon', "Which pokemon?", OptionType.STRING)
+                    Option('smart_stats', 'Use the improved stat distribution? (Default: True)?',
+                           OptionType.BOOLEAN),
+                    Option('imagify', 'Send an image instead?', OptionType.BOOLEAN)
                 ]
             )
         )
+        # sc.append(
+        #     SlashCommand(
+        #         name = 'quest',
+        #         description = 'Generate some quests at a rank, from [pokemon]!',
+        #         options = [
+        #             Option('number', 'How many? (up to 5)', OptionType.INTEGER, choices = [
+        #                 OptionChoice(str(x), x) for x in range(1, 6)
+        #             ]),
+        #             Option('rank', 'What rank?', OptionType.STRING, choices = [
+        #                 OptionChoice(x, x) for x in ranks
+        #             ]),
+        #             Option('pokemon', "Which pokemon?", OptionType.STRING)
+        #         ]
+        #     )
+        # )
         registered = inter_client.get_guild_commands(test_guild)
         registered_names = [x.name for x in registered]
         sc_names = [x.name for x in sc]
@@ -453,6 +457,15 @@ async def getPokemonAbilities(pkmn):
         output += '\n'
 
     return output[:-2]  #-2 to remove the trailing \n 's
+
+async def send_slash_img(inter, content, image, filename):
+    with BytesIO() as image_binary:
+        image.save(image_binary, 'PNG')
+        image_binary.seek(0)
+        file = discord.File(fp = image_binary, filename = filename)
+        await inter.reply(content = content,
+                                file = file,
+                                fetch_response_message = False)
 
 #######
 #decorators
@@ -2066,7 +2079,8 @@ async def calcStats(rank : str, attr : list, maxAttr : list,
     return attributes, socials, skills, leftover
 
 async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
-                         exact_rank : bool = False, boss : bool = False, guild = None) -> str:
+                         exact_rank : bool = False, boss : bool = False, guild = None,
+                         image = False) -> str:
     if guild is None:
         guild = await getGuilds(ctx)
     msg = ''
@@ -2250,6 +2264,43 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
         for social in socials:
             allAttr.update({social[0].upper():social[1]})
 
+        #return an Image instead of a str
+        if image:
+            tmpMoves = []
+            for move in move_descs:
+                stf = await pkmnmovehelper(move)
+                if stf[-1][8][-9:-1] == 'Accuracy':
+                    try:
+                        accMod = int(found[8][-11])
+                    except:
+                        accMod = 0
+                else:
+                    accMod = 0
+                tmpMoves.append(PokeImageWriter.Move(
+                    move,
+                    acc1 = allAttr[stf[5]],
+                    acc2 = allAttr[stf[6]],
+                    pow1 = allAttr[stf[3]],
+                    pow2 = allAttr[stf[3]],
+                    acc_debuff = accMod
+                ))
+            nature = random.choice(natures).split(' ')[0]
+            # print(f'number? {statlist[0]}: name {nextpoke}: types- {statlist[1]} / {statlist[2]}')
+            return PokeImageWriter.Pokemon(
+                rank = rank,
+                socials = [x[1] for x in socials],
+                skills = [x[1] for x in skills],
+                stats = attributes[1:6],
+                base_hp = attributes[0],
+                nature = nature,
+                ability = ability,
+                my_type = str(statlist[1]) + (f' / {statlist[2]}' if statlist[2] else ''),
+                number = statlist[0],
+                name = nextpoke,
+                moves = tmpMoves,
+            ).create_stat_sheet()
+
+
         abilitytext = ''
         if pokebotsettings[guild][5]:
             try:
@@ -2393,12 +2444,14 @@ async def pkmn_search_encounter(ctx, number : typing.Optional[int] = 1,
                                 numberMax : typing.Optional[int] = None,
                                 rank : typing.Optional[ensure_rank] = 'Base',
                                 *, pokelist : (lambda x : x.split(', ')),
-                                boss = False):
+                                boss = False, image = False):
     #pokelist = pokelist.split(', ')
     guild = await getGuilds(ctx)
     if numberMax is not None:
         number = random.randint(number, numberMax)
-    msg = await pkmn_encounter(ctx, number, rank, pokelist, boss = boss, guild = guild)
+    msg = await pkmn_encounter(ctx, number, rank, pokelist, boss = boss, guild = guild, image = image)
+    if image:
+        return msg
     if pokebotsettings[guild][10]:
         codify = True
     else:
@@ -2503,12 +2556,23 @@ async def smart_pkmn_search(ctx, number : typing.Optional[int] = 1,
             OptionChoice(x, x) for x in ranks
         ]),
         Option('smart_stats', 'Use the improved stat distribution? (Default: True)?',
-               OptionType.BOOLEAN)
+               OptionType.BOOLEAN
+        ),
+        Option('imagify', 'Send an image instead?', OptionType.BOOLEAN)
     ]
 )
 async def smart_pkmn_search(inter, number : int = 1,
-                                rank : ensure_rank = 'Base', smart_stats : bool = True,
+                                rank : ensure_rank = 'Base', smart_stats : bool = True, imagify : bool = False,
                                 *, pokemon : str = ''):
+    if imagify:
+        msg_img = await pkmn_search_encounter(ctx = inter, number = number, numberMax =  number,
+                                    rank = rank.title(), pokelist =  pokemon.split(', '),
+                                    boss = smart_stats, image = True)
+        name = f'{rank}_{pokemon}'
+        await inter.reply(name, delete_after = 1)
+        await send_slash_img(inter = inter, content = f'{rank} {pkmn_cap(pokemon)}',
+                             image = msg_img, filename = f'{name}.png')
+        return
     if pokemon == '':
         guild = await getGuilds(inter)
         if pokebotsettings[guild][10]:
