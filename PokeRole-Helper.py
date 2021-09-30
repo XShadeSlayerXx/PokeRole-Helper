@@ -265,6 +265,7 @@ def lookup_poke(arg : str) -> str:
     return suggestion.term
 
 async def send_big_msg(ctx, arg : str, codify : bool = False):
+    arg += '\n'
     if codify:
         arg = arg.replace('`','') #remove all backticks since they're irrelevant
         arg = arg.replace('*__','-')
@@ -284,6 +285,7 @@ async def send_big_msg(ctx, arg : str, codify : bool = False):
         arg = arg[last_newline+1:]
 
 async def send_big_slash_msg(inter, arg : str, codify : bool = False, offset : int = 0):
+    arg += '\n'
     which = True
     if codify:
         arg = arg.replace('`','') #remove all backticks since they're irrelevant
