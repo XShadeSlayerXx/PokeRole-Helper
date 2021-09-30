@@ -68,7 +68,7 @@ class Pokemon:
 
         if self.image: draw_image(base, self.image)
 
-        hp = f'{self.base_hp + self.stats[3]}'
+        hp = f'{self.base_hp}'
         initiative = f'd6 + {self.stats[1] + self.skills[4]}'
         will = f'{self.stats[4] + 2}'
         evasion = f'{self.stats[1] + self.skills[3]}'
