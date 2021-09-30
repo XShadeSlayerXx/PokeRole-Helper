@@ -2271,13 +2271,12 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
             tmpMoves = []
             for move in move_descs:
                 stf = await pkmnmovehelper(move)
-                if stf[-1][8][-9:-1] == 'Accuracy':
-                    try:
+                accMod = 0
+                try:
+                    if stf[-1][8][-9:-1] == 'Accuracy':
                         accMod = int(found[8][-11])
-                    except:
-                        accMod = 0
-                else:
-                    accMod = 0
+                except:
+                    pass
                 tmpMoves.append(PokeImageWriter.Move(
                     move,
                     acc1 = allAttr[stf[5]],
@@ -2566,15 +2565,7 @@ async def smart_pkmn_search(ctx, number : typing.Optional[int] = 1,
 async def smart_pkmn_search(inter, number : int = 1,
                                 rank : ensure_rank = 'Base', smart_stats : bool = True, imagify : bool = False,
                                 *, pokemon : str = ''):
-    if imagify:
-        msg_img = await pkmn_search_encounter(ctx = inter, number = number, numberMax =  number,
-                                    rank = rank.title(), pokelist =  pokemon.split(', '),
-                                    boss = smart_stats, image = True)
-        name = f'{rank}_{pokemon}'
-        await inter.reply(name, delete_after = 1)
-        await send_slash_img(inter = inter, content = f'{rank} {pkmn_cap(pokemon)}',
-                             image = msg_img, filename = f'{name}.png')
-        return
+    if imagify: await inter.reply('Creating the entry...', delete_after = 1)
     if pokemon == '':
         guild = await getGuilds(inter)
         if pokebotsettings[guild][10]:
@@ -2593,14 +2584,31 @@ async def smart_pkmn_search(inter, number : int = 1,
         pokemon = database.custom_query(query)
         msg = ''
         for count, pkm in enumerate([x[0] for x in pokemon]):
-            if count != 0:
-                msg += f'\t**{count+1}**\n\n'
-            msg += await pkmn_encounter(ctx = inter, number = 1, rank = rank.title(),
-                                        pokelist =  [pkm], boss = smart_stats, guild = guild)
-        await send_big_msg(ctx = inter, arg = msg, codify = codify)
+            if imagify:
+                msg_img = await pkmn_search_encounter(ctx = inter, number = number, numberMax =  number,
+                                            rank = rank.title(), pokelist =  [pkm],
+                                            boss = smart_stats, image = True)
+                name = f'{rank}_{pkm}'
+                await send_slash_img(inter = inter, content = f'{rank} {pkmn_cap(pkm)}',
+                                     image = msg_img, filename = f'{name}.png')
+            else:
+                if count != 0:
+                    msg += f'\t**{count+1}**\n\n'
+                msg += await pkmn_encounter(ctx = inter, number = 1, rank = rank.title(),
+                                            pokelist =  [pkm], boss = smart_stats, guild = guild)
+        if not imagify: await send_big_msg(ctx = inter, arg = msg, codify = codify)
     else:
-        await pkmn_search_encounter(ctx = inter, number = number, numberMax =  number,
-                                    rank = rank.title(), pokelist =  pokemon.split(', '), boss = smart_stats)
+        if imagify:
+            for _ in range(number):
+                msg_img = await pkmn_search_encounter(ctx = inter, number = 1, numberMax =  1,
+                                            rank = rank.title(), pokelist =  pokemon.split(', '),
+                                            boss = smart_stats, image = True)
+                name = f'{rank}_{pokemon}'
+                await send_slash_img(inter = inter, content = f'{rank} {pkmn_cap(pokemon)}',
+                                     image = msg_img, filename = f'{name}.png')
+        else:
+            await pkmn_search_encounter(ctx = inter, number = number, numberMax =  number,
+                                        rank = rank.title(), pokelist =  pokemon.split(', '), boss = smart_stats)
 
 #####
 
