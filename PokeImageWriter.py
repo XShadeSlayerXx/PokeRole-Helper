@@ -31,7 +31,7 @@ class Pokemon:
 
     # moves: list of the moves as type Move
     def __init__(self, number, name, my_type, ability, nature, base_hp,
-                 stats, skills, socials, rank, moves : list[Move]):
+                 stats, skills, socials, rank, moves):
         self.rank = rank
         self.socials = socials
         self.skills = skills
@@ -230,7 +230,7 @@ def draw_skills(draw_object, skills):
         if i % 4 == 3:
             ofs[1] += skill_group_offset
 
-def write_moves(draw_object, moves : list[Move]):
+def write_moves(draw_object, moves):
     fnt = get_font(font_size['moves'])
     ofs = list(offsets['moves'])[:]
     for i, move in enumerate(moves):
