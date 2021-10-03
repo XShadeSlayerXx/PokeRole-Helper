@@ -2565,7 +2565,9 @@ async def smart_pkmn_search(ctx, number : typing.Optional[int] = 1,
 async def smart_pkmn_search(inter, number : int = 1,
                                 rank : ensure_rank = 'Base', smart_stats : bool = True, imagify : bool = False,
                                 *, pokemon : str = ''):
-    if imagify: await inter.reply('Finding the Pokemon...')
+    if imagify:
+        await inter.reply('Finding the Pokemon...')
+        rnk = f' {rank}' if rank != 'Base' else ''
     if pokemon == '':
         guild = await getGuilds(inter)
         if pokebotsettings[guild][10]:
@@ -2589,7 +2591,7 @@ async def smart_pkmn_search(inter, number : int = 1,
                                             rank = rank.title(), pokelist =  [pkm],
                                             boss = smart_stats, image = True)
                 name = f'{rank}_{pkm}'
-                await send_slash_img(inter = inter, content = f'Found a {rank} {pkmn_cap(pkm)}!',
+                await send_slash_img(inter = inter, content = f'Found a{rnk} {pkmn_cap(pkm)}!',
                                      image = msg_img, filename = f'{name}.png')
             else:
                 if count != 0:
@@ -2604,7 +2606,7 @@ async def smart_pkmn_search(inter, number : int = 1,
                                             rank = rank.title(), pokelist =  pokemon.split(', '),
                                             boss = smart_stats, image = True)
                 name = f'{rank}_{pokemon}'
-                await send_slash_img(inter = inter, content = f'Found a {rank} {pkmn_cap(pokemon)}!',
+                await send_slash_img(inter = inter, content = f'Found a{rnk} {pkmn_cap(pokemon)}!',
                                      image = msg_img, filename = f'{name}.png')
         else:
             await pkmn_search_encounter(ctx = inter, number = number, numberMax =  number,
