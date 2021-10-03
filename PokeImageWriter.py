@@ -261,10 +261,8 @@ def write_moves(draw_object, moves):
             ofs[1] = offsets['moves'][1]
 
 def draw_image(draw_object, image):
-    with Image.open(image).convert('RGBA') as img:
+    with Image.open(image) as img:
         tmp = asarray(img).copy()
-
-        tmp[:, :, 3] = (255 * (tmp[:, :, :3] != 255).any(axis = 2)).astype(uint8)
 
         tmp = Image.fromarray(tmp)
 
