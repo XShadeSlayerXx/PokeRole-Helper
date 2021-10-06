@@ -1664,10 +1664,10 @@ async def metronome(ctx, *, parameters : str = ''):
         Option('max_power', "Maximum power on a move? (inclusive)", OptionType.INTEGER, choices = [
             OptionChoice(str(x), str(x)) for x in range(11)
         ]),
-        Option('private', "Display the move in a private message? (Default: True)", OptionType.BOOLEAN)
+        Option('private', "Display the move in a private message? (Default: False)", OptionType.BOOLEAN)
     ]
 )
-async def metronome_slash(inter, type : str = None, power : int = None, max_power : int = None, private : bool = True):
+async def metronome_slash(inter, type : str = None, power : int = None, max_power : int = None, private : bool = False):
     if power and max_power and power > max_power:
         min_power, max_power = max_power, power
     move = await metronome_backend(type = type, lower = power, higher = max_power)
