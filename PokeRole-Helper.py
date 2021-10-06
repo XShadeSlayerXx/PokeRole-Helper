@@ -1550,9 +1550,9 @@ async def move_backend(movename):
         found = await pkmnmovehelper(movename)
 
         output = f'__{movename}__\n'
-        if not found[4]:
-            pwr2 = f' + {found[2]}'
-        else:
+        if not found[4]: #there is no second damage mod, use the power
+            pwr2 = f' + {found[2]}' if found[2] != 0 else ''
+        else: #use the damage mod
             pwr2 = f' + {found[4]}'
         if found[9] != "":
             output += f'*{found[9]}*\n'
