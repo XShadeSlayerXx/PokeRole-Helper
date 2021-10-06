@@ -460,14 +460,16 @@ async def getPokemonAbilities(pkmn):
 
     return output[:-2]  #-2 to remove the trailing \n 's
 
-async def send_slash_img(inter, content, image, filename):
+async def send_slash_img(inter, content, image, filename, components = None):
     with BytesIO() as image_binary:
         image.save(image_binary, 'PNG')
         image_binary.seek(0)
         file = discord.File(fp = image_binary, filename = filename)
-        await inter.reply(content = content,
+        msg = await inter.reply(content = content,
                                 file = file,
-                                fetch_response_message = False)
+                                fetch_response_message = False,
+                                components = components)
+    return msg
 
 #######
 #decorators
@@ -2086,7 +2088,7 @@ async def calcStats(rank : str, attr : list, maxAttr : list,
 
 async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
                          exact_rank : bool = False, boss : bool = False, guild = None,
-                         image = False) -> str:
+                         image = False):
     if guild is None:
         guild = await getGuilds(ctx)
     msg = ''
@@ -2303,7 +2305,7 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
                 number = statlist[0],
                 name = nextpoke,
                 moves = tmpMoves,
-            ).create_stat_sheet()
+            ).create_stat_sheet(), move_descs
 
 
         abilitytext = ''
@@ -2576,6 +2578,13 @@ async def smart_pkmn_search(inter, number : int = 1,
     if imagify:
         await inter.reply('Finding the Pokemon...')
         rnk = f' {rank}' if rank != 'Base' else ''
+        components = [ActionRow(Button(
+                style = ButtonStyle.gray,
+                label = "Expand Moves",
+                custom_id = "moves"
+            ))]
+    else:
+        rnk, components = None, None
     if pokemon == '':
         guild = await getGuilds(inter)
         if pokebotsettings[guild][10]:
@@ -2595,12 +2604,12 @@ async def smart_pkmn_search(inter, number : int = 1,
         msg = ''
         for count, pkm in enumerate([x[0] for x in pokemon]):
             if imagify:
-                msg_img = await pkmn_search_encounter(ctx = inter, number = number, numberMax =  number,
+                msg_img, moves = await pkmn_search_encounter(ctx = inter, number = number, numberMax =  number,
                                             rank = rank.title(), pokelist =  [pkm],
                                             boss = smart_stats, image = True)
                 name = f'{rank}_{pkm}'
-                await send_slash_img(inter = inter, content = f'Found a{rnk} {pkmn_cap(pkm)}!',
-                                     image = msg_img, filename = f'{name}.png')
+                img_msg = await send_slash_img(inter = inter, content = f'Found a{rnk} {pkmn_cap(pkm)}!',
+                                     image = msg_img, filename = f'{name}.png', components = components)
             else:
                 if count != 0:
                     msg += f'\t**{count+1}**\n\n'
@@ -2610,15 +2619,25 @@ async def smart_pkmn_search(inter, number : int = 1,
     else:
         if imagify:
             for _ in range(number):
-                msg_img = await pkmn_search_encounter(ctx = inter, number = 1, numberMax =  1,
+                msg_img, moves = await pkmn_search_encounter(ctx = inter, number = 1, numberMax =  1,
                                             rank = rank.title(), pokelist =  pokemon.split(', '),
                                             boss = smart_stats, image = True)
                 name = f'{rank}_{pokemon}'
-                await send_slash_img(inter = inter, content = f'Found a{rnk} {pkmn_cap(pokemon)}!',
-                                     image = msg_img, filename = f'{name}.png')
+                img_msg = await send_slash_img(inter = inter, content = f'Found a{rnk} {pkmn_cap(pokemon)}!',
+                                     image = msg_img, filename = f'{name}.png', components = components)
         else:
             await pkmn_search_encounter(ctx = inter, number = number, numberMax =  number,
                                         rank = rank.title(), pokelist =  pokemon.split(', '), boss = smart_stats)
+    if imagify:
+        on_click = img_msg.create_click_listener(timeout = 300)
+
+        @on_click.matching_id('moves')
+        async def on_button(inter):
+            moveset = ''
+            for mv in moves:
+                moveset += await move_backend(mv) + '\n\n'
+            await img_msg.edit(components = None)
+            await img_msg.reply(content = moveset)
 
 #####
 
