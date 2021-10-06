@@ -1550,14 +1550,18 @@ async def move_backend(movename):
         found = await pkmnmovehelper(movename)
 
         output = f'__{movename}__\n'
+        if not found[4]:
+            pwr2 = f' + {found[2]}'
+        else:
+            pwr2 = f' + {found[4]}'
         if found[9] != "":
             output += f'*{found[9]}*\n'
         output += f'**Type**: {found[0].capitalize()}'
         output += f' -- **{found[1].capitalize()}**\n'
         output += f'**Target**: {found[7]}'
         output += f' -- **Power**: {found[2]}\n'
-        output += f'**Dmg Mods**: {(found[3] or "None")} + {(found[4] or "None")}\n'
-        output += f'**Acc Mods**: {(found[5] or "None")} + {(found[6] or "None")}\n'
+        output += f'**Damage Dice**: {(found[3] or "None")}{pwr2}\n'
+        output += f'**Accuracy Dice**: {(found[5] or "None")} + {(found[6] or "None")}\n'
         output += f'**Effect**: {found[8]}'
 
         return output
@@ -2401,6 +2405,10 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
                     #todo: differentiate between damaging STAB, non-damaging STAB, and add + after the STAB dmg array
                     if x.title() not in naturalMoves:
                         msg += '*'
+                    if found[4]:
+                        powermod2 = f' + {found[4]}'
+                    else:
+                        powermod2 = ''
                     msg += f'__{x.title()}__\n'
                     if found[9] != "":
                         msg += f'*{found[9]}*\n'
@@ -2414,13 +2422,13 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
                     totalAcc = (allAttr[found[5]] or 0) + (allAttr[found[6]] or 0)
                     accArray = [sum([random.randint(0,1) for _ in range(totalAcc)])-accMod for _ in range(numRolls)]
                     if found[1].capitalize() != 'Support':
-                        msg += f'**Dmg Mods**: {(found[3] or "None")} + {(found[4] or "None")} ' \
-                               f'+ {found[2]} = ({totalDmg}'
+                        msg += f'**Dmg Dice**: {(found[3] or "None")}{powermod2}' \
+                               f' + {found[2]} = ({totalDmg}'
                         msg += f'{" STAB" if found[0].capitalize() in (statlist[1],statlist[2]) else ""})'
                         msg += f' {dmgArray}\n' if pokebotsettings[guild][8] else '\n'
                     else:
-                        msg += f'**Dmg Mods**: None\n'
-                    msg += f'**Acc Mods**: {(found[5] or "None")} + {(found[6] or "None")} = '
+                        msg += f'**Dmg Dice**: None\n'
+                    msg += f'**Acc Dice**: {(found[5] or "None")} + {(found[6] or "None")} = '
                     msg += f'({(allAttr[found[5]] or 0)+(allAttr[found[6]] or 0)}'
                     msg += f" - {accMod} Successes)" if accMod != 0 else ")"
                     msg += f' {accArray}\n' if pokebotsettings[guild][8] else '\n'
