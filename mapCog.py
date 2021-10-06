@@ -634,7 +634,7 @@ class Maps(commands.Cog):
 
         # inter = await msg.wait_for_button()
         @self.on_click.matching_id('up')
-        async def on_left_button(inter):
+        async def on_up_button(inter):
             # print(inter.message.content)
             # print(inter.component)
             if inter.author.id == self.button_owner or not self.author_only:
@@ -647,7 +647,7 @@ class Maps(commands.Cog):
                                             ephemeral = True)
 
         @self.on_click.matching_id('down')
-        async def on_left_button(inter):
+        async def on_down_button(inter):
             if inter.author.id == self.button_owner or not self.author_only:
                 content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id, edge = height)
                 await inter.reply(content = content, type = ResponseType.UpdateMessage)
@@ -669,7 +669,7 @@ class Maps(commands.Cog):
                                             ephemeral = True)
 
         @self.on_click.matching_id('right')
-        async def on_left_button(inter):
+        async def on_right_button(inter):
             if inter.author.id == self.button_owner or not self.author_only:
                 content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id, edge = width)
                 await inter.reply(content = content, type = ResponseType.UpdateMessage)
@@ -680,7 +680,7 @@ class Maps(commands.Cog):
                                             ephemeral = True)
 
         @self.on_click.matching_id('event')
-        async def on_left_button(inter):
+        async def on_event_button(inter):
             if inter.author.id == self.button_owner:
                 #event_order
                 content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id)
