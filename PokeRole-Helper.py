@@ -2419,10 +2419,20 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
                     msg += f'**Target**: {found[7]}'
                     msg += f' -- **Power**: {found[2]}\n'
                     numRolls = 4
-                    totalDmg = (allAttr[found[3]] or 0) + (allAttr[found[4]] or 0) + int(found[2])
-                    dmgArray = [sum([random.randint(0,1) for _ in range(totalDmg)]) for _ in range(numRolls)]
-                    totalAcc = (allAttr[found[5]] or 0) + (allAttr[found[6]] or 0)
-                    accArray = [sum([random.randint(0,1) for _ in range(totalAcc)])-accMod for _ in range(numRolls)]
+
+                    try:
+                        totalDmg = (allAttr[found[3]] or 0) + (allAttr[found[4]] or 0) + int(found[2])
+                        dmgArray = [sum([random.randint(0,1) for _ in range(totalDmg)]) for _ in range(numRolls)]
+                    except:
+                        totalDmg = 0
+                        dmgArray = ''
+                    try:
+                        totalAcc = (allAttr[found[5]] or 0) + (allAttr[found[6]] or 0)
+                        accArray = [sum([random.randint(0,1) for _ in range(totalAcc)])-accMod for _ in range(numRolls)]
+                    except:
+                        totalAcc = 0
+                        accArray = ''
+
                     if found[1].capitalize() != 'Support':
                         msg += f'**Dmg Dice**: {(found[3] or "None")}{powermod2}' \
                                f' + {found[2]} = ({totalDmg}'
@@ -2431,8 +2441,11 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
                     else:
                         msg += f'**Dmg Dice**: None\n'
                     msg += f'**Acc Dice**: {(found[5] or "None")} + {(found[6] or "None")} = '
-                    msg += f'({(allAttr[found[5]] or 0)+(allAttr[found[6]] or 0)}'
-                    msg += f" - {accMod} Successes)" if accMod != 0 else ")"
+                    try:
+                        msg += f'({(allAttr[found[5]] or 0)+(allAttr[found[6]] or 0)}'
+                        msg += f" - {accMod} Successes)" if accMod != 0 else ")"
+                    except:
+                        msg += '???'
                     msg += f' {accArray}\n' if pokebotsettings[guild][8] else '\n'
                     msg += f'**Effect**: {found[8]}\n\n'
                 except:
