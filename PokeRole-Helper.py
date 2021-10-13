@@ -2289,7 +2289,7 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
                     acc1 = (allAttr[stf[5]] if stf[5] in allAttr else None),
                     acc2 = allAttr[stf[6]],
                     pow1 = allAttr[stf[3]],
-                    pow2 = allAttr[stf[3]],
+                    pow2 = stf[2],
                     acc_debuff = accMod,
                     effect = stf[8]
                 ))

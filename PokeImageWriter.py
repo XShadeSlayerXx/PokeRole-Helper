@@ -247,11 +247,12 @@ def write_moves(draw_object, moves, types = None):
         #move name
         write = move.name.title()
         power_add = 0
+        stab = ''
         if types and move.pow2 and move.type in types:
             try:
                 int(move.pow2)
+                stab = f' (+ 1)'
                 write += ' (STAB)'
-                power_add = 1
             except:
                 pass
         draw_object.multiline_text(ofs, write, font = fnt, fill = text_clr)
@@ -269,7 +270,7 @@ def write_moves(draw_object, moves, types = None):
         except:
             pow = '???'
         debuff = f' ( - {move.acc_debuff})' if move.acc_debuff else ''
-        write = f'acc: {acc}{debuff:<20}pow: {pow}'
+        write = f'acc: {acc}{debuff:<15}dmg: {pow}{stab}'
         # next_offset = (ofs[0], ofs[1] + move_dice_offset)
         next_offset = (ofs[0], ofs[1] + move_power_offset)
         draw_object.multiline_text(next_offset, write, font = fnt, fill = text_clr)
