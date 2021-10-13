@@ -2285,7 +2285,7 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
                     pass
                 tmpMoves.append(PokeImageWriter.Move(
                     move,
-                    acc1 = allAttr[stf[5]],
+                    acc1 = (allAttr[stf[5]] if stf[5] in allAttr else None),
                     acc2 = allAttr[stf[6]],
                     pow1 = allAttr[stf[3]],
                     pow2 = allAttr[stf[3]],
@@ -2305,6 +2305,7 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
                 number = statlist[0],
                 name = nextpoke,
                 moves = tmpMoves,
+                max_stats = maxattr[1:6],
             ).create_stat_sheet(), move_descs
 
 
