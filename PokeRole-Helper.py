@@ -2279,8 +2279,8 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
                 stf = await pkmnmovehelper(move)
                 accMod = 0
                 try:
-                    if stf[-1][8][-9:-1] == 'Accuracy':
-                        accMod = int(found[8][-11])
+                    if stf[8][-9:-1] == 'Accuracy':
+                        accMod = int(stf[8][-11])
                 except:
                     pass
                 tmpMoves.append(PokeImageWriter.Move(
