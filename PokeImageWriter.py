@@ -134,53 +134,6 @@ skill_offset = 73
 skill_dot_offset = 31
 skill_group_offset = 13
 
-### test stuff
-
-from random import randrange
-move_examples = [
-    ('foresight', 0, 'SUPPORT'),
-    ('quick attack', 2, 'STRENGTH'),
-    ('endure', 0),
-    ('counter', 0),
-    ('feint', 0),
-    ('thunder shock', 0),
-    ('thunderbolt', 0),
-    ('fake out', 0),
-    ('volt tackle', 0),
-    ('wish', 0),
-    ('stone edge', 0),
-    ('thunder fang', 0),
-    ('earthquake', 0),
-    ('take down', 0),
-]
-number = str(randrange(1,900))
-name = 'Riolu'
-rank = 'Beginner'
-my_type = 'Dragon / Fighting'
-
-ability = 'Inner Focus'
-
-stats = [
-    randrange(1,5) for x in range(5)
-]
-max_stats = [
-    randrange(5,8) for x in range(5)
-]
-socials = [
-    randrange(1,5) for x in range(5)
-]
-skills = [
-    randrange(1,5) for x in range(12)
-]
-hp = 3
-
-nature = 'Brash'
-
-move_list = [
-    Move(x[0], stats[1], skills[0], stats[0], randrange(0,3), randrange(0,3)) for x in move_examples
-]
-### end test stuff
-
 def get_image(number, name):
     if name.startswith('Mega'):
         add_on = 'M'
@@ -307,5 +260,50 @@ def draw_quick_reference(draw_object, hp, will, initiative, evasion, clash, defe
 
 
 if __name__ == "__main__":
+    from random import randrange
+
+    move_examples = [
+        ('foresight', 0, 'SUPPORT'),
+        ('quick attack', 2, 'STRENGTH'),
+        ('endure', 0),
+        ('counter', 0),
+        ('feint', 0),
+        ('thunder shock', 0),
+        ('thunderbolt', 0),
+        ('fake out', 0),
+        ('volt tackle', 0),
+        ('wish', 0),
+        ('stone edge', 0),
+        ('thunder fang', 0),
+        ('earthquake', 0),
+        ('take down', 0),
+    ]
+    number = str(randrange(1, 900))
+    name = 'Riolu'
+    rank = 'Beginner'
+    my_type = 'Dragon / Fighting'
+
+    ability = 'Inner Focus'
+
+    stats = [
+        randrange(1, 5) for x in range(5)
+    ]
+    max_stats = [
+        randrange(5, 8) for x in range(5)
+    ]
+    # max_stats = None
+    socials = [
+        randrange(1, 5) for x in range(5)
+    ]
+    skills = [
+        randrange(1, 5) for x in range(12)
+    ]
+    hp = 3
+
+    nature = 'Brash'
+
+    move_list = [
+        Move(x[0], stats[1], skills[0], stats[0], randrange(0, 3), randrange(0, 3)) for x in move_examples
+    ]
     pkmn = Pokemon(number, name, my_type, ability, nature, hp, stats, skills, socials, rank, move_list, max_stats)
     pkmn.create_stat_sheet().show()
