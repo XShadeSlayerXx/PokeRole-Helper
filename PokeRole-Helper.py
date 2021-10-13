@@ -2592,11 +2592,12 @@ async def smart_pkmn_search(inter, number : int = 1,
     if imagify:
         await inter.reply('Finding the Pokemon...')
         rnk = f' {rank}' if rank != 'Base' else ''
-        components = [ActionRow(Button(
-                style = ButtonStyle.gray,
-                label = "Expand Moves",
-                custom_id = "moves"
-            ))]
+        # components = [ActionRow(Button(
+        #         style = ButtonStyle.gray,
+        #         label = "Expand Moves",
+        #         custom_id = "moves"
+        #     ))]
+        components = None
     else:
         rnk, components = None, None
     if pokemon == '':
@@ -2642,16 +2643,16 @@ async def smart_pkmn_search(inter, number : int = 1,
         else:
             await pkmn_search_encounter(ctx = inter, number = number, numberMax =  number,
                                         rank = rank.title(), pokelist =  pokemon.split(', '), boss = smart_stats)
-    if imagify:
-        on_click = img_msg.create_click_listener(timeout = 300)
-
-        @on_click.matching_id('moves')
-        async def on_button(inter):
-            moveset = ''
-            for mv in moves:
-                moveset += await move_backend(mv) + '\n\n'
-            await img_msg.edit(components = None)
-            await img_msg.reply(content = moveset)
+    # if imagify:
+    #     on_click = img_msg.create_click_listener(timeout = 300)
+    #
+    #     @on_click.matching_id('moves')
+    #     async def on_button(inter):
+    #         moveset = ''
+    #         for mv in moves:
+    #             moveset += await move_backend(mv) + '\n\n'
+    #         await img_msg.edit(components = None)
+    #         await img_msg.reply(content = moveset)
 
 #####
 
