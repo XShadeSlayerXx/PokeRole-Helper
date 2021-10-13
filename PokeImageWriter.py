@@ -123,7 +123,7 @@ font_size = {
 
 type_offset = 60
 move_offset = 217
-move_power_offset = 46
+move_power_offset = 35
 move_dice_offset = 119
 move_horizontal_offset = 530
 move_boxh_offset = 460
@@ -243,14 +243,17 @@ def write_moves(draw_object, moves, types = None):
                                       fill = fill,
                                       radius = move_radius)
         # print(str(move))
-        text_clr = ((255, 255, 255) if sum(move.type_color)//3  < 100 else (0, 0, 0))
+        text_clr = ((255, 255, 255) if sum(move.type_color)//3  < 110 else (0, 0, 0))
         #move name
         write = move.name.title()
-        if types and move.type in types:
-            write += ' (STAB)'
-            power_add = 1
-        else:
-            power_add = 0
+        power_add = 0
+        if types and move.pow2 and move.type in types:
+            try:
+                int(move.pow2)
+                write += ' (STAB)'
+                power_add = 1
+            except:
+                pass
         draw_object.multiline_text(ofs, write, font = fnt, fill = text_clr)
         # #move power
         # write = f'{move.pow2}'
@@ -266,7 +269,7 @@ def write_moves(draw_object, moves, types = None):
         except:
             pow = '???'
         debuff = f' ( - {move.acc_debuff})' if move.acc_debuff else ''
-        write = f'acc: {acc}{debuff}{" "*8}pow: {pow}'
+        write = f'acc: {acc}{debuff:<20}pow: {pow}'
         # next_offset = (ofs[0], ofs[1] + move_dice_offset)
         next_offset = (ofs[0], ofs[1] + move_power_offset)
         draw_object.multiline_text(next_offset, write, font = fnt, fill = text_clr)
@@ -274,6 +277,7 @@ def write_moves(draw_object, moves, types = None):
         #write the effects out
         fnt = get_font(font_size['effect'])
         write = []
+        place = 0
         old = 0
         tmp = move.effect[::-1]
         length = len(tmp)
@@ -286,8 +290,11 @@ def write_moves(draw_object, moves, types = None):
             except:
                 write.append(move.effect[place:])
                 break
+        if len(write) > 4:
+            write = write[:4]
+            write[-1] += '...'
         write = '\n'.join(write)
-        next_offset = (ofs[0], ofs[1] + move_power_offset*2)
+        next_offset = (ofs[0], ofs[1] + move_power_offset*2 + 5)
         draw_object.multiline_text(next_offset, write, font = fnt, fill = text_clr)
 
 
