@@ -2285,11 +2285,13 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
                     pass
                 tmpMoves.append(PokeImageWriter.Move(
                     move,
+                    type = stf[0],
                     acc1 = (allAttr[stf[5]] if stf[5] in allAttr else None),
                     acc2 = allAttr[stf[6]],
                     pow1 = allAttr[stf[3]],
                     pow2 = allAttr[stf[3]],
-                    acc_debuff = accMod
+                    acc_debuff = accMod,
+                    effect = stf[8]
                 ))
             nature = random.choice(natures).split(' ')[0]
             # print(f'number? {statlist[0]}: name {nextpoke}: types- {statlist[1]} / {statlist[2]}')

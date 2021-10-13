@@ -8,18 +8,23 @@ class Move:
     def __init__(
             self,
             name,
+            type = None,
             acc1 = None,
             acc2 = None,
             pow1 = None,
             pow2 = None,
-            acc_debuff = None
+            acc_debuff = None,
+            effect = ''
         ):
         self.name = name
+        self.type = type
+        self.type_color = type_colors[self.type]
         self.acc1 = acc1
         self.pow1 = pow1
         self.acc2 = acc2
         self.pow2 = pow2
         self.acc_debuff = acc_debuff if acc_debuff != 0 else None
+        self.effect = effect
 
     def __str__(self):
         return f'{self.name} - a: {self.acc1} + {self.acc2} - {self.acc_debuff}, d: {self.pow1} + {self.pow2}\n'
@@ -43,6 +48,7 @@ class Pokemon:
         self.nature = nature
         self.ability = ability
         self.my_type = my_type
+        self.types = self.my_type.split(' / ')
         self.number = number.replace('#', '')
         self.name = name
         self.moves = moves
@@ -68,7 +74,7 @@ class Pokemon:
         draw_max_stats(out, self.max_stats)
         draw_socials(out, self.socials)
         draw_skills(out, self.skills)
-        write_moves(out, self.moves)
+        write_moves(out, self.moves, self.types)
 
         if self.image: draw_image(base, self.image)
 
@@ -111,7 +117,8 @@ font_size = {
     'hp': 60,
     'rank': 60,
     'nature': 80,
-    'reference': 40
+    'reference': 40,
+    'effect': 27,
 }
 
 type_offset = 60
@@ -120,9 +127,10 @@ move_power_offset = 46
 move_dice_offset = 119
 move_horizontal_offset = 530
 move_boxh_offset = 460
-move_boxv_offset = 168
+move_boxv_offset = 175
 move_boxtotal_offset = 20
 move_radius = 50
+move_effect_length = 40
 
 #always has been
 insight_offset = (11,2)
@@ -133,6 +141,28 @@ dot_offset = 47
 skill_offset = 73
 skill_dot_offset = 31
 skill_group_offset = 13
+
+type_colors = {
+    'bug' : (131, 145, 39),
+    'dark' : (84, 64, 48),
+    'dragon' : (91, 58, 115),
+    'flying' : (121, 134, 156),
+    'electric' : (240, 194, 84),
+    'fairy' : (218, 136, 157),
+    'fighting' : (116, 62, 41),
+    'ghost' : (75, 75, 116),
+    'fire' : (119, 75, 46),
+    'grass' : (107, 163, 69),
+    'rock' : (178, 146, 73),
+    'ground' : (153, 131, 68),
+    'ice' : (64, 155, 157),
+    'normal' : (138, 130, 105),
+    'poison' : (150, 80, 126),
+    'psychic' : (219, 100, 130),
+    'steel' : (142, 139, 142),
+    'water' : (68, 118, 149),
+    'any' : (198, 194, 174)
+}
 
 def get_image(number, name):
     if name.startswith('Mega'):
@@ -201,19 +231,27 @@ def draw_skills(draw_object, skills):
         if i % 4 == 3:
             ofs[1] += skill_group_offset
 
-def write_moves(draw_object, moves):
-    fnt = get_font(font_size['moves'])
+def write_moves(draw_object, moves, types = None):
+    if types: types = [x.lower() for x in types]
     ofs = list(offsets['moves'])[:]
     for i, move in enumerate(moves):
         #prepare the area with a white square
+        fnt = get_font(font_size['moves'])
+        fill = move.type_color
         draw_object.rounded_rectangle(((ofs[0] - move_boxtotal_offset, ofs[1] - move_boxtotal_offset),
                                        (ofs[0] + move_boxh_offset, ofs[1] + move_boxv_offset)),
-                                      fill = (255,255,255),
+                                      fill = fill,
                                       radius = move_radius)
         # print(str(move))
+        text_clr = ((255, 255, 255) if sum(move.type_color)//3  < 100 else (0, 0, 0))
         #move name
         write = move.name.title()
-        draw_object.multiline_text(ofs, write, font = fnt, fill = (0, 0, 0))
+        if types and move.type in types:
+            write += ' (STAB)'
+            power_add = 1
+        else:
+            power_add = 0
+        draw_object.multiline_text(ofs, write, font = fnt, fill = text_clr)
         # #move power
         # write = f'{move.pow2}'
         # next_offset = (ofs[0], ofs[1] + move_power_offset)
@@ -224,14 +262,36 @@ def write_moves(draw_object, moves):
         except:
             acc = '???'
         try:
-            pow = (int(move.pow1) if move.pow1 else 0) + (int(move.pow2) if move.pow2 else 0)
+            pow = (int(move.pow1) if move.pow1 else 0) + (int(move.pow2) if move.pow2 else 0) + power_add
         except:
             pow = '???'
         debuff = f' ( - {move.acc_debuff})' if move.acc_debuff else ''
-        write = f'acc: {acc}{debuff}\npow: {pow}'
+        write = f'acc: {acc}{debuff}{" "*8}pow: {pow}'
         # next_offset = (ofs[0], ofs[1] + move_dice_offset)
         next_offset = (ofs[0], ofs[1] + move_power_offset)
-        draw_object.multiline_text(next_offset, write, font = fnt, fill = (0, 0, 0))
+        draw_object.multiline_text(next_offset, write, font = fnt, fill = text_clr)
+
+        #write the effects out
+        fnt = get_font(font_size['effect'])
+        write = []
+        old = 0
+        tmp = move.effect[::-1]
+        length = len(tmp)
+        while old < len(move.effect):
+            try:
+                place = length - move.effect.index(' ', old + move_effect_length)
+                place = length - tmp.index(' ', place)
+                write.append(move.effect[old:place])
+                old = place
+            except:
+                write.append(move.effect[place:])
+                break
+        write = '\n'.join(write)
+        next_offset = (ofs[0], ofs[1] + move_power_offset*2)
+        draw_object.multiline_text(next_offset, write, font = fnt, fill = text_clr)
+
+
+        #go to the next area
         ofs[1] += move_offset
         if i % 5 == 4:
             ofs[0] += move_horizontal_offset
@@ -260,7 +320,7 @@ def draw_quick_reference(draw_object, hp, will, initiative, evasion, clash, defe
 
 
 if __name__ == "__main__":
-    from random import randrange
+    from random import randrange, choice
 
     move_examples = [
         ('foresight', 0, 'SUPPORT'),
@@ -302,8 +362,14 @@ if __name__ == "__main__":
 
     nature = 'Brash'
 
+    def getType():
+        return choice(list(type_colors.keys()))
+    def getEffect():
+        #return ''.join([choice('abcdefghijklmnopqrstuvwxyz        ') for _ in range((randrange(15, 70)))])
+        return 'the quick brown fox jumped over the lazy dog '*2
     move_list = [
-        Move(x[0], stats[1], skills[0], stats[0], randrange(0, 3), randrange(0, 3)) for x in move_examples
+        Move(x[0], getType(), stats[1], skills[0], stats[0], randrange(0, 3), randrange(0, 3), getEffect())
+            for x in move_examples
     ]
     pkmn = Pokemon(number, name, my_type, ability, nature, hp, stats, skills, socials, rank, move_list, max_stats)
     pkmn.create_stat_sheet().show()
