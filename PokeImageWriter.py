@@ -31,11 +31,14 @@ class Pokemon:
 
     # moves: list of the moves as type Move
     def __init__(self, number, name, my_type, ability, nature, base_hp,
-                 stats, skills, socials, rank, moves):
+                 stats, skills, socials, rank, moves, max_stats = None):
+        if max_stats is None:
+            max_stats = [12] * 5
         self.rank = rank
         self.socials = socials
         self.skills = skills
         self.stats = stats
+        self.max_stats = max_stats
         self.base_hp = int(base_hp)
         self.nature = nature
         self.ability = ability
@@ -62,6 +65,7 @@ class Pokemon:
         add_word(out, 'nature', self.nature)
         add_word(out, 'rank', self.rank)
         draw_stats(out, self.stats)
+        draw_max_stats(out, self.max_stats)
         draw_socials(out, self.socials)
         draw_skills(out, self.skills)
         write_moves(out, self.moves)
@@ -131,47 +135,50 @@ skill_dot_offset = 31
 skill_group_offset = 13
 
 ### test stuff
-#
-# from random import randrange
-# move_examples = [
-#     ('foresight', 0, 'SUPPORT'),
-#     ('quick attack', 2, 'STRENGTH'),
-#     ('endure', 0),
-#     ('counter', 0),
-#     ('feint', 0),
-#     ('thunder shock', 0),
-#     ('thunderbolt', 0),
-#     ('fake out', 0),
-#     ('volt tackle', 0),
-#     ('wish', 0),
-#     ('stone edge', 0),
-#     ('thunder fang', 0),
-#     ('earthquake', 0),
-#     ('take down', 0),
-# ]
-# number = str(randrange(1,900))
-# name = 'Riolu'
-# rank = 'Beginner'
-# my_type = 'Dragon / Fighting'
-#
-# ability = 'Inner Focus'
-#
-# stats = [
-#     randrange(1,5) for x in range(5)
-# ]
-# socials = [
-#     randrange(1,5) for x in range(5)
-# ]
-# skills = [
-#     randrange(1,5) for x in range(12)
-# ]
-# hp = 3
-#
-# nature = 'Brash'
-#
-# move_list = [
-#     Move(x[0], stats[1], skills[0], stats[0], randrange(0,3), randrange(0,3)) for x in move_examples
-# ]
+
+from random import randrange
+move_examples = [
+    ('foresight', 0, 'SUPPORT'),
+    ('quick attack', 2, 'STRENGTH'),
+    ('endure', 0),
+    ('counter', 0),
+    ('feint', 0),
+    ('thunder shock', 0),
+    ('thunderbolt', 0),
+    ('fake out', 0),
+    ('volt tackle', 0),
+    ('wish', 0),
+    ('stone edge', 0),
+    ('thunder fang', 0),
+    ('earthquake', 0),
+    ('take down', 0),
+]
+number = str(randrange(1,900))
+name = 'Riolu'
+rank = 'Beginner'
+my_type = 'Dragon / Fighting'
+
+ability = 'Inner Focus'
+
+stats = [
+    randrange(1,5) for x in range(5)
+]
+max_stats = [
+    randrange(5,8) for x in range(5)
+]
+socials = [
+    randrange(1,5) for x in range(5)
+]
+skills = [
+    randrange(1,5) for x in range(12)
+]
+hp = 3
+
+nature = 'Brash'
+
+move_list = [
+    Move(x[0], stats[1], skills[0], stats[0], randrange(0,3), randrange(0,3)) for x in move_examples
+]
 ### end test stuff
 
 def get_image(number, name):
@@ -203,6 +210,17 @@ def draw_stats(draw_object, stats):
             draw_object.ellipse(circle, fill = (62, 59, 54))
             ofs[0] += dot_offset
         ofs[0] = offsets['stats'][0]
+        ofs[1] += stat_offset
+        if i == 3:
+            ofs[0] += insight_offset[0]
+            ofs[1] += insight_offset[1]
+
+def draw_max_stats(draw_object, stats):
+    clr = (0,167,189)
+    ofs = list(offsets['stats'])[:]
+    for i, dots in enumerate(stats):
+        rect = ((ofs[0]+dot_offset*dots-2, ofs[1]), (ofs[0]+dot_offset*12,ofs[1]+dot_offset))
+        draw_object.rectangle(rect, fill = clr)
         ofs[1] += stat_offset
         if i == 3:
             ofs[0] += insight_offset[0]
@@ -282,5 +300,6 @@ def draw_quick_reference(draw_object, hp, will, initiative, evasion, clash, defe
 
 
 
-# pkmn = Pokemon(number, name, my_type, ability, nature, hp, stats, skills, socials, rank, move_list)
-# pkmn.create_stat_sheet().show()
+if __name__ == "__main__":
+    pkmn = Pokemon(number, name, my_type, ability, nature, hp, stats, skills, socials, rank, move_list, max_stats)
+    pkmn.create_stat_sheet().show()
