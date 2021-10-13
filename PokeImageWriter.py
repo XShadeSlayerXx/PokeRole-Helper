@@ -266,8 +266,14 @@ def write_moves(draw_object, moves):
         # next_offset = (ofs[0], ofs[1] + move_power_offset)
         # draw_object.multiline_text(next_offset, write, font = fnt, fill = (0, 0, 0))
         #move dice pool
-        acc = (int(move.acc1) if move.acc1 else 0) + (int(move.acc2) if move.acc2 else 0)
-        pow = (int(move.pow1) if move.pow1 else 0) + (int(move.pow2) if move.pow2 else 0)
+        try:
+            acc = (int(move.acc1) if move.acc1 else 0) + (int(move.acc2) if move.acc2 else 0)
+        except:
+            acc = '???'
+        try:
+            pow = (int(move.pow1) if move.pow1 else 0) + (int(move.pow2) if move.pow2 else 0)
+        except:
+            pow = '???'
         debuff = f' ( - {move.acc_debuff})' if move.acc_debuff else ''
         write = f'acc: {acc}{debuff}\npow: {pow}'
         # next_offset = (ofs[0], ofs[1] + move_dice_offset)
