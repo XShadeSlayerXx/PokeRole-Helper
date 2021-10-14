@@ -116,7 +116,7 @@ class Misc(commands.Cog):
             ])
         ]
     )
-    async def slash_status(self, inter, status):
+    async def slash_status(self, inter, status = ''):
         await self.status_func(ctx = inter, status = status)
 
     @slash_command(
@@ -128,7 +128,7 @@ class Misc(commands.Cog):
             ])
         ]
     )
-    async def slash_status(self, inter, weather):
+    async def slash_status(self, inter, weather = ''):
         await self.weather_func(ctx = inter, weather = weather)
 
 def setup(bot):
