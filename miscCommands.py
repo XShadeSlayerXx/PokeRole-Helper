@@ -1,5 +1,35 @@
 from discord.ext import commands
+from dislash import slash_command, Option, OptionChoice, OptionType
 import csv
+
+statuses = [
+    'Burn 1',
+    'Burn 2',
+    'Burn 3',
+    'Paralysis',
+    'Frozen Solid',
+    'Poison',
+    'Badly Poisoned',
+    'Sleep',
+    'Flinched',
+    'Confused',
+    'Disabled',
+    'In Love',
+    'Blocked'
+]
+weathers = [
+    'Sunny Weather',
+    'Harsh Sunlight Weather',
+    'Rain Weather',
+    'Typhoon Weather',
+    'Sandstorm Weather',
+    'Strong Winds Weather',
+    'Hail Weather',
+    'Fog/Darkness',
+    'Muddy',
+    'On Fire!',
+    'Electric Poles'
+]
 
 class Misc(commands.Cog):
 
@@ -26,7 +56,7 @@ class Misc(commands.Cog):
                  help = 'Quick reference for the weather.\n'
                         'Type `%weather` for a list of all weather types, or'
                         'type `%weather sunny day` for example for an in-depth explanation.')
-    async def weather(self, ctx, *, weather = ''):
+    async def weather_func(self, ctx, *, weather = ''):
         if len(self.weather) == 0:
             await self.instantiateWeather()
         output = ''
@@ -52,7 +82,7 @@ class Misc(commands.Cog):
                       help = 'Quick reference for statuses.\n'
                              'Type `%status` for a list of all statuses, or'
                              'type `%status burn` for example for an in-depth explanation.')
-    async def status(self, ctx, *, status = ''):
+    async def status_func(self, ctx, *, status = ''):
         if len(self.status) == 0:
             await self.instantiateStatus()
         output = ''
@@ -76,6 +106,30 @@ class Misc(commands.Cog):
                 output = f'`{status}` wasn\'t found in the status list:{statusrepl}' \
                          + statusrepl.join([str(k) for k in self.status.keys()])
         await ctx.send(output)
+
+    @slash_command(
+        name = 'status',
+        description = 'A nice long nap...',
+        options = [
+            Option('status', 'Which status?', OptionType.STRING, choices = [
+                OptionChoice(x, x) for x in list(statuses)
+            ])
+        ]
+    )
+    async def slash_status(self, inter, status):
+        await self.status_func(ctx = inter, status = status)
+
+    @slash_command(
+        name = 'weather',
+        description = 'Are those clouds?',
+        options = [
+            Option('weather', 'Which weather?', OptionType.STRING, choices = [
+                OptionChoice(x, x) for x in list(weathers)
+            ])
+        ]
+    )
+    async def slash_status(self, inter, weather):
+        await self.weather_func(ctx = inter, weather = weather)
 
 def setup(bot):
     bot.add_cog(Misc(bot))
