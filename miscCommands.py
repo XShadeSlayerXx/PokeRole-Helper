@@ -111,7 +111,7 @@ class Misc(commands.Cog):
         name = 'status',
         description = 'A nice long nap...',
         options = [
-            Option('status', 'Which status?', OptionType.STRING, choices = [
+            Option('status', 'Which status?', OptionType.STRING, required = True, choices = [
                 OptionChoice(x, x) for x in list(statuses)
             ])
         ]
@@ -123,7 +123,7 @@ class Misc(commands.Cog):
         name = 'weather',
         description = 'Are those clouds?',
         options = [
-            Option('weather', 'Which weather?', OptionType.STRING, choices = [
+            Option('weather', 'Which weather?', OptionType.STRING, required = True, choices = [
                 OptionChoice(x, x) for x in list(weathers)
             ])
         ]
