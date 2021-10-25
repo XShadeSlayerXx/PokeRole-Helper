@@ -74,12 +74,24 @@ class Dice(commands.Cog):
         help = 'Roll a d6. You can type \'!roll 3d6\' for example to change # of dice and/or # of faces',
         brief = '\'!roll\' or \'!roll 3d6\' for example'
     )
-    async def rollDice(self, ctx, *, mc = ''):
+    async def rollDice(self, ctx, *, mc = '', note = None):
+        if not note:
+            note = ''
         try:
             int(mc)
             mc = f'{mc}d6'
         except:
-            pass
+            if '#' in mc:
+                try:
+                    mc, note = mc.split('#', maxsplit = 2)
+                except:
+                    note = mc.replace('#', '')
+                note = note.replace('\n', ' - ')[:500]
+                note = note.strip()
+                mc = mc.strip()
+                note = f'*{note}*\n'
+                await self.rollDice(ctx = ctx, mc = mc, note = note)
+                return
         msg = await self.dice_backend(ctx = ctx, mc = mc)
 
         button = [ActionRow(Button(
@@ -87,8 +99,8 @@ class Dice(commands.Cog):
             label = 'Roll Again',
             custom_id = 'reroll'
         ))]
-
-        sent = await ctx.send(msg, components = button)
+        final = note + msg
+        sent = await ctx.send(final, components = button)
 
         on_click = sent.create_click_listener(timeout = self.timeout)
         button_owner = ctx.author.id
@@ -96,15 +108,18 @@ class Dice(commands.Cog):
         @on_click.matching_id('reroll')
         async def on_matching_reroll(inter):
             if inter.author.id == button_owner:
+                first = inter.message.content.index('\n')+1 if note else 0
                 if inter.message.content.count('\n') > 6:
-                    first = inter.message.content.index('\n')
+                    first = inter.message.content.index('\n', first)
                     final = inter.message.content[inter.message.content.index('\n', first+1)+1:]
                 else:
-                    final = inter.message.content
+                    if note:
+                        final = inter.message.content[first:]
+                    else:
+                        final = inter.message.content
                 extra = await self.dice_backend(ctx = ctx, mc = mc)
-                final += '\n' + extra
-                await sent.edit(content = final)
-                await inter.reply(type = ResponseType.UpdateMessage)
+                final = note + final + '\n' + extra
+                await inter.reply(content = final, type = ResponseType.UpdateMessage)
             else:
                 await inter.create_response(content = 'The Reroll button is reserved '
                                                       'for whoever ran the original message.',
@@ -150,15 +165,19 @@ class Dice(commands.Cog):
             Option('dice', 'Number of dice to roll (up to 20)', OptionType.INTEGER),
             Option('sides', 'Number of sides each die has (up to 100)', OptionType.INTEGER),
             Option('flat_addition', 'Flat number to the roll', OptionType.INTEGER),
+            Option('note', 'Add a note for future reference', OptionType.STRING),
             Option('private', 'Send a private message to you in this chat? (default: False)', OptionType.BOOLEAN)
         ]
     )
     async def rollDice_slash(self, inter, sides : int = 6, dice : int = 1,
-                             flat_addition : int = None, private : bool = False):
+                             flat_addition : int = None, note : str = '', private : bool = False):
         dice = sorted((1, dice, maxDice))[1]
         sides = sorted((2, sides, maxPips))[1]
 
         msg = await self.dice_backend_slash(sides, dice, flat_addition)
+        if note != '':
+            note = f'*{note}*\n'
+            msg = note + msg
 
         if private:
             sent = await inter.reply(msg, ephemeral = private)
@@ -178,15 +197,18 @@ class Dice(commands.Cog):
             @on_click.matching_id('reroll')
             async def on_matching_reroll(inter):
                 if inter.author.id == button_owner:
+                    first = inter.message.content.index('\n')+1 if note else 0
                     if inter.message.content.count('\n') > 6:
-                        first = inter.message.content.index('\n')
+                        first = inter.message.content.index('\n', first)
                         final = inter.message.content[inter.message.content.index('\n', first+1)+1:]
                     else:
-                        final = inter.message.content
+                        if note:
+                            final = inter.message.content[first:]
+                        else:
+                            final = inter.message.content
                     extra = await self.dice_backend_slash(sides, dice, flat_addition)
-                    final += '\n' + extra
-                    await sent.edit(content = final)
-                    await inter.reply(type = ResponseType.UpdateMessage)
+                    final = note + final + '\n' + extra
+                    await inter.reply(content = final, type = ResponseType.UpdateMessage)
                 else:
                     await inter.create_response(content = 'The Reroll button is reserved '
                                                           'for whoever ran the original message.',
