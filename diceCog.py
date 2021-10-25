@@ -71,7 +71,8 @@ class Dice(commands.Cog):
     @commands.command(
         name = 'roll',
         aliases = ['r'],
-        help = 'Roll a d6. You can type \'!roll 3d6\' for example to change # of dice and/or # of faces',
+        help = 'Roll a d6. You can type \'%roll 3d6\' for example to change # of dice and/or # of faces.\n'
+               'You can also add notes for future reference like this: `%roll 3d6 # I am a note!`',
         brief = '\'!roll\' or \'!roll 3d6\' for example'
     )
     async def rollDice(self, ctx, *, mc = '', note = None):
