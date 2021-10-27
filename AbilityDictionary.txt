@@ -1,0 +1,294 @@
+Absolution$100
+Adaptability$100
+Aerilate$100
+Aftermath$100
+Air Lock$100
+Amplifier$100
+Analytic$100
+Ancient Presence$100
+Anger Point$100
+Anticipation$100
+Arena Trap$100
+Aroma Veil$100
+Athenian$100
+Aura Break$100
+Bad Dreams$100
+Ball Fetch$100
+Battery$100
+Battle Armor$100
+Battle Bond$100
+Beast Boost$100
+Berserk$100
+Big Pecks$100
+Blaze$100
+Blaze Boost$100
+Bulletproof$100
+Cheek Pouch$100
+Chlorofury$100
+Chlorophyll$100
+Clear Body$100
+Cloud Nine$100
+Color Change$100
+Comatose$100
+Competitive$100
+Compound Eyes$100
+Contrary$100
+Corrosion$100
+Cotton Down$100
+Cursed Body$100
+Cute Charm$100
+Damp$100
+Dancer$100
+Dark Aura$100
+Dauntless Shield$100
+Dazzling$100
+Defeatist$100
+Defiant$100
+Delta Stream$100
+Desolate Land$100
+Disguise$100
+Download$100
+Drizzle$100
+Drought$100
+Dry Skin$100
+Early Bird$100
+Effect Spore$100
+Electric Surge$100
+Emergency Exit$100
+Ethereal Shroud$100
+Fairy Aura$100
+Filter$100
+Flame Body$100
+Flare Boost$100
+Flash Fire$100
+Flower Gift$100
+Flower Veil$100
+Fluffy$100
+Forecast$100
+Forewarn$100
+Foundry$100
+Friend Guard$100
+Frisk$100
+Full Metal Body$100
+Fur Coat$100
+Gale Wings$100
+Galvanize$100
+Gluttony$100
+Gooey$100
+Gorilla Tactics$100
+Grass Pelt$100
+Grassy Surge$100
+Gulp Missile$100
+Guts$100
+Harvest$100
+Healer$100
+Heatproof$100
+Heavy Metal$100
+Heliophobia$100
+Honey Gather$100
+Hubris$100
+Huge Power$100
+Hunger Switch$100
+Hustle$100
+Hydration$100
+Hyper Cutter$100
+Ice Body$100
+Ice Cleats$100
+Ice Face$100
+Ice Scales$100
+Illuminate$100
+Illusion$100
+Immunity$100
+Imposter$100
+Infiltrator$100
+Innards Out$100
+Inner Focus$100
+Insomnia$100
+Intimidate$100
+Intoxicate$100
+Intrepid Sword$100
+Iron Barbs$100
+Iron Fist$100
+Irrelephant$100
+Justified$100
+Keen Eye$100
+Klutz$100
+Leaf Guard$100
+Lernean$100
+Levitate$100
+Libero$100
+Light Metal$100
+Lightning Rod$100
+Limber$100
+Liquid Ooze$100
+Liquid Voice$100
+Long Reach$100
+Magic Bounce$100
+Magic Guard$100
+Magician$100
+Magma Armor$100
+Magnet Pull$100
+Marvel Scale$100
+Mega Launcher$100
+Merciless$100
+Mimicry$100
+Minus$100
+Mirror Armor$100
+Misty Surge$100
+Mold Breaker$100
+Moody$100
+Motor Drive$100
+Moxie$100
+Multiscale$100
+Multitype$100
+Mummy$100
+Natural Cure$100
+Neuroforce$100
+Neutralizing Gas$100
+No Guard$100
+Noctem$100
+Normalize$100
+Oblivious$100
+Omnitype$100
+Overcoat$100
+Overgrow$100
+Own Tempo$100
+Parental Bond$100
+Pastel Veil$100
+Pendulum$100
+Periodic Orbit$100
+Perish Body$100
+Phototroph$100
+Pickpocket$100
+Pickup$100
+Pixilate$100
+Plus$100
+Poison Heal$100
+Poison Point$100
+Poison Touch$100
+Power Construct$100
+Power Spot$100
+Power of Alchemy$100
+Prankster$100
+Pressure$100
+Primordial Sea$100
+Prism Armor$100
+Prism Guard$100
+Propeller Tail$100
+Protean$100
+Protean Maxima$100
+Psychic Surge$100
+Psycho Call$100
+Punk Rock$100
+Pure Power$100
+Queenly Majesty$100
+Quick Feet$100
+RKS System$100
+Rain Dish$100
+Rattled$100
+Receiver$100
+Reckless$100
+Refrigerate$100
+Regenerator$100
+Regurgitation$100
+Ripen$100
+Rivalry$100
+Rock Head$100
+Rough Skin$100
+Run Away$100
+Sand Force$100
+Sand Rush$100
+Sand Spit$100
+Sand Stream$100
+Sand Veil$100
+Sap Sipper$100
+Schooling$100
+Scrappy$100
+Screen Cleaner$100
+Serene Grace$100
+Shadow Call$100
+Shadow Dance$100
+Shadow Shield$100
+Shadow Tag$100
+Shed Skin$100
+Sheer Force$100
+Shell Armor$100
+Shield Dust$100
+Shields Down$100
+Simple$100
+Skill Link$100
+Sleet$100
+Slow Start$100
+Slush Rush$100
+Sniper$100
+Snow Cloak$100
+Snow Warning$100
+Solar Power$100
+Solid Rock$100
+Soul Heart$100
+Soundproof$100
+Spectral Jaws$100
+Speed Boost$100
+Speed Swap$100
+Spirit Call$100
+Stakeout$100
+Stall$100
+Stalwart$100
+Stamina$100
+Stance Change$100
+Static$100
+Steadfast$100
+Steam Engine$100
+Steelworker$100
+Steely Spirit$100
+Stench$100
+Sticky Hold$100
+Storm Drain$100
+Strong Jaw$100
+Sturdy$100
+Suction Cups$100
+Super Luck$100
+Supercell$100
+Surge Surfer$100
+Swarm$100
+Sweet Veil$100
+Swift Swim$100
+Symbiosis$100
+Synchronize$100
+Tangled Feet$100
+Tangling Hair$100
+Technician$100
+Telepathy$100
+Teravolt$100
+Thick Fat$100
+Tinted Lens$100
+Torrent$100
+Tough Claws$100
+Toxic Boost$100
+Trace$100
+Triage$100
+Truant$100
+Turboblaze$100
+Unaware$100
+Unburden$100
+Unleafed$100
+Unnerve$100
+Vampiric$100
+Vaporization$100
+Venomous$100
+Victory Star$100
+Vital Spirit$100
+Volt Absorb$100
+Wandering Spirit$100
+Water Absorb$100
+Water Bubble$100
+Water Compaction$100
+Water Veil$100
+Weak Armor$100
+White Smoke$100
+Wimp Out$100
+Wind Force$100
+Winter Joy$100
+Wonder Guard$100
+Wonder Skin$100
+Zen Mode$100
