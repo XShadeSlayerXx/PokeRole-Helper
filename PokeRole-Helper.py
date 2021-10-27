@@ -111,6 +111,9 @@ poke_dict.load_dictionary('PokeDictionary.txt', 0, 1, separator = '$')
 move_dict = SymSpell()
 move_dict.load_dictionary('MoveDictionary.txt', 0, 1, separator = '$')
 
+ability_dict = SymSpell()
+ability_dict.load_dictionary('AbilityDictionary.txt', 0, 1, separator = '$')
+
 #github stuff for updating the lists
 github_base = 'https://raw.githubusercontent.com/XShadeSlayerXx/PokeRole-Discord.py-Base/master/'
 github_files = [
@@ -269,6 +272,11 @@ def lookup_poke(arg : str) -> str:
 
 def lookup_move(arg : str) -> str:
     suggestion =  move_dict.lookup(arg, Verbosity.CLOSEST, max_edit_distance = 2,
+                     include_unknown = True)[0]
+    return suggestion.term
+
+def lookup_ability(arg : str) -> str:
+    suggestion =  ability_dict.lookup(arg, Verbosity.CLOSEST, max_edit_distance = 2,
                      include_unknown = True)[0]
     return suggestion.term
 
@@ -1515,7 +1523,11 @@ async def pkmnabilitieshelper(ability):
 @bot.command(name = 'ability', aliases = ['a'], help = 'List a pokemon ability\'s traits')
 async def pkmn_search_ability(ctx, *, abilityname : pkmn_cap):
     try:
-        found = await pkmnabilitieshelper(abilityname)
+        try:
+            found = await pkmnabilitieshelper(abilityname)
+        except:
+            abilityname = lookup_ability(abilityname)
+            found = await pkmnabilitieshelper(abilityname)
 
         output = f'**{abilityname}:** {found[0]}'
         if found[1] != '':
@@ -1535,7 +1547,11 @@ async def pkmn_search_ability(ctx, *, abilityname : pkmn_cap):
 async def pkmn_search_ability(inter, *, ability):
     ability = pkmn_cap(ability)
     try:
-        found = await pkmnabilitieshelper(ability)
+        try:
+            found = await pkmnabilitieshelper(ability)
+        except:
+            ability = lookup_ability(ability)
+            found = await pkmnabilitieshelper(ability)
 
         output = f'**{ability}:** {found[0]}'
         if found[1] != '':
