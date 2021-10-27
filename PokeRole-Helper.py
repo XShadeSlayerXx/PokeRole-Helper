@@ -108,6 +108,9 @@ pkmnListsPriv = dict()
 poke_dict = SymSpell()
 poke_dict.load_dictionary('PokeDictionary.txt', 0, 1, separator = '$')
 
+move_dict = SymSpell()
+move_dict.load_dictionary('MoveDictionary.txt', 0, 1, separator = '$')
+
 #github stuff for updating the lists
 github_base = 'https://raw.githubusercontent.com/XShadeSlayerXx/PokeRole-Discord.py-Base/master/'
 github_files = [
@@ -261,6 +264,11 @@ def pkmn_cap(arg : str) -> str:
 
 def lookup_poke(arg : str) -> str:
     suggestion =  poke_dict.lookup(arg, Verbosity.CLOSEST, max_edit_distance = 2,
+                     include_unknown = True)[0]
+    return suggestion.term
+
+def lookup_move(arg : str) -> str:
+    suggestion =  move_dict.lookup(arg, Verbosity.CLOSEST, max_edit_distance = 2,
                      include_unknown = True)[0]
     return suggestion.term
 
@@ -1541,15 +1549,16 @@ async def pkmn_search_ability(inter, *, ability):
 
 async def pkmnmovehelper(move):
     global database
-    try:
-        return list(database.query_table('pkmnMoves', 'name', move)[0])[1:]
-    except:
-        move = move.replace(' ', '-')
-        return list(database.query_table('pkmnMoves', 'name', move)[0])[1:]
+    return list(database.query_table('pkmnMoves', 'name', move)[0])[1:]
 
 async def move_backend(movename):
     try:
-        found = await pkmnmovehelper(movename)
+        movename = movename.title()
+        try:
+            found = await pkmnmovehelper(movename)
+        except:
+            movename = lookup_move(movename)
+            found = await pkmnmovehelper(movename)
 
         output = f'__{movename}__\n'
         if not found[4]: #there is no second damage mod, use the power
