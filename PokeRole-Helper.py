@@ -2463,8 +2463,8 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
 
                     if found[1].capitalize() != 'Support':
                         msg += f'**Dmg Dice**: {(found[3] or "None")}{powermod2}' \
-                               f' + {found[2]} = ({totalDmg}'
-                        msg += f'{" STAB" if found[0].capitalize() in (statlist[1],statlist[2]) else ""})'
+                               f' + {found[2]} = {totalDmg}'
+                        msg += f'{"(+1 STAB)" if found[0].capitalize() in (statlist[1],statlist[2]) else ""}'
                         msg += f' {dmgArray}\n' if pokebotsettings[guild][8] else '\n'
                     else:
                         msg += f'**Dmg Dice**: None\n'
