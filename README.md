@@ -8,6 +8,8 @@ Command organization:
 Base stuff, quick reference (%move/%stats/etc), %lists, and %encounter
  - PokeRole-Helper.py
  - PokeDictionary.txt (for poke autocorrect)
+ - MoveDictionary.txt
+ - AbilityDictionary.txt
 
 Dungeon Generation
  - mapCog.py (base logic)
