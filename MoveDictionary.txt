@@ -330,7 +330,7 @@ Iron Defense$100
 Iron Head$100
 Iron Tail$100
 Jaw Lock$100
-Judgement$100
+Judgment$100
 Jump Kick$100
 Karate Chop$100
 Kinesis$100
