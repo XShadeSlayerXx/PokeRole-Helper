@@ -674,6 +674,19 @@ async def query(ctx, *, msg = ''):
             surplus = ''
         await ctx.send('Error: Bad or Empty Request\n'+str(surplus))
 
+@commands.is_owner()
+@bot.command(name = 'whoLearns', hidden = True)
+async def checkLearnables(ctx, *, msg = ''):
+    move = lookup_move(msg.title())
+    query = 'SELECT name FROM pkmnLearns where '
+    query += ' or '.join([f'move{x}="{move}"' for x in range(28)])
+    returned = database.custom_query(query)
+    if not returned:
+        returned = 'None'
+    else:
+        returned = ', '.join([x[0] for x in returned])
+    await send_big_msg(ctx, f'__{move}__:\n{returned}')
+
 #######
 
 @bot.command(name = 'docs',
