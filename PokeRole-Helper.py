@@ -1725,12 +1725,7 @@ async def pkmnstatshelper(poke : str):
     tmp = [f'#{tmp[0]}'] + tmp[2:]
     return tmp
 
-async def pkmn_stat_msg_helper(pokemon):
-    try:
-        found = (await pkmnstatshelper(pokemon))[:]
-    except:
-        pokemon = lookup_poke(pokemon)
-        found = (await pkmnstatshelper(pokemon))[:]
+async def pkmn_stat_msg_helper(pokemon, found):
     for x in range(4, 14, 2):
         found[x + 1] = "⭘" * (int(found[x + 1]) - int(found[x]))
         found[x] = "⬤" * int(found[x])
@@ -1785,7 +1780,12 @@ async def pkmn_stat_msg_helper(pokemon):
 @bot.command(name = 'stats', aliases = ['s', 'info'], help = 'List a pokemon\'s stats. '
                                                              'Emote on the message to expand the abilities!')
 async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
-    output, buttons = await pkmn_stat_msg_helper(pokemon)
+    try:
+        found = (await pkmnstatshelper(pokemon))[:]
+    except:
+        pokemon = lookup_poke(pokemon)
+        found = (await pkmnstatshelper(pokemon))[:]
+    output, buttons = await pkmn_stat_msg_helper(pokemon, found)
 
     msg = await ctx.send(output, components = buttons)
 
@@ -1832,7 +1832,12 @@ async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
 )
 async def pkmn_search_stats_slash(inter, *, pokemon):
     pokemon = pkmn_cap(pokemon)
-    output, buttons = await pkmn_stat_msg_helper(pokemon)
+    try:
+        found = (await pkmnstatshelper(pokemon))[:]
+    except:
+        pokemon = lookup_poke(pokemon)
+        found = (await pkmnstatshelper(pokemon))[:]
+    output, buttons = await pkmn_stat_msg_helper(pokemon, found)
 
     msg = await inter.reply(output, components = buttons)
 
