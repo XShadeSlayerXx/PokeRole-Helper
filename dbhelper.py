@@ -171,7 +171,13 @@ class Database:
             reader = csv.reader(infile)
             for row in reader:
                 value = row[1:]
-                value[1::2] = [ranks[x] for x in value[1::2]]
+                # value[1::2] = [ranks[x] for x in value[1::2] if x != '']
+                for x in range(len(value)):
+                    if value[x] == '':
+                        value = value[:x]
+                        break
+                    if x % 2 == 1:
+                        value[x] = ranks[value[x]]
                 value += [None] * (56 - len(value))  #pad value to number of moves maximum
                 num = row[0][:3]
                 #frick farfetch'd
