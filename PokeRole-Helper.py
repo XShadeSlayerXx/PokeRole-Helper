@@ -1909,6 +1909,34 @@ async def pkmnlearnshelper(poke : str, rank : ensure_rank = 'Master'):
             moves[found[x + 1]].append(found[x])
     return moves
 
+# returns the moves of a pokemon + all it's devolutions
+async def move_aggregator_tmp(poke : str, rank : str, denote_moves : bool = False) -> dict:
+    movelist = {} # init final dict
+    allPokes = [poke]
+    result = False
+    depth = -1
+    while result is not None:
+        query = f'SELECT previous FROM pkmnEvo WHERE name="{allPokes[-1]}"'
+        result = database.custom_query(query, multiple = False)
+        if result:
+            allPokes.append(result[0])
+    for pkmn in allPokes:
+        depth += 1
+        tmp = await pkmnlearnshelper(pkmn, rank)
+        for x, y in list(tmp.items()):
+            if x in movelist:
+                for name in y:
+                    if denote_moves and depth != 0 and name not in movelist[x]:
+                        movelist[x].add('*'+name)
+                    else:
+                        movelist[x].add(name)
+            else:
+                if denote_moves and depth != 0:
+                    movelist[x] = set([depth*'*'+z for z in y])
+                else:
+                    movelist[x] = set(y)
+    return movelist
+
 @bot.command(name = 'pokelearns',
              aliases = ['canlearn', 'pl', 'moves', 'learnset'],
              help = 'Lists what moves a pokemon can learn\ne.g. %pokelearns vulpix')
@@ -1947,18 +1975,25 @@ async def pkmn_search_learns(ctx, *, pokemon : pkmn_cap):
     name = 'pokelearns',
     description = 'Display the moves a pokemon can learn',
     options = [
-        Option('pokemon', "Which pokemon?", OptionType.STRING, required = True)
+        Option('pokemon', "Which pokemon?", OptionType.STRING, required = True),
+        Option('previous_evo_moves', 'Show moves from previous evolutions?', OptionType.BOOLEAN, required = False)
     ]
 )
-async def pkmn_search_learns_slash(inter, *, pokemon):
+async def pkmn_search_learns_slash(inter, *, pokemon, previous_evo_moves = False):
     #known moves is insight + 2
     pokemon = pkmn_cap(pokemon)
     try:
         try:
-            moves = await pkmnlearnshelper(pokemon)
+            if not previous_evo_moves:
+                moves = await pkmnlearnshelper(pokemon)
+            else:
+                moves = await move_aggregator_tmp(pokemon, 'Master', denote_moves = previous_evo_moves)
         except:
             pokemon = lookup_poke(pokemon)
-            moves = await pkmnlearnshelper(pokemon)
+            if not previous_evo_moves:
+                moves = await pkmnlearnshelper(pokemon)
+            else:
+                moves = await move_aggregator_tmp(pokemon, 'Master', denote_moves = previous_evo_moves)
         output = f'__{pokemon.title()}__\n'
 
         for x in moves.keys():
