@@ -1932,7 +1932,7 @@ async def move_aggregator_tmp(poke : str, rank : str, denote_moves : bool = Fals
                         movelist[x].add(name)
             else:
                 if denote_moves and depth != 0:
-                    movelist[x] = set([depth*'*'+z for z in y])
+                    movelist[x] = set(['*'+z for z in y])
                 else:
                     movelist[x] = set(y)
     return movelist
