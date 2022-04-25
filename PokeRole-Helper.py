@@ -1523,7 +1523,7 @@ async def pkmn_filter_habitat(ctx, listname : str, rank : typing.Optional[ensure
                     'e.g. %vh ocean biomes')
 async def view_habitat(ctx, *, habitatlist : str):
     separate_poke = sep_biomes(habitatlist)
-    await send_big_msg(ctx, (await pkmnRankDisplay(f'__{habitatlist}__', separate_poke)))
+    await send_big_msg(ctx, (await pkmnRankDisplay(f'__{habitatlist.title()}__', separate_poke)))
 
 #######
 
