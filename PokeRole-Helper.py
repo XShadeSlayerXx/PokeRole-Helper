@@ -1521,8 +1521,9 @@ async def pkmn_filter_habitat(ctx, listname : str, rank : typing.Optional[ensure
 @bot.command(name = 'viewhabitat', aliases = ['vh'],
              help = 'Expand a habitat into a viewable format.\n'
                     'e.g. %vh ocean biomes')
-async def view_habitat(ctx, *, habitatlist : sep_biomes):
-    await ctx.send((await pkmnRankDisplay(f'__{habitatlist}__', habitatlist)))
+async def view_habitat(ctx, *, habitatlist : str):
+    separate_poke = sep_biomes(habitatlist)
+    await send_big_msg(ctx, (await pkmnRankDisplay(f'__{habitatlist}__', separate_poke)))
 
 #######
 
