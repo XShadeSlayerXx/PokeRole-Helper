@@ -31,12 +31,41 @@ weathers = [
     'Electric Poles'
 ]
 
+natures = [
+    'Adamant',
+    'Bashful',
+    'Bold',
+    'Brave',
+    'Calm',
+    'Careful',
+    'Docile',
+    'Gentle',
+    'Hardy',
+    'Hasty',
+    'Impish',
+    'Jolly',
+    'Lax',
+    'Lonely',
+    'Mild',
+    'Modest',
+    'Naive',
+    'Naughty',
+    'Quiet',
+    'Quirky',
+    'Rash',
+    'Relaxed',
+    'Sassy',
+    'Serious',
+    'Timid'
+]
+
 class Misc(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
         self.weather = dict()
         self.status = dict()
+        self.nature = dict()
 
     async def instantiateWeather(self):
         # 0 is name, 1 is description, 2 is effect
@@ -50,6 +79,12 @@ class Misc(commands.Cog):
             reader = csv.reader(file)
             for row in reader:
                 self.status[row[0]] = row[1:]
+
+    async def instantiateNature(self):
+        with open('nature.csv', 'r', encoding = "UTF-8") as file:
+            reader = csv.reader(file)
+            for row in reader:
+                self.nature[row[0]] = row[1:]
 
     @commands.command(name = 'weather',
                  aliases = ['w'],
@@ -107,6 +142,33 @@ class Misc(commands.Cog):
                          + statusrepl.join([str(k) for k in self.status.keys()])
         await ctx.send(output)
 
+
+    @commands.command(name = 'nature',
+                 aliases = ['n'],
+                 help = 'Quick reference for natures.\n'
+                        'Type `%nature` for a list of all natures, or'
+                        'type `%nature bold` for example for an in-depth explanation.')
+    async def nature_func(self, ctx, *, nature = ''):
+        if len(self.nature) == 0:
+            await self.instantiateNature()
+        output = ''
+        naturerepl = '\n'
+        if nature == '':
+            #list all nature
+            for k, v in list(self.nature.items()):
+                output += f'**{k}**{naturerepl}\t-*{v[0]}*\n'
+        else:
+            #list a single nature description
+            nature = nature.title()
+            if nature in self.nature:
+                effect = self.nature[nature][1]
+                output = f'**{nature}**:\n*{self.nature[nature][0]}*{naturerepl}{effect}'
+            else:
+                output = f'`{nature}` wasn\'t found in the nature list:{naturerepl}'\
+                         + naturerepl.join([str(k) for k in self.nature.keys()])
+        await ctx.send(output)
+
+
     @slash_command(
         name = 'status',
         description = 'A nice long nap...',
@@ -130,6 +192,18 @@ class Misc(commands.Cog):
     )
     async def slash_status(self, inter, weather = ''):
         await self.weather_func(ctx = inter, weather = weather)
+
+    @slash_command(
+        name = 'nature',
+        description = 'Who am I?',
+        options = [
+            Option('nature', 'Which nature?', OptionType.STRING, required = True, choices = [
+                OptionChoice(x, x) for x in list(natures)
+            ])
+        ]
+    )
+    async def slash_status(self, inter, nature = ''):
+        await self.nature_func(ctx = inter, nature = nature)
 
 def setup(bot):
     bot.add_cog(Misc(bot))
