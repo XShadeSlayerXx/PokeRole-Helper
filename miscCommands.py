@@ -162,7 +162,7 @@ class Misc(commands.Cog):
             nature = nature.title()
             if nature in self.nature:
                 effect = self.nature[nature][1]
-                output = f'**{nature}**:\n*{self.nature[nature][0]}*{naturerepl}{effect}'
+                output = f'**{nature}**\n*{self.nature[nature][0]}*{naturerepl}\n{effect}'
             else:
                 output = f'`{nature}` wasn\'t found in the nature list:{naturerepl}'\
                          + naturerepl.join([str(k) for k in self.nature.keys()])
