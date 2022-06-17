@@ -5,7 +5,7 @@ import random
 import re
 import math
 
-maxDice = 20
+maxDice = 100
 maxPips = 100
 
 diceSplit = re.compile(r'\d*d\d+')
