@@ -4,11 +4,15 @@ import pickle
 import random
 import re
 import typing
+from typing import Literal, List
 import sys
 import traceback
 
 import discord
 from discord.ext import commands
+from discord import app_commands
+from discord.app_commands import Choice
+from discord.ui import button, Button
 from dotenv import load_dotenv
 from symspellpy import SymSpell, Verbosity
 # can be replaced when/if i ever convert to nosql
@@ -16,8 +20,6 @@ from collections import OrderedDict as ODict
 import requests
 from numpy.random import choice
 from bisect import bisect
-from dislash import InteractionClient, ActionRow, Button, ButtonStyle, ResponseType, Option, OptionType, OptionChoice
-from dislash.interactions import SlashCommand
 import PokeImageWriter
 from PIL import Image
 from io import BytesIO
@@ -32,7 +34,9 @@ dev_env = (True if len(sys.argv) > 1 else False)
 
 cmd_prefix = ('./' if dev_env else '%')
 
-bot = commands.Bot(command_prefix = cmd_prefix)
+intents = discord.Intents.default()
+bot = commands.Bot(command_prefix = cmd_prefix, intents = intents)
+tree = app_commands.CommandTree(bot)
 if dev_env:
     #register slash commands
     # inter_client = InteractionClient(bot)
@@ -145,6 +149,9 @@ async def on_ready():
     global pkmnListsPriv
     global database
     global restartError
+
+    for cog in cogs:
+        await bot.load_extension(cog)
 
     database = Database()
 
@@ -2976,8 +2983,13 @@ if not dev_env:
 
 #####
 
-for cog in cogs:
-    bot.load_extension(cog)
+# for cog in cogs:
+#     await bot.load_extension(cog)
+
+# todo: add all slash commands? or like at least test them
+#   omit the guild parameter for global sync
+# tree.add_command( CMD() )
+# await tree.sync( guild = discord.Object( id = GUILD_ID) )
 
 bot.expand_list = pokesFromList
 bot.big_msg = send_big_msg
