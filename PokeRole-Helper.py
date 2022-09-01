@@ -705,6 +705,29 @@ async def docs(ctx):
     await ctx.send('https://github.com/XShadeSlayerXx/PokeRole-Discord.py-Base/blob/master/PokeRoleBot-Docs.MD')
 
 #######
+# auto-completes
+
+async def types_autocomplete(
+    interaction: discord.Interaction,
+    current: str,
+    namespace: app_commands.Namespace
+) -> List[Choice[str]]:
+    return [
+        app_commands.Choice(name=m_type, value=m_type)
+        for m_type in types if current.lower() in m_type.lower()
+    ]
+
+async def ranks_autocomplete(
+    interaction: discord.Interaction,
+    current: str,
+    namespace: app_commands.Namespace
+) -> List[Choice[str]]:
+    return [
+        app_commands.Choice(name=m_type, value=m_type)
+        for m_type in ranks if current.lower() in m_type.lower()
+    ]
+
+#######
 
 #[ability1, ability2, ability3, shiny, show_move_desc, show ability desc, the item list used in encounter,
 # display lists pokemon by rank or odds]
@@ -825,75 +848,70 @@ async def settings(ctx, setting='', value=''):
     await ctx.send(msg + print_settings(guild))
     save_obj(pokebotsettings, 'pokebotsettings')
 
-@inter_client.slash_command(
+@app_commands.command(
     name = 'settings',
-    description = 'Change the settings',
-    options = [
-        Option('ability_one_chance',
-               "Chance for a generated pokemon to have its first ability (out of 100 total)",
-               OptionType.NUMBER
-        ),
-        Option('ability_two_chance',
-               "Chance for a generated pokemon to have its second ability (out of 100 total)",
-               OptionType.NUMBER
-        ),
-        Option('ability_hidden_chance',
-               "Chance for a generated pokemon to have its hidden ability (out of 100 total)",
-               OptionType.NUMBER
-        ),
-        Option('shiny_chance',
-               "Chance for a generated pokemon to be shiny (out of 100 total)",
-               OptionType.NUMBER
-        ),
-        Option('previous_evolution_moves',
-               "Should Pokemon generate with moves from their previous evolutions?",
-               OptionType.STRING, choices = [
-                    OptionChoice('Yes', value = 0),
-                    OptionChoice('No', value = 1),
-                    OptionChoice('Yes, but from 1 rank lower', value = 2),
-        ]),
-        Option('code_block_format',
-               "Display generated pokemon in a `code block`?",
-               OptionType.BOOLEAN
-        ),
-        Option('show_move_description',
-               "Expand move descriptions by default in generated pokemon?",
-               OptionType.BOOLEAN
-        ),
-        Option('show_ability_description',
-               "Expand ability descriptions by default in generated pokemon?",
-               OptionType.BOOLEAN
-        ),
-        Option('item_list_in_encounter',
-               "Which item list should be used in encounters? (type 'False' to clear)",
-               OptionType.STRING
-        ),
-        Option('display_lists_by',
-               "Choose to display specific lists by Rank or Odds",
-               OptionType.STRING,
-               choices = [
-                    OptionChoice('Rank', value = True),
-                    OptionChoice('Odds', value = False)
-        ]),
-        Option('random_rolls_in_encounter',
-               "Have 4 suggested rolls for Accuracy and Damage in encounters?",
-               OptionType.BOOLEAN
-        )
-    ]
+    description = 'Change the settings'
+)
+@app_commands.describe(
+        ability_one_chance = "Chance for a generated pokemon to have its first ability (out of 100 total)",
+        ability_two_chance = "Chance for a generated pokemon to have its second ability (out of 100 total)",
+        ability_hidden_chance = "Chance for a generated pokemon to have its hidden ability (out of 100 total)",
+        shiny_chance = "Chance for a generated pokemon to be shiny (out of 100 total)",
+        previous_evolution_moves = "Should Pokemon generate with moves from their previous evolutions?",
+        code_block_format = "Display generated pokemon in a `code block`?",
+        show_move_description = "Expand move descriptions by default in generated pokemon?",
+        show_ability_description = "Expand ability descriptions by default in generated pokemon?",
+        item_list_in_encounter = "Which item list should be used in encounters? (type 'False' to clear)",
+        display_lists_by = "Choose to display specific lists by Rank or Odds",
+        random_rolls_in_encounter = "Have 4 suggested rolls for Accuracy and Damage in encounters?"
+)
+@app_commands.choices(
+    previous_evolution_moves = [
+        Choice('Yes', value = 0),
+        Choice('No', value = 1),
+        Choice('Yes, but from 1 rank lower', value = 2),
+    ],
+    # Option('code_block_format',
+    #        "Display generated pokemon in a `code block`?",
+    #        OptionType.BOOLEAN
+    # ),
+    # Option('show_move_description',
+    #        "Expand move descriptions by default in generated pokemon?",
+    #        OptionType.BOOLEAN
+    # ),
+    # Option('show_ability_description',
+    #        "Expand ability descriptions by default in generated pokemon?",
+    #        OptionType.BOOLEAN
+    # ),
+    # Option('item_list_in_encounter',
+    #        "Which item list should be used in encounters? (type 'False' to clear)",
+    #        OptionType.STRING
+    # ),
+    # Option('display_lists_by',
+    #        "Choose to display specific lists by Rank or Odds",
+    #        OptionType.STRING,
+    #        choices = [
+    #             OptionChoice('Rank', value = True),
+    #             OptionChoice('Odds', value = False)
+    # ]),
+    # Option('random_rolls_in_encounter',
+    #        "Have 4 suggested rolls for Accuracy and Damage in encounters?",
+    #        OptionType.BOOLEAN
+    # )
 )
 async def settings_slash(
-        inter,
-        ability_one_chance: float = None,
-        ability_two_chance: float = None,
-        ability_hidden_chance: float = None,
-        shiny_chance: float = None,
+        inter : discord.Interaction,
+        ability_one_chance: app_commands.Range[float, 0, 100] = None,
+        ability_two_chance: app_commands.Range[float, 0, 100] = None,
+        ability_hidden_chance: app_commands.Range[float, 0, 100] = None,
+        shiny_chance: app_commands.Range[float, 0, 100] = None,
         previous_evolution_moves: int = None,
-        code_block_format: bool = None,
-        show_move_description: bool = None,
-        show_ability_description: bool = None,
+        code_block_format: Literal[True, False] = None,
+        show_move_description: Literal[True, False] = None,
+        show_ability_description: Literal[True, False] = None,
         item_list_in_encounter: str = None,
-        display_lists_by: str = None,
-        random_rolls_in_encounter: bool = None
+        display_lists_by: Literal[True, False] = None,
+        random_rolls_in_encounter: Literal[True, False] = None
 ):
     try:
         guild = inter.guild.id
@@ -1561,14 +1579,12 @@ async def pkmn_search_ability(ctx, *, abilityname : pkmn_cap):
     except:
         await ctx.send(f'{abilityname} wasn\'t found in the ability list.')
 
-@inter_client.slash_command(
+@app_commands.command(
     name = 'ability',
-    description = 'Display an ability\'s info',
-    options = [
-        Option('ability', "Which ability?", OptionType.STRING, required = True)
-    ]
+    description = 'Display an ability\'s info'
 )
-async def pkmn_search_ability(inter, *, ability):
+@app_commands.describe(ability="Which ability?")
+async def pkmn_search_ability(inter, *, ability : str):
     ability = pkmn_cap(ability)
     try:
         try:
@@ -1625,14 +1641,12 @@ async def pkmn_search_move(ctx, *, movename : pkmn_cap):
     await ctx.send(await move_backend(movename))
 
 
-@inter_client.slash_command(
+@app_commands.command(
     name = 'move',
-    description = 'List a pokemon move traits',
-    options = [
-        Option('move', "Which move?", OptionType.STRING, required = True)
-    ]
+    description = 'List a pokemon move traits'
 )
-async def pkmn_search_move_slash(inter, *, move):
+@app_commands.describe(move = "Which move?")
+async def pkmn_search_move_slash(inter, *, move : str):
     move = pkmn_cap(move)
     await inter.reply(await move_backend(move))
 
@@ -1702,26 +1716,26 @@ async def metronome(ctx, *, parameters : str = ''):
                        delete_after = 15)
 
 
-@inter_client.slash_command(
+@app_commands.command(
     name = 'metronome',
-    description = 'Get a random move from any of them (with a few options)',
-    options = [
-        Option('type', "Want a specific move typing?", OptionType.STRING, choices = [
-            OptionChoice(x, x) for x in types
-        ] + [OptionChoice('support', 'support')]),
-        Option('power', "Power for the move? (exact if max_power isn't provided, inclusive otherwise)", OptionType.INTEGER, choices = [
-            OptionChoice(str(x), str(x)) for x in range(11)
-        ]),
-        Option('max_power', "Maximum power on a move? (inclusive)", OptionType.INTEGER, choices = [
-            OptionChoice(str(x), str(x)) for x in range(11)
-        ]),
-        Option('private', "Display the move in a private message? (Default: False)", OptionType.BOOLEAN)
-    ]
+    description = 'Get a random move from any of them (with a few options)'
 )
-async def metronome_slash(inter, type : str = None, power : int = None, max_power : int = None, private : bool = False):
+@app_commands.describe(
+    move_type = "Want a specific move typing?",
+    power = "Power for the move? (exact if max_power isn't provided, inclusive otherwise)",
+    max_power = "Maximum power on a move? (inclusive)",
+    private = "Display the move in a private message? (Default: False)"
+)
+@app_commands.autocomplete(move_type = types_autocomplete)
+async def metronome_slash(
+        inter,
+        move_type : str = None,
+        power : app_commands.Range[int, 0, 10] = None,
+        max_power : app_commands.Range[int, 0, 10] = None,
+        private : Literal[True, False] = False):
     if power and max_power and power > max_power:
         min_power, max_power = max_power, power
-    move = await metronome_backend(type = type, lower = power, higher = max_power)
+    move = await metronome_backend(type = move_type, lower = power, higher = max_power)
     move = await move_backend(movename = move)
     await inter.reply(move, ephemeral = private)
 
@@ -1766,25 +1780,51 @@ async def pkmn_stat_msg_helper(pokemon, found):
     output += f'**Can Evolve**: {(found[18] or "No")}\n'
     output += f'**Other Forms**: {(found[19] or "No")}\n'
 
-    buttons = [
-        ActionRow(
-            Button(
-                style = ButtonStyle.blurple,
-                label = 'Moves',
-                custom_id = 'moves'
-            ),
-            Button(
-                style = ButtonStyle.green,
-                label = 'Abilities',
-                custom_id = 'abilities'
-            ),
-            Button(
-                style = ButtonStyle.gray,
-                label = 'Forms',
-                custom_id = 'forms'
-            )
-        )
-    ]
+    buttons = discord.ui.View()
+
+    b_moves = Button(
+        style = discord.ButtonStyle.blurple,
+        label = 'Moves'
+    )
+    async def on_move_button(inter):
+        moves = await pkmnlearnshelper(pokemon)
+
+        output = f'__{pokemon.title()}__\n'
+        for x in moves.keys():
+            output += f'**{x}**\n' + '  |  '.join(moves[x]) + '\n'
+
+        await inter.response.send_message(output)
+        b_moves.disabled = True
+        await inter.response.edit_message(view = buttons)
+
+    b_moves.callback = on_move_button
+    buttons.add_item(b_moves)
+
+    b_abilities = Button(
+        style = discord.ButtonStyle.green,
+        label = 'Abilities'
+    )
+    async def on_ability_button(inter):
+        await inter.reply(await getPokemonAbilities(pokemon))
+        b_abilities.disabled = True
+        await inter.response.edit_message(view = buttons)
+
+    b_abilities.callback = on_ability_button
+    buttons.add_item(b_abilities)
+
+    b_forms = Button(
+        style = discord.ButtonStyle.gray,
+        label = 'Forms'
+    )
+    async def on_form_button(inter):
+        output = await form_helper(pokemon)
+        if '\n' in output:
+            await inter.reply(await form_helper(pokemon))
+        b_forms.disabled = True
+        await inter.response.edit_message(view = buttons)
+
+    b_forms.callback = on_form_button
+    buttons.add_item(b_forms)
 
     return output, buttons
 
@@ -1800,48 +1840,12 @@ async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
 
     msg = await ctx.send(output, components = buttons)
 
-    on_click = msg.create_click_listener(timeout = 30)
-
-    @on_click.matching_id('moves')
-    async def on_move_button(inter):
-        moves = await pkmnlearnshelper(pokemon)
-
-        output = f'__{pokemon.title()}__\n'
-        for x in moves.keys():
-            output += f'**{x}**\n' + '  |  '.join(moves[x]) + '\n'
-
-        await inter.reply(output)
-        inter.component.disabled = True
-        await msg.edit(components = inter.components)
-
-    @on_click.matching_id('abilities')
-    async def on_ability_button(inter):
-        await inter.reply(await getPokemonAbilities(pokemon))
-        inter.component.disabled = True
-        await msg.edit(components = inter.components)
-
-    @on_click.matching_id('forms')
-    async def on_form_button(inter):
-        output = await form_helper(pokemon)
-        if '\n' in output:
-            await inter.reply(await form_helper(pokemon))
-        inter.component.disabled = True
-        await msg.edit(components = inter.components)
-        # this prevents the update from 'failing'
-        await inter.reply(type = ResponseType.UpdateMessage)
-
-    @on_click.timeout
-    async def on_timeout():
-        await msg.edit(components = [])
-
-@inter_client.slash_command(
+@app_commands.command(
     name = 'stats',
-    description = 'Display a pokemon\'s stats',
-    options = [
-        Option('pokemon', "Which pokemon?", OptionType.STRING, required = True)
-    ]
+    description = 'Display a pokemon\'s stats'
 )
-async def pkmn_search_stats_slash(inter, *, pokemon):
+@app_commands.describe(pokemon = "Which pokemon?")
+async def pkmn_search_stats_slash(inter, *, pokemon : str):
     pokemon = pkmn_cap(pokemon)
     try:
         found = (await pkmnstatshelper(pokemon))[:]
@@ -1851,42 +1855,6 @@ async def pkmn_search_stats_slash(inter, *, pokemon):
     output, buttons = await pkmn_stat_msg_helper(pokemon, found)
 
     msg = await inter.reply(output, components = buttons)
-
-    on_click = msg.create_click_listener(timeout = 30)
-
-    @on_click.matching_id('moves')
-    async def on_move_button(inter):
-        moves = await pkmnlearnshelper(pokemon)
-
-        output = f'__{pokemon.title()}__\n'
-        for x in moves.keys():
-            output += f'**{x}**\n' + '  |  '.join(moves[x]) + '\n'
-
-        await inter.reply(output)
-        inter.component.disabled = True
-        await msg.edit(components = inter.components)
-
-    @on_click.matching_id('abilities')
-    async def on_ability_button(inter):
-        await inter.reply(await getPokemonAbilities(pokemon))
-        inter.component.disabled = True
-        await msg.edit(components = inter.components)
-
-    @on_click.matching_id('forms')
-    async def on_form_button(inter):
-        output = await form_helper(pokemon)
-        if '\n' in output:
-            await inter.reply(await form_helper(pokemon))
-        inter.component.disabled = True
-        await msg.edit(components = inter.components)
-        # this prevents the update from 'failing'
-        await inter.reply(type = ResponseType.UpdateMessage)
-
-    @on_click.timeout
-    async def on_timeout():
-        await msg.edit(components = [])
-
-
 
 #####
 
@@ -1982,15 +1950,15 @@ async def pkmn_search_learns(ctx, *, pokemon : pkmn_cap):
             msg += '\nDid you mean: '+', '.join(pkmnLists[pokemon])+'?'
         await ctx.send(msg)
 
-@inter_client.slash_command(
+@app_commands.command(
     name = 'pokelearns',
-    description = 'Display the moves a pokemon can learn',
-    options = [
-        Option('pokemon', "Which pokemon?", OptionType.STRING, required = True),
-        Option('previous_evo_moves', 'Show moves from previous evolutions?', OptionType.BOOLEAN, required = False)
-    ]
+    description = 'Display the moves a pokemon can learn'
 )
-async def pkmn_search_learns_slash(inter, *, pokemon, previous_evo_moves = False):
+@app_commands.describe(
+    pokemon = "Which pokemon?",
+    previous_evo_moves = "Show moves from previous evolutions?"
+)
+async def pkmn_search_learns_slash(inter, *, pokemon : str, previous_evo_moves : Literal[True, False] = False):
     #known moves is insight + 2
     pokemon = pkmn_cap(pokemon)
     try:
@@ -2660,26 +2628,27 @@ async def smart_pkmn_search(ctx, number : typing.Optional[int] = 1,
     await pkmn_search_encounter(ctx = ctx, number = number, numberMax =  numberMax,
                                 rank = rank, pokelist =  pokelist, boss = True)
 
-@inter_client.slash_command(
+@app_commands.command(
     name = 'encounter',
-    description = 'Encounter 2 Ace Pikachu!',
-    options = [
-        Option('pokemon', "Which pokemon?", OptionType.STRING),
-        Option('number', 'How many? (up to 6)', OptionType.INTEGER, choices = [
-            OptionChoice(str(x), x) for x in range(1, 7)
-        ]),
-        Option('rank', 'What rank?', OptionType.STRING, choices = [
-            OptionChoice(x, x) for x in ranks
-        ]),
-        Option('smart_stats', 'Use the improved stat distribution? (Default: True)?',
-               OptionType.BOOLEAN
-        ),
-        Option('imagify', 'Send an image instead? (Note: Forms have default image)', OptionType.BOOLEAN)
-    ]
+    description = 'Encounter 2 Ace Pikachu!'
 )
-async def smart_pkmn_search(inter, number : int = 1,
-                                rank : ensure_rank = 'Base', smart_stats : bool = True, imagify : bool = False,
-                                *, pokemon : str = ''):
+@app_commands.describe(
+    pokemon = "Which pokemon?",
+    number = "How many? (up to 6)",
+    rank = "What rank? (Default: No change)",
+    smart_stats = "Use the improved stat distribution? (Default: True)?",
+    imagify = "Send an image instead? (Note: Forms have default image)"
+)
+@app_commands.choices(
+    rank = [Choice(x) for x in [["Base"] + ranks]]
+)
+async def smart_pkmn_search_slash(inter,
+                            number : app_commands.Range[int, 1, 6] = 1,
+                            #rank : ensure_rank = 'Base',
+                            rank : str = 'Base',
+                            smart_stats : Literal[True, False] = True,
+                            imagify : Literal[True, False] = False,
+                            *, pokemon : str = ''):
     if imagify:
         await inter.reply('Finding the Pokemon...')
         rnk = f' {rank}' if rank != 'Base' else ''
@@ -2843,11 +2812,13 @@ async def tracker(ctx, cmd = '', *, mc = ''):
 
     save_obj(pokeStatus, 'pokeStatus')
 
-@bot.command(name = 'rank',
-             aliases = ['ranks'],
-             help = 'Displays all bot recognized ranks.\n'
-                    'Note that all Pokemon ranks are suggested, and their base attributes are listed at the '
-                    'Starter rank.')
+@commands.HybridCommand(
+    name = 'rank',
+    aliases = ['ranks'],
+    help = 'Displays all bot recognized ranks.\n'
+           'Note that all Pokemon ranks are suggested, and their base attributes are listed at the '
+           'Starter rank.')
+@app_commands.autocomplete(rank = ranks_autocomplete)
 async def rankDisplay(ctx, rank : str = None):
     if rank: rank = rank.title()
     rank_info = {
@@ -2892,24 +2863,24 @@ async def rankDisplay(ctx, rank : str = None):
 
 #####
 
-@bot.command(name = 'feedback',
+@commands.hybrid_command(name = 'feedback',
              aliases = ['fb', 'report', 'typo', 'bug'],
              help = 'Send feedback/suggestions/bug reports straight to my creator!')
 async def feedback(ctx, *, info):
     await bot.appinfo.owner.send(f'{ctx.author.name}: {info}')
     await ctx.message.add_reaction('\N{HIBISCUS}')
 
-@inter_client.slash_command(
-    name = 'feedback',
-    description = 'Send feedback/suggestions/bug reports/etc straight to my creator!',
-    options = [
-        Option('info', "Feedback here!", OptionType.STRING, required = True)
-    ]
-)
-async def feedback_slash(inter, *, info):
-    await bot.appinfo.owner.send(f'{inter.author.name}: {info}')
-    await inter.reply("Thank you for your feedback!", ephemeral = True)
-    # await ctx.message.add_reaction('\N{HIBISCUS}')
+# @app_commands.command(
+#     name = 'feedback',
+#     description = 'Send feedback/suggestions/bug reports/etc straight to my creator!',
+#     options = [
+#         Option('info', "Feedback here!", OptionType.STRING, required = True)
+#     ]
+# )
+# async def feedback_slash(inter, *, info):
+#     await bot.appinfo.owner.send(f'{inter.author.name}: {info}')
+#     await inter.reply("Thank you for your feedback!", ephemeral = True)
+#     # await ctx.message.add_reaction('\N{HIBISCUS}')
 
 
 
