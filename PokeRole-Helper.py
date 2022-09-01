@@ -26,11 +26,14 @@ from io import BytesIO
 
 from dbhelper import Database
 
-load_dotenv()
-token = os.getenv('POKEROLE_TOKEN')
-
 #for my testing environment
 dev_env = (True if len(sys.argv) > 1 else False)
+
+load_dotenv()
+if not dev_env:
+    token = os.getenv('POKEROLE_TOKEN')
+else:
+    token = os.getenv('BETA_TOKEN')
 
 cmd_prefix = ('./' if dev_env else '%')
 
