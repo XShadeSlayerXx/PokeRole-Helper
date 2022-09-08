@@ -28,6 +28,8 @@ from dbhelper import Database
 
 #for my testing environment
 dev_env = (True if len(sys.argv) > 1 else False)
+test_guilds = [669326419641237509]#, 709299031968579625]
+SLASH_COMMANDS = []
 
 load_dotenv()
 if not dev_env:
@@ -39,13 +41,6 @@ cmd_prefix = ('./' if dev_env else '%')
 
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix = cmd_prefix, intents = intents)
-tree = app_commands.CommandTree(bot)
-if dev_env:
-    #register slash commands
-    # inter_client = InteractionClient(bot)
-    inter_client = InteractionClient(bot, test_guilds = [669326419641237509, 709299031968579625], sync_commands = False)
-else:
-    inter_client = InteractionClient(bot, sync_commands = False)
 
 #note that 'custom help' needs to load last
 cogs = ['mapCog', 'diceCog', 'miscCommands', 'questCog', 'custom_help']
@@ -152,9 +147,10 @@ async def on_ready():
     global pkmnListsPriv
     global database
     global restartError
+    global SLASH_COMMANDS
 
-    for cog in cogs:
-        await bot.load_extension(cog)
+    #for cog in cogs:
+    #    await bot.load_extension(cog)
 
     database = Database()
 
@@ -186,61 +182,34 @@ async def on_ready():
             save_obj(file[1], file[0])
     await instantiateHabitatsList()
 
+    #tree init
+    for command in SLASH_COMMANDS:
+        bot.tree.add_command(command)
+
     if not dev_env:
         await bot.appinfo.owner.send(f'Connected Successfully')
     restartError = False
 
-if dev_env:
-    @inter_client.event
-    async def on_ready():
-        sc = []
-        test_guild = 669326419641237509
-        sc.append(
-            SlashCommand(
-                name = 'encounter',
-                description = 'Encounter 2 Ace Pikachu!',
-                options = [
-                    Option('pokemon', "Which pokemon?", OptionType.STRING),
-                    Option('number', 'How many? (up to 6)', OptionType.INTEGER, choices = [
-                        OptionChoice(str(x), x) for x in range(1, 7)
-                    ]),
-                    Option('rank', 'What rank?', OptionType.STRING, choices = [
-                        OptionChoice(x, x) for x in ranks
-                    ]),
-                    Option('smart_stats', 'Use the improved stat distribution? (Default: True)?',
-                           OptionType.BOOLEAN),
-                    Option('imagify', 'Send an image instead?', OptionType.BOOLEAN)
-                ]
-            )
-        )
-        # sc.append(
-        #     SlashCommand(
-        #         name = 'quest',
-        #         description = 'Generate some quests at a rank, from [pokemon]!',
-        #         options = [
-        #             Option('number', 'How many? (up to 5)', OptionType.INTEGER, choices = [
-        #                 OptionChoice(str(x), x) for x in range(1, 6)
-        #             ]),
-        #             Option('rank', 'What rank?', OptionType.STRING, choices = [
-        #                 OptionChoice(x, x) for x in ranks
-        #             ]),
-        #             Option('pokemon', "Which pokemon?", OptionType.STRING)
-        #         ]
-        #     )
-        # )
-        registered = inter_client.get_guild_commands(test_guild)
-        registered_names = [x.name for x in registered]
-        sc_names = [x.name for x in sc]
-        for func in sc:
-            func.description = "testbot " + func.description
-            if func.name not in registered_names:
-                await inter_client.register_guild_command(test_guild, func)
-            else:
-                await inter_client.edit_guild_command_named(test_guild, func.name, func)
-        for name in registered_names:
-            if name not in sc_names:
-                await inter_client.delete_guild_command_named(test_guild, name)
+#######
+# sync commands
 
+@commands.is_owner()
+@bot.command(name = 'sync_global', hidden = True)
+async def sync_commands(ctx):
+    #bot.tree.clear_commands(guild = None) # do I need this?
+    await bot.tree.sync()
+    await ctx.message.add_reaction('\N{HIBISCUS}')
+
+@commands.is_owner()
+@bot.command(name = 'sync_test', hidden = True)
+async def sync_commands_guilds(ctx, *, copy : str = None):
+    global test_guilds
+
+    for guild in test_guilds:
+        bot.tree.clear_commands(guild = discord.Object(id = guild))
+        bot.tree.copy_global_to(guild = discord.Object(id = guild))
+        await bot.tree.sync(guild = discord.Object(id = guild))
+    await ctx.message.add_reaction('\N{HIBISCUS}')
 
 #######
 #converters
@@ -291,6 +260,10 @@ def lookup_ability(arg : str) -> str:
     return suggestion.term
 
 async def send_big_msg(ctx, arg : str, codify : bool = False):
+    #due to hybrid commands, sometimes slash messages can end up here
+    if isinstance(ctx, discord.Interaction):
+        await send_big_slash_msg(ctx, arg, codify)
+        return
     arg += '\n'
     if codify:
         arg = arg.replace('`','') #remove all backticks since they're irrelevant
@@ -328,11 +301,11 @@ async def send_big_slash_msg(inter, arg : str, codify : bool = False, offset : i
         else:
             msg = arg[offset:last_newline]
         if which:
-            await inter.reply(msg, type = ResponseType.ChannelMessage)
+            await inter.response.send_message(msg)
             which = not which
             offset = 0
         else:
-            await inter.followup(msg)
+            await inter.followup.send(msg)
         #plus 1 to go over the '\n'
         arg = arg[last_newline+1:]
 
@@ -486,15 +459,15 @@ async def getPokemonAbilities(pkmn):
 
     return output[:-2]  #-2 to remove the trailing \n 's
 
-async def send_slash_img(inter, content, image, filename, components = None):
+async def send_slash_img(inter, content, image, filename, view = None):
     with BytesIO() as image_binary:
         image.save(image_binary, 'PNG')
         image_binary.seek(0)
         file = discord.File(fp = image_binary, filename = filename)
-        msg = await inter.reply(content = content,
+        msg = await inter.response.send_message(content = content,
                                 file = file,
                                 fetch_response_message = False,
-                                components = components)
+                                view = view)
     return msg
 
 #######
@@ -699,18 +672,19 @@ async def checkLearnables(ctx, *, msg = ''):
 
 #######
 
-@bot.command(name = 'docs',
+@bot.hybrid_command(name = 'docs',
              help = '--> A link to an easy to read file <--')
 async def docs(ctx):
     await ctx.send('https://github.com/XShadeSlayerXx/PokeRole-Discord.py-Base/blob/master/PokeRoleBot-Docs.MD')
+
+#SLASH_COMMANDS.append(docs)
 
 #######
 # auto-completes
 
 async def types_autocomplete(
     interaction: discord.Interaction,
-    current: str,
-    namespace: app_commands.Namespace
+    current: str
 ) -> List[Choice[str]]:
     return [
         app_commands.Choice(name=m_type, value=m_type)
@@ -719,8 +693,7 @@ async def types_autocomplete(
 
 async def ranks_autocomplete(
     interaction: discord.Interaction,
-    current: str,
-    namespace: app_commands.Namespace
+    current: str
 ) -> List[Choice[str]]:
     return [
         app_commands.Choice(name=m_type, value=m_type)
@@ -866,38 +839,32 @@ async def settings(ctx, setting='', value=''):
         random_rolls_in_encounter = "Have 4 suggested rolls for Accuracy and Damage in encounters?"
 )
 @app_commands.choices(
+    #this looks like the wrong order but it's correct
     previous_evolution_moves = [
-        Choice('Yes', value = 0),
-        Choice('No', value = 1),
-        Choice('Yes, but from 1 rank lower', value = 2),
+        Choice(name = 'Yes', value = 0),
+        Choice(name = 'No', value = 1),
+        Choice(name = 'Yes, but from 1 rank lower', value = 2),
     ],
-    # Option('code_block_format',
-    #        "Display generated pokemon in a `code block`?",
-    #        OptionType.BOOLEAN
-    # ),
-    # Option('show_move_description',
-    #        "Expand move descriptions by default in generated pokemon?",
-    #        OptionType.BOOLEAN
-    # ),
-    # Option('show_ability_description',
-    #        "Expand ability descriptions by default in generated pokemon?",
-    #        OptionType.BOOLEAN
-    # ),
-    # Option('item_list_in_encounter',
-    #        "Which item list should be used in encounters? (type 'False' to clear)",
-    #        OptionType.STRING
-    # ),
-    # Option('display_lists_by',
-    #        "Choose to display specific lists by Rank or Odds",
-    #        OptionType.STRING,
-    #        choices = [
-    #             OptionChoice('Rank', value = True),
-    #             OptionChoice('Odds', value = False)
-    # ]),
-    # Option('random_rolls_in_encounter',
-    #        "Have 4 suggested rolls for Accuracy and Damage in encounters?",
-    #        OptionType.BOOLEAN
-    # )
+    code_block_format = [
+        Choice(name = 'Yes', value = 1),
+        Choice(name = 'No', value = 0),
+    ],
+    show_move_description = [
+        Choice(name = 'Yes', value = 1),
+        Choice(name = 'No', value = 0),
+    ],
+    show_ability_description = [
+        Choice(name = 'Yes', value = 1),
+        Choice(name = 'No', value = 0),
+    ],
+    display_lists_by = [
+        Choice(name = 'Rank', value = 1),
+        Choice(name = 'Odds', value = 0),
+    ],
+    random_rolls_in_encounter = [
+        Choice(name = 'Yes', value = 1),
+        Choice(name = 'No', value = 0),
+    ]
 )
 async def settings_slash(
         inter : discord.Interaction,
@@ -906,12 +873,12 @@ async def settings_slash(
         ability_hidden_chance: app_commands.Range[float, 0, 100] = None,
         shiny_chance: app_commands.Range[float, 0, 100] = None,
         previous_evolution_moves: int = None,
-        code_block_format: Literal[True, False] = None,
-        show_move_description: Literal[True, False] = None,
-        show_ability_description: Literal[True, False] = None,
+        code_block_format: int = None,
+        show_move_description: int = None,
+        show_ability_description: int = None,
         item_list_in_encounter: str = None,
-        display_lists_by: Literal[True, False] = None,
-        random_rolls_in_encounter: Literal[True, False] = None
+        display_lists_by: int = None,
+        random_rolls_in_encounter: int = None
 ):
     try:
         guild = inter.guild.id
@@ -924,16 +891,17 @@ async def settings_slash(
     if ability_two_chance: pokebotsettings[guild][1] = ability_two_chance
     if ability_hidden_chance: pokebotsettings[guild][2] = ability_hidden_chance
     if shiny_chance: pokebotsettings[guild][3] = shiny_chance
-    if show_move_description: pokebotsettings[guild][4] = show_move_description
-    if show_ability_description: pokebotsettings[guild][5] = show_ability_description
+    if show_move_description: pokebotsettings[guild][4] = bool(show_move_description)
+    if show_ability_description: pokebotsettings[guild][5] = bool(show_ability_description)
     if item_list_in_encounter: pokebotsettings[guild][6] = item_list_in_encounter
-    if display_lists_by: pokebotsettings[guild][7] = display_lists_by
-    if random_rolls_in_encounter: pokebotsettings[guild][8] = random_rolls_in_encounter
+    if display_lists_by: pokebotsettings[guild][7] = bool(display_lists_by)
+    if random_rolls_in_encounter: pokebotsettings[guild][8] = bool(random_rolls_in_encounter)
     if previous_evolution_moves: pokebotsettings[guild][9] = previous_evolution_moves
-    if code_block_format: pokebotsettings[guild][10] = code_block_format
+    if code_block_format: pokebotsettings[guild][10] = bool(code_block_format)
 
-    await inter.reply(print_settings(guild))
+    await inter.response.send_message(print_settings(guild))
 
+SLASH_COMMANDS.append(settings_slash)
 #######
 
 @commands.is_owner()
@@ -1015,13 +983,13 @@ async def show_lists(ctx):
         msg = mymsg + '\n-----------\n' + msg
     await send_big_msg(ctx, msg)
 
-@bot.command(name = 'list', aliases=['l'], help = '%list <listname> (add/show/del) poke1, poke2, etc\n'
+@bot.hybrid_command(name = 'list', aliases=['l'], help = '%list <listname> (add/show/del) poke1, poke2, etc\n'
                                    'or %list <listname> (add/show/del) 43% item1, item2, 10% item3, item4, etc\n'
                                    'In this case, the remaining 47% is no item, for %encounter and %random purposes.\n'
                                    'Lists are unique to people - don\'t forget everyone can see them!\n'
                                    'Use "%list <listname> access @mention" to give edit permissions to someone\n'
                                    'Their user id will also work (right click their profile --> copy id)')
-async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
+async def pkmn_list(ctx, listname : str, which : str = 'show', *, pokelist : str = ''):
     #areListsBroken = [x for x in list(pkmnLists.keys())]
     try:
         #initialize pkmnstats and check if listname is a valid pokemon
@@ -1193,6 +1161,7 @@ async def pkmn_list(ctx, listname : str, which = 'show', *, pokelist = ''):
     #if len(pkmnLists.keys()) < len(areListsBroken) - 1:
     #    await bot.appinfo.owner.send(f'{listname} {which} {pokelist}')
 
+#SLASH_COMMANDS.append(pkmn_list)
 ###
 
 @bot.command(name = 'listsub', help = 'Subtract two lists.\n'
@@ -1345,9 +1314,10 @@ async def pkmnitemhelper(item):
     except:
         raise KeyError(f'{item} wasn\'t recognized as an item.')
 
-@bot.command(name = 'item', aliases = ['items', 'i'], help = 'List an item\'s traits. "%item" for categories.')
-async def pkmn_search_item(ctx, *, itemname : pkmn_cap = ''):
+@bot.hybrid_command(name = 'item', aliases = ['items', 'i'], help = 'List an item\'s traits. "%item" for categories.')
+async def pkmn_search_item(ctx, *, itemname : str = ''):
     global database
+    itemname = pkmn_cap(itemname)
     if itemname != '':
         try:
             found = await pkmnitemhelper(itemname)
@@ -1388,6 +1358,8 @@ async def pkmn_search_item(ctx, *, itemname : pkmn_cap = ''):
             msg += ('\n - ' if not wbool else ' / ') + x
             wbool = not wbool
         await ctx.send(msg)
+
+#SLASH_COMMANDS.append(pkmn_search_item)
 
 @bot.command(name='shop', help='Lists all recommended shop items grouped by price.\n'
                                '"%shop (price) (showHigherPriced)" to limit the output by price.\n'
@@ -1461,7 +1433,7 @@ async def pkmnRankListDisplay(title : str, listname : str) -> str:
         pokelist.append(x)
     return await pkmnRankDisplay(title, pokelist)
 
-@bot.command(name = 'habitat', aliases = ['biome', 'h', 'habitats'],
+@bot.hybrid_command(name = 'habitat', aliases = ['biome', 'h', 'habitats'],
              help = 'List the pokemon for a biome that theworldofpokemon.com suggests.')
 async def pkmn_search_habitat(ctx, *, habitat : str = ''):
     try:
@@ -1496,6 +1468,8 @@ async def pkmn_search_habitat(ctx, *, habitat : str = ''):
             msg += x + f' ({len(pkmnHabitats[x])})' + ('\n - ' if wbool else ' / ')
             wbool = not wbool
         await ctx.send(msg[:-3])
+
+#SLASH_COMMANDS.append(pkmn_search_habitat)
 
 @bot.command(name = 'filterhabitat', aliases = ['fh'],
              help = '%filterhabitat <list> <rank=All> <includeLowerRanks=True> <habitat>\n'
@@ -1597,9 +1571,11 @@ async def pkmn_search_ability(inter, *, ability : str):
         if found[1] != '':
             output += f'\n*{found[1]}*'
 
-        await inter.reply(output)
+        await inter.response.send_message(output)
     except:
-        await inter.reply(f'{ability} wasn\'t found in the ability list.')
+        await inter.response.send_message(f'{ability} wasn\'t found in the ability list.')
+
+SLASH_COMMANDS.append(pkmn_search_ability)
 
 #######
 
@@ -1648,7 +1624,9 @@ async def pkmn_search_move(ctx, *, movename : pkmn_cap):
 @app_commands.describe(move = "Which move?")
 async def pkmn_search_move_slash(inter, *, move : str):
     move = pkmn_cap(move)
-    await inter.reply(await move_backend(move))
+    await inter.response.send_message(await move_backend(move))
+
+SLASH_COMMANDS.append(pkmn_search_move_slash)
 
 async def metronome_backend(type, lower, higher):
     have_and = True
@@ -1726,19 +1704,27 @@ async def metronome(ctx, *, parameters : str = ''):
     max_power = "Maximum power on a move? (inclusive)",
     private = "Display the move in a private message? (Default: False)"
 )
+@app_commands.choices(
+    private = [
+        Choice(name = 'Yes', value = 1),
+        Choice(name = 'No', value = 0),
+    ]
+)
 @app_commands.autocomplete(move_type = types_autocomplete)
 async def metronome_slash(
         inter,
         move_type : str = None,
         power : app_commands.Range[int, 0, 10] = None,
         max_power : app_commands.Range[int, 0, 10] = None,
-        private : Literal[True, False] = False):
+        private : int = 0):
+    private = bool(private)
     if power and max_power and power > max_power:
         min_power, max_power = max_power, power
     move = await metronome_backend(type = move_type, lower = power, higher = max_power)
     move = await move_backend(movename = move)
-    await inter.reply(move, ephemeral = private)
+    await inter.response.send_message(move, ephemeral = private)
 
+SLASH_COMMANDS.append(metronome_slash)
 #####
 
 async def pkmnstatshelper(poke : str):
@@ -1793,9 +1779,9 @@ async def pkmn_stat_msg_helper(pokemon, found):
         for x in moves.keys():
             output += f'**{x}**\n' + '  |  '.join(moves[x]) + '\n'
 
-        await inter.response.send_message(output)
         b_moves.disabled = True
         await inter.response.edit_message(view = buttons)
+        await inter.followup.send(output)
 
     b_moves.callback = on_move_button
     buttons.add_item(b_moves)
@@ -1805,9 +1791,9 @@ async def pkmn_stat_msg_helper(pokemon, found):
         label = 'Abilities'
     )
     async def on_ability_button(inter):
-        await inter.reply(await getPokemonAbilities(pokemon))
         b_abilities.disabled = True
         await inter.response.edit_message(view = buttons)
+        await inter.followup.send(await getPokemonAbilities(pokemon))
 
     b_abilities.callback = on_ability_button
     buttons.add_item(b_abilities)
@@ -1817,11 +1803,11 @@ async def pkmn_stat_msg_helper(pokemon, found):
         label = 'Forms'
     )
     async def on_form_button(inter):
-        output = await form_helper(pokemon)
-        if '\n' in output:
-            await inter.reply(await form_helper(pokemon))
         b_forms.disabled = True
         await inter.response.edit_message(view = buttons)
+        output = await form_helper(pokemon)
+        if '\n' in output:
+            await inter.followup.send(await form_helper(pokemon))
 
     b_forms.callback = on_form_button
     buttons.add_item(b_forms)
@@ -1838,7 +1824,7 @@ async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
         found = (await pkmnstatshelper(pokemon))[:]
     output, buttons = await pkmn_stat_msg_helper(pokemon, found)
 
-    msg = await ctx.send(output, components = buttons)
+    msg = await ctx.send(output, view = buttons)
 
 @app_commands.command(
     name = 'stats',
@@ -1854,8 +1840,9 @@ async def pkmn_search_stats_slash(inter, *, pokemon : str):
         found = (await pkmnstatshelper(pokemon))[:]
     output, buttons = await pkmn_stat_msg_helper(pokemon, found)
 
-    msg = await inter.reply(output, components = buttons)
+    msg = await inter.response.send_message(output, view = buttons)
 
+SLASH_COMMANDS.append(pkmn_search_stats_slash)
 #####
 
 async def pkmnlearnshelper(poke : str, rank : ensure_rank = 'Master'):
@@ -1958,7 +1945,14 @@ async def pkmn_search_learns(ctx, *, pokemon : pkmn_cap):
     pokemon = "Which pokemon?",
     previous_evo_moves = "Show moves from previous evolutions?"
 )
-async def pkmn_search_learns_slash(inter, *, pokemon : str, previous_evo_moves : Literal[True, False] = False):
+@app_commands.choices(
+    previous_evo_moves = [
+        Choice(name = 'Yes', value = 1),
+        Choice(name = 'No', value = 0),
+    ]
+)
+async def pkmn_search_learns_slash(inter, *, pokemon : str, previous_evo_moves : int = 0):
+    previous_evo_moves = bool(previous_evo_moves)
     #known moves is insight + 2
     pokemon = pkmn_cap(pokemon)
     try:
@@ -1978,14 +1972,15 @@ async def pkmn_search_learns_slash(inter, *, pokemon : str, previous_evo_moves :
         for x in moves.keys():
             output += f'**{x}**\n' + '  |  '.join(moves[x]) + '\n'
 
-        await inter.reply(output)
+        await inter.response.send_message(output)
 
     except:
         msg = f'{pokemon} wasn\'t found in the pokeLearns list.'
         if pokemon in pkmnLists:
             msg += '\nDid you mean: '+', '.join(pkmnLists[pokemon])+'?'
-        await inter.reply(msg)
+        await inter.response.send_message(msg)
 
+SLASH_COMMANDS.append(pkmn_search_learns_slash)
 #####
 
 # returns the moves of a pokemon + all it's devolutions
@@ -2636,30 +2631,40 @@ async def smart_pkmn_search(ctx, number : typing.Optional[int] = 1,
     pokemon = "Which pokemon?",
     number = "How many? (up to 6)",
     rank = "What rank? (Default: No change)",
-    smart_stats = "Use the improved stat distribution? (Default: True)?",
+    smart_stats = "Use the improved stat distribution? (Default: True)",
     imagify = "Send an image instead? (Note: Forms have default image)"
 )
 @app_commands.choices(
-    rank = [Choice(x) for x in [["Base"] + ranks]]
+    rank = [Choice(name = x, value = x) for x in ["Base"] + ranks],
+    smart_stats = [
+        Choice(name = 'Yes', value = 1),
+        Choice(name = 'No', value = 0),
+    ],
+    imagify = [
+        Choice(name = 'Yes', value = 1),
+        Choice(name = 'No', value = 0),
+    ]
 )
 async def smart_pkmn_search_slash(inter,
                             number : app_commands.Range[int, 1, 6] = 1,
                             #rank : ensure_rank = 'Base',
                             rank : str = 'Base',
-                            smart_stats : Literal[True, False] = True,
-                            imagify : Literal[True, False] = False,
+                            smart_stats : int = 1,
+                            imagify : int = 0,
                             *, pokemon : str = ''):
+    smart_stats = bool(smart_stats)
+    imagify = bool(imagify)
     if imagify:
-        await inter.reply('Finding the Pokemon...')
+        await inter.response.send_message('Finding the Pokemon...')
         rnk = f' {rank}' if rank != 'Base' else ''
-        # components = [ActionRow(Button(
+        # view = [ActionRow(Button(
         #         style = ButtonStyle.gray,
         #         label = "Expand Moves",
         #         custom_id = "moves"
         #     ))]
-        components = None
+        view = None
     else:
-        rnk, components = None, None
+        rnk, view = None, None
     if pokemon == '':
         guild = await getGuilds(inter)
         if pokebotsettings[guild][10]:
@@ -2669,7 +2674,7 @@ async def smart_pkmn_search_slash(inter,
         if rank == 'Base':
             rank = rank_dist()
         elif rank == 'Champion':
-            await inter.reply('Since there are no pokemon who naturally have the '
+            await inter.response.send_message('Since there are no pokemon who naturally have the '
                               'Champion rank, a random pokemon cannot be generated from this pool.', ephemeral = True)
             return
         # random poke from database at rank
@@ -2684,7 +2689,7 @@ async def smart_pkmn_search_slash(inter,
                                             boss = smart_stats, image = True)
                 name = f'{rank}_{pkm}'
                 img_msg = await send_slash_img(inter = inter, content = f'Found a{rnk} {pkmn_cap(pkm)}!',
-                                     image = msg_img, filename = f'{name}.png', components = components)
+                                     image = msg_img, filename = f'{name}.png', view = view)
             else:
                 if count != 0:
                     msg += f'\t**{count+1}**\n\n'
@@ -2699,7 +2704,7 @@ async def smart_pkmn_search_slash(inter,
                                             boss = smart_stats, image = True)
                 name = f'{rank}_{pokemon}'
                 img_msg = await send_slash_img(inter = inter, content = f'Found a{rnk} {pkmn_cap(pokemon)}!',
-                                     image = msg_img, filename = f'{name}.png', components = components)
+                                     image = msg_img, filename = f'{name}.png', view = view)
         else:
             await pkmn_search_encounter(ctx = inter, number = number, numberMax =  number,
                                         rank = rank.title(), pokelist =  pokemon.split(', '), boss = smart_stats)
@@ -2711,9 +2716,10 @@ async def smart_pkmn_search_slash(inter,
     #         moveset = ''
     #         for mv in moves:
     #             moveset += await move_backend(mv) + '\n\n'
-    #         await img_msg.edit(components = None)
-    #         await img_msg.reply(content = moveset)
+    #         await img_msg.edit(view = None)
+    #         await img_msg.response.send_message(content = moveset)
 
+SLASH_COMMANDS.append(smart_pkmn_search_slash)
 #####
 
 async def form_helper(name):
@@ -2812,7 +2818,7 @@ async def tracker(ctx, cmd = '', *, mc = ''):
 
     save_obj(pokeStatus, 'pokeStatus')
 
-@commands.HybridCommand(
+@commands.hybrid_command(
     name = 'rank',
     aliases = ['ranks'],
     help = 'Displays all bot recognized ranks.\n'
@@ -2861,7 +2867,11 @@ async def rankDisplay(ctx, rank : str = None):
         msg += '\n- '.join(rank_info[rank][1])
         await ctx.send(msg)
 
+#SLASH_COMMANDS.append(rankDisplay)
 #####
+
+#TODO: feedback should send me a 'modal' which i can reply to, which sends
+# a ctx.followup.send to the original sender
 
 @commands.hybrid_command(name = 'feedback',
              aliases = ['fb', 'report', 'typo', 'bug'],
@@ -2870,6 +2880,7 @@ async def feedback(ctx, *, info):
     await bot.appinfo.owner.send(f'{ctx.author.name}: {info}')
     await ctx.message.add_reaction('\N{HIBISCUS}')
 
+#SLASH_COMMANDS.append(feedback)
 # @app_commands.command(
 #     name = 'feedback',
 #     description = 'Send feedback/suggestions/bug reports/etc straight to my creator!',
@@ -2879,7 +2890,7 @@ async def feedback(ctx, *, info):
 # )
 # async def feedback_slash(inter, *, info):
 #     await bot.appinfo.owner.send(f'{inter.author.name}: {info}')
-#     await inter.reply("Thank you for your feedback!", ephemeral = True)
+#     await inter.response.send_message("Thank you for your feedback!", ephemeral = True)
 #     # await ctx.message.add_reaction('\N{HIBISCUS}')
 
 
