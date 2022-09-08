@@ -1,5 +1,6 @@
 from discord.ext import commands
-from dislash import slash_command, Option, OptionChoice, OptionType
+from discord import app_commands
+from discord.app_commands import Choice
 from dbhelper import Database
 import typing, math
 import pmd_quest_text as pmd
@@ -240,21 +241,26 @@ class Quests(commands.Cog):
                                   price = price, price_upper = price_upper, mc = mc)
         await self.bot.big_msg(ctx, msg)
 
-    @slash_command(
+    @app_commands.command(
         name = 'quest',
         description = 'Generate some quests at a rank, from [pokemon]!',
-        options = [
-            Option('number', 'How many? (up to 5)', OptionType.INTEGER, choices = [
-                OptionChoice(str(x), x) for x in range(1, 6)
-            ]),
-            Option('rank', 'What rank?', OptionType.STRING, choices = [
-                OptionChoice(x, x) for x in ranks
-            ]),
-            Option('pokemon', "Which pokemon?", OptionType.STRING)
+    )
+    @app_commands.describe(
+        number = "How many? (up to 5)",
+        rank = "What rank?",
+        pokemon = "Which pokemon?"
+    )
+    @app_commands.choices(
+        number = [
+            Choice(name = x, value = x) for x in range(1, 6)
+        ],
+        rank = [
+            Choice(name = x, value = x) for x in ['Any'] + ranks
         ]
     )
-    async def generate_quest_slash(self, inter, number : int = 1, rank : str = '', pokemon : str = ''):
-        if rank == '':
+    async def generate_quest_slash(self, inter, number :  int = 1,
+                                   rank : str = 'Any', pokemon : str = ''):
+        if rank == 'Any':
             rank = self.bot.rank_dist()
         pokemon = pokemon.split(', ')
         price = prices[ranks.index(rank)]
@@ -286,5 +292,5 @@ class Quests(commands.Cog):
         await ctx.send('Don\'t forget to state the quest rank! (Starter, Beginner, Amateur, Ace, Pro)')
 
 
-def setup(bot):
-    bot.add_cog(Quests(bot))
+async def setup(bot):
+    await bot.add_cog(Quests(bot))
