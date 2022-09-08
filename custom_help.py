@@ -65,8 +65,10 @@ class Help(commands.Cog):
         output += cmd.help
         return output
 
-    @commands.command()
-    async def help(self, ctx, *which):
+    @commands.hybrid_command(
+        name = 'help'
+    )
+    async def help(self, ctx, *,which : str = None):
         global cmd_list
         global spacing
         if not which:
@@ -90,17 +92,11 @@ class Help(commands.Cog):
                     output += f'  {cmd:{spacing}}{self.brief_help_msg(cmd_list[cmd])}\n'
             output += f'\nType {self.bot.command_prefix}help command for more info on a command.\n'
         else:
-            if len(which) == 1:
-                output = f'```\n{self.big_help_msg(cmd_list[which[0]])}\n'
-            else:
-                for cmd in which:
-                    if cmd is not None and cmd != '':
-                        await self.help(ctx, cmd)
-                return
+            output = f'```\n{self.big_help_msg(cmd_list[which])}\n'
         output += '```\n'
 
         await ctx.send(output[:1998])
 
-def setup(bot):
+async def setup(bot):
     bot.remove_command('help')
-    bot.add_cog(Help(bot))
+    await bot.add_cog(Help(bot))
