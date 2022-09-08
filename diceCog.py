@@ -163,12 +163,12 @@ class Dice(commands.Cog):
             note = f'*{note}*\n'
             msg = note + msg
 
-        if private:
-            sent = await inter.response.send_message(msg, ephemeral = private)
-        else:
+        if not private:
             buttons = RerollButton(timeout = self.timeout,
                                    note = note, sides = sides, dice = dice, flat_addition = flat_addition)
-            await inter.response.send_message(msg, view = buttons)
+        else:
+            buttons = None
+        await inter.response.send_message(msg, view = buttons, ephemeral = private)
 
 class RerollButton(View):
     def __init__(self, *, timeout : int = 180,
