@@ -700,6 +700,16 @@ async def ranks_autocomplete(
         for m_type in ranks if current.lower() in m_type.lower()
     ]
 
+async def list_autocomplete(
+    interaction: discord.Interaction,
+    current: str
+) -> List[Choice[str]]:
+    return [
+        app_commands.Choice(name=m_list, value=m_list)
+        for m_list in pkmnLists if current.lower() in m_list.lower()
+    ]
+
+
 #######
 
 #[ability1, ability2, ability3, shiny, show_move_desc, show ability desc, the item list used in encounter,
@@ -989,6 +999,14 @@ async def show_lists(ctx):
                                    'Lists are unique to people - don\'t forget everyone can see them!\n'
                                    'Use "%list <listname> access @mention" to give edit permissions to someone\n'
                                    'Their user id will also work (right click their profile --> copy id)')
+@app_commands.choices(
+    which = [
+        Choice(name = "add", value = "add"),
+        Choice(name = "show list", value = "show"),
+        Choice(name = "delete", value = "del"),
+    ]
+)
+# @app_commands.autocomplete(listname = list_autocomplete)
 async def pkmn_list(ctx, listname : str, which : str = 'show', *, pokelist : str = ''):
     #areListsBroken = [x for x in list(pkmnLists.keys())]
     try:
