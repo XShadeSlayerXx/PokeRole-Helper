@@ -149,8 +149,8 @@ async def on_ready():
     global restartError
     global SLASH_COMMANDS
 
-    #for cog in cogs:
-    #    await bot.load_extension(cog)
+    for cog in cogs:
+       await bot.load_extension(cog)
 
     database = Database()
 
@@ -2818,7 +2818,7 @@ async def tracker(ctx, cmd = '', *, mc = ''):
 
     save_obj(pokeStatus, 'pokeStatus')
 
-@commands.hybrid_command(
+@bot.hybrid_command(
     name = 'rank',
     aliases = ['ranks'],
     help = 'Displays all bot recognized ranks.\n'
@@ -2873,7 +2873,7 @@ async def rankDisplay(ctx, rank : str = None):
 #TODO: feedback should send me a 'modal' which i can reply to, which sends
 # a ctx.followup.send to the original sender
 
-@commands.hybrid_command(name = 'feedback',
+@bot.hybrid_command(name = 'feedback',
              aliases = ['fb', 'report', 'typo', 'bug'],
              help = 'Send feedback/suggestions/bug reports straight to my creator!')
 async def feedback(ctx, *, info):
