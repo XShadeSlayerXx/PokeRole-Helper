@@ -1,5 +1,7 @@
+import discord
 from discord.ext import commands
-from dislash import slash_command, Option, OptionChoice, OptionType
+from discord import app_commands
+from discord.app_commands import Choice
 import csv
 
 statuses = [
@@ -59,6 +61,12 @@ natures = [
     'Timid'
 ]
 
+async def send_msg(context, msg):
+    if isinstance(context, discord.Interaction):
+        await context.response.send_message(msg)
+    else:
+        await context.send(msg)
+
 class Misc(commands.Cog):
 
     def __init__(self, bot):
@@ -86,11 +94,11 @@ class Misc(commands.Cog):
             for row in reader:
                 self.nature[row[0]] = row[1:]
 
-    @commands.command(name = 'weather',
-                 aliases = ['w'],
-                 help = 'Quick reference for the weather.\n'
-                        'Type `%weather` for a list of all weather types, or'
-                        'type `%weather sunny day` for example for an in-depth explanation.')
+    # @commands.command(name = 'weather',
+    #              aliases = ['w'],
+    #              help = 'Quick reference for the weather.\n'
+    #                     'Type `%weather` for a list of all weather types, or'
+    #                     'type `%weather sunny day` for example for an in-depth explanation.')
     async def weather_func(self, ctx, *, weather = ''):
         if len(self.weather) == 0:
             await self.instantiateWeather()
@@ -111,12 +119,12 @@ class Misc(commands.Cog):
             else:
                 output = f'`{weather}` wasn\'t found in the weather list:{weatherrepl}'\
                          + weatherrepl.join([str(k) for k in self.weather.keys()])
-        await ctx.send(output)
+        await send_msg(ctx, output)
 
-    @commands.command(name = 'status',
-                      help = 'Quick reference for statuses.\n'
-                             'Type `%status` for a list of all statuses, or'
-                             'type `%status burn` for example for an in-depth explanation.')
+    # @commands.command(name = 'status',
+    #                   help = 'Quick reference for statuses.\n'
+    #                          'Type `%status` for a list of all statuses, or'
+    #                          'type `%status burn` for example for an in-depth explanation.')
     async def status_func(self, ctx, *, status = ''):
         if len(self.status) == 0:
             await self.instantiateStatus()
@@ -140,14 +148,14 @@ class Misc(commands.Cog):
             else:
                 output = f'`{status}` wasn\'t found in the status list:{statusrepl}' \
                          + statusrepl.join([str(k) for k in self.status.keys()])
-        await ctx.send(output)
+        await send_msg(ctx, output)
 
 
-    @commands.command(name = 'nature',
-                 aliases = ['n'],
-                 help = 'Quick reference for natures.\n'
-                        'Type `%nature` for a list of all natures, or'
-                        'type `%nature bold` for example for an in-depth explanation.')
+    # @commands.command(name = 'nature',
+    #              aliases = ['n'],
+    #              help = 'Quick reference for natures.\n'
+    #                     'Type `%nature` for a list of all natures, or'
+    #                     'type `%nature bold` for example for an in-depth explanation.')
     async def nature_func(self, ctx, *, nature = ''):
         if len(self.nature) == 0:
             await self.instantiateNature()
@@ -166,44 +174,55 @@ class Misc(commands.Cog):
             else:
                 output = f'`{nature}` wasn\'t found in the nature list:{naturerepl}'\
                          + naturerepl.join([str(k) for k in self.nature.keys()])
-        await ctx.send(output)
+        await send_msg(ctx, output)
 
 
-    @slash_command(
+    @commands.hybrid_command(
         name = 'status',
-        description = 'A nice long nap...',
-        options = [
-            Option('status', 'Which status?', OptionType.STRING, required = True, choices = [
-                OptionChoice(x, x) for x in list(statuses)
-            ])
+        description = "A nice long nap..."
+    )
+    @app_commands.describe(
+        status = "Which status?"
+    )
+    @app_commands.choices(
+        status = [
+            Choice(name = x, value = x) for x in list(statuses)
         ]
     )
-    async def slash_status(self, inter, status = ''):
+    async def slash_status(self, inter : discord.Interaction, *, status : str):
         await self.status_func(ctx = inter, status = status)
 
-    @slash_command(
+
+    @commands.hybrid_command(
         name = 'weather',
-        description = 'Are those clouds?',
-        options = [
-            Option('weather', 'Which weather?', OptionType.STRING, required = True, choices = [
-                OptionChoice(x, x) for x in list(weathers)
-            ])
+        description = "Are those clouds?"
+    )
+    @app_commands.describe(
+        weather = "Which weather?"
+    )
+    @app_commands.choices(
+        weather = [
+            Choice(name = x, value = x) for x in list(weathers)
         ]
     )
-    async def slash_status(self, inter, weather = ''):
+    async def slash_weather(self, inter, *, weather : str):
         await self.weather_func(ctx = inter, weather = weather)
 
-    @slash_command(
+
+    @commands.hybrid_command(
         name = 'nature',
-        description = 'Who am I?',
-        options = [
-            Option('nature', 'Which nature?', OptionType.STRING, required = True, choices = [
-                OptionChoice(x, x) for x in list(natures)
-            ])
+        description = "Who am I?"
+    )
+    @app_commands.describe(
+        nature = "Which nature?"
+    )
+    @app_commands.choices(
+        nature = [
+            Choice(name = x, value = x) for x in list(natures)
         ]
     )
-    async def slash_status(self, inter, nature = ''):
+    async def slash_nature(self, inter, *, nature : str):
         await self.nature_func(ctx = inter, nature = nature)
 
-def setup(bot):
-    bot.add_cog(Misc(bot))
+async def setup(bot):
+    await bot.add_cog(Misc(bot))
