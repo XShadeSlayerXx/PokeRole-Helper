@@ -1,10 +1,10 @@
 from discord.ext import commands
-from discord import File, Embed
+from discord import File, Embed, app_commands
+from discord.app_commands import Choice
 from typing import Optional
 from PIL import Image, ImageDraw
 import numpy as np
 from sys import maxsize as MAXSIZE
-from dislash import slash_command, ActionRow, Button, ButtonStyle, ResponseType, Option, OptionType, check
 from io import BytesIO
 
 import random
@@ -423,79 +423,79 @@ def create_map(dungeon, legend):
 
     return newDungeon, TILE_OFFSET
 
-def Make_WASD(lock : bool = True):
-    rows = [
-        ActionRow(
-            Button(
-                style = ButtonStyle.green,
-                label = "Event",
-                custom_id = "event"
-            ),
-            Button(
-                style = ButtonStyle.blurple,
-                label = "↑",
-                custom_id = "up"
-            ),
-            Button(
-                style = ButtonStyle.green,
-                label = "Update",
-                custom_id = "dungeon"
-            )
-        ),
-            ActionRow(
-            Button(
-                style = ButtonStyle.blurple,
-                label = "←",
-                custom_id = "left"
-            ),
-            Button(
-                style = ButtonStyle.blurple,
-                label = "↓",
-                custom_id = "down"
-            ),
-            Button(
-                style = ButtonStyle.blurple,
-                label = "→",
-                custom_id = "right"
-            )
-        ),
-            ActionRow(
-                Button(
-                    style = ButtonStyle.red,
-                    label = 'delete',
-                    custom_id = 'delete'
-                ),
-                Button(
-                    style = ButtonStyle.gray,
-                    label = ('unlock' if lock else 'lock') + ' movement',
-                    custom_id = 'lock'
+# def Make_WASD(lock : bool = True):
+#     rows = [
+#         ActionRow(
+#             Button(
+#                 style = ButtonStyle.green,
+#                 label = "Event",
+#                 custom_id = "event"
+#             ),
+#             Button(
+#                 style = ButtonStyle.blurple,
+#                 label = "↑",
+#                 custom_id = "up"
+#             ),
+#             Button(
+#                 style = ButtonStyle.green,
+#                 label = "Update",
+#                 custom_id = "dungeon"
+#             )
+#         ),
+#             ActionRow(
+#             Button(
+#                 style = ButtonStyle.blurple,
+#                 label = "←",
+#                 custom_id = "left"
+#             ),
+#             Button(
+#                 style = ButtonStyle.blurple,
+#                 label = "↓",
+#                 custom_id = "down"
+#             ),
+#             Button(
+#                 style = ButtonStyle.blurple,
+#                 label = "→",
+#                 custom_id = "right"
+#             )
+#         ),
+#             ActionRow(
+#                 Button(
+#                     style = ButtonStyle.red,
+#                     label = 'delete',
+#                     custom_id = 'delete'
+#                 ),
+#                 Button(
+#                     style = ButtonStyle.gray,
+#                     label = ('unlock' if lock else 'lock') + ' movement',
+#                     custom_id = 'lock'
+#
+#                 )
+#             )
+#     ]
+#     return rows
 
-                )
-            )
-    ]
-    return rows
-
-async def Pillow_reply(inter, content, image, filename, include_descriptions : bool = True):
-    dungeon = image
-    if include_descriptions:
-        components = Make_WASD()
-    else:
-        components = []
-    with BytesIO() as image_binary:
-        dungeon.save(image_binary, 'PNG')
-        image_binary.seek(0)
-        # im = Image.open(image_binary)
-        # im.show()
-        # filename = f'Dungeon-Size-{size}-Seed-{seed}.png'
-        # filename = 'dungeon.png'
-        file = File(fp = image_binary, filename = filename)
-        # embed = Embed().set_image(url = f'attachment://{filename}')
-        msg = await inter.reply(content = content,
-                                file = file,
-                                # embed = embed,
-                                # file = File(f'Dungeon-Size-{size}-Seed-{seed}.png'),
-                                components = components,
-                                fetch_response_message = False)
+# async def Pillow_reply(inter, content, image, filename, include_descriptions : bool = True):
+#     dungeon = image
+#     if include_descriptions:
+#         components = Make_WASD()
+#     else:
+#         components = []
+#     with BytesIO() as image_binary:
+#         dungeon.save(image_binary, 'PNG')
+#         image_binary.seek(0)
+#         # im = Image.open(image_binary)
+#         # im.show()
+#         # filename = f'Dungeon-Size-{size}-Seed-{seed}.png'
+#         # filename = 'dungeon.png'
+#         file = File(fp = image_binary, filename = filename)
+#         # embed = Embed().set_image(url = f'attachment://{filename}')
+#         msg = await inter.reply(content = content,
+#                                 file = file,
+#                                 # embed = embed,
+#                                 # file = File(f'Dungeon-Size-{size}-Seed-{seed}.png'),
+#                                 components = components,
+#                                 fetch_response_message = False)
 
     return msg
 
@@ -587,164 +587,167 @@ class Maps(commands.Cog):
         self.author_only = True
         self.button_owner = None
 
-    @slash_command(
-        name = 'dungeon',
-        description="Create a dungeon with control buttons from {size} and {seed}. (0, 0) is top-left.",
-        options = [
-            Option('size', 'Number of dungeon tiles between 5 and 100', OptionType.INTEGER),
-            Option('seed', 'RNG seed (integer)', OptionType.STRING)
-        ]
-    )
-    async def dungeon(self, inter, size : int = None, seed : int = None):
-        if seed is None:
-            seed = random.randrange(MAXSIZE)
-        random.seed(seed)
 
-        if size is None:
-            size = random.randrange(10,40)
-        else:
-            size = sorted((5,size,100))[1]
+    #TODO: update this to work with discord.py's buttons
 
-        dungeonMap = form_map(size)
+    # @slash_command(
+    #     name = 'dungeon',
+    #     description="Create a dungeon with control buttons from {size} and {seed}. (0, 0) is top-left.",
+    #     options = [
+    #         Option('size', 'Number of dungeon tiles between 5 and 100', OptionType.INTEGER),
+    #         Option('seed', 'RNG seed (integer)', OptionType.STRING)
+    #     ]
+    # )
+    # async def dungeon(self, inter, size : int = None, seed : int = None):
+    #     if seed is None:
+    #         seed = random.randrange(MAXSIZE)
+    #     random.seed(seed)
+    #
+    #     if size is None:
+    #         size = random.randrange(10,40)
+    #     else:
+    #         size = sorted((5,size,100))[1]
+    #
+    #     dungeonMap = form_map(size)
+    #
+    #     newEvents = None
+    #     dungeon, TILE_OFFSET = create_map(dungeonMap, newEvents)
+    #     width, height = dungeon.size
+    #     width //= TILE_OFFSET
+    #     height //= TILE_OFFSET
+    #
+    #     # dungeon.save(f'Dungeon-Size-{size}-Seed-{seed}.png')
+    #
+    #     content = f'(1,1) - Event: nothing\n' \
+    #               f'Size: {size} - Seed: {seed}'
+    #     filename = f'Dungeon-Size-{size}-Seed-{seed}.png'
+    #     #a necessary evil
+    #     timeout_msg = 'Creating your dungeon...\n' \
+    #                   f'The dungeon controls will timeout after {self.timeout//60} minutes of inactivity.'
+    #     await inter.reply(content = timeout_msg, ephemeral = True)
+    #
+    #     self.button_owner = inter.author.id
+    #
+    #     self.msg = await Pillow_reply(inter = inter, content = content,
+    #                        image = dungeon, filename = filename)
+    #
+    #     # os.remove(f'Dungeon-Size-{size}-Seed-{seed}.png')
+    #
+    #     self.on_click = self.msg.create_click_listener(timeout = self.timeout)
+    #
+    #     # inter = await msg.wait_for_button()
+    #     @self.on_click.matching_id('up')
+    #     async def on_up_button(inter):
+    #         # print(inter.message.content)
+    #         # print(inter.component)
+    #         if inter.author.id == self.button_owner or not self.author_only:
+    #             content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id, edge = height)
+    #             await inter.reply(content = content, type = ResponseType.UpdateMessage)
+    #         else:
+    #             await inter.create_response(content = 'The Movement buttons are reserved '
+    #                                                   'for whoever ran the original message, unless they\'re '
+    #                                                   'unlocked.',
+    #                                         ephemeral = True)
+    #
+    #     @self.on_click.matching_id('down')
+    #     async def on_down_button(inter):
+    #         if inter.author.id == self.button_owner or not self.author_only:
+    #             content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id, edge = height)
+    #             await inter.reply(content = content, type = ResponseType.UpdateMessage)
+    #         else:
+    #             await inter.create_response(content = 'The Movement buttons are reserved '
+    #                                                   'for whoever ran the original message, unless they\'re '
+    #                                                   'unlocked.',
+    #                                         ephemeral = True)
+    #
+    #     @self.on_click.matching_id('left')
+    #     async def on_left_button(inter):
+    #         if inter.author.id == self.button_owner or not self.author_only:
+    #             content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id, edge = width)
+    #             await inter.reply(content = content, type = ResponseType.UpdateMessage)
+    #         else:
+    #             await inter.create_response(content = 'The Movement buttons are reserved '
+    #                                                   'for whoever ran the original message, unless they\'re '
+    #                                                   'unlocked.',
+    #                                         ephemeral = True)
+    #
+    #     @self.on_click.matching_id('right')
+    #     async def on_right_button(inter):
+    #         if inter.author.id == self.button_owner or not self.author_only:
+    #             content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id, edge = width)
+    #             await inter.reply(content = content, type = ResponseType.UpdateMessage)
+    #         else:
+    #             await inter.create_response(content = 'The Movement buttons are reserved '
+    #                                                   'for whoever ran the original message, unless they\'re '
+    #                                                   'unlocked.',
+    #                                         ephemeral = True)
+    #
+    #     @self.on_click.matching_id('event')
+    #     async def on_event_button(inter):
+    #         if inter.author.id == self.button_owner:
+    #             #event_order
+    #             content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id)
+    #             await inter.reply(content = content, type = ResponseType.UpdateMessage)
+    #         else:
+    #             await inter.create_response(content = 'The Event, Update, Delete, and Lock buttons are reserved '
+    #                                                   'for whoever ran the original message.',
+    #                                         ephemeral = True)
+    #
+    #     @self.on_click.matching_id('dungeon')
+    #     async def on_dungeon_button(inter):
+    #         if inter.author.id == self.button_owner:
+    #             x, y, event = Separate_Params(inter.message.content)
+    #             if event in ['random']:
+    #                 event = random.choice(list(event_icons.keys()))
+    #             content = f'({x},{y}) - Event: {event}'
+    #             filename = f'tmp_Size-{size}-Seed-{seed}.png'
+    #             tmp_dungeon = Add_Event(dungeon, event, x, y, TILE_OFFSET)
+    #             # tmp_dungeon.show()
+    #             timeout_msg = 'Updating...'
+    #             await inter.reply(content = timeout_msg, ephemeral = False, delete_after = 1)
+    #             if self.prev_msg:
+    #                 await self.prev_msg.delete()
+    #                 self.prev_msg = None
+    #             self.prev_msg = await Pillow_reply(inter = inter, content = content,
+    #                                      image = tmp_dungeon, filename = filename,
+    #                                           include_descriptions = False)
+    #         else:
+    #             await inter.create_response(content = 'The Event, Update, Delete, and Lock buttons are reserved '
+    #                                                   'for whoever ran the original message.',
+    #                                         ephemeral = True)
+    #
+    #     @self.on_click.matching_id('delete')
+    #     async def on_delete_button(inter):
+    #         if inter.author.id == self.button_owner:
+    #             await self.msg.delete()
+    #             if self.prev_msg:
+    #                 await self.prev_msg.delete()
+    #                 self.prev_msg = None
+    #         else:
+    #             await inter.create_response(content = 'The Event, Update, Delete, and Lock buttons are reserved '
+    #                                                   'for whoever ran the original message.',
+    #                                         ephemeral = True)
+    #
+    #     @self.on_click.matching_id('lock')
+    #     async def on_lock_button(inter):
+    #         if inter.author.id == self.button_owner:
+    #             self.author_only = not self.author_only
+    #             await inter.reply(content = inter.message.content, type = ResponseType.UpdateMessage,
+    #                                 components = Make_WASD(self.author_only))
+    #         else:
+    #             await inter.create_response(content = 'The Event, Update, Delete, and Lock buttons are reserved '
+    #                                                   'for whoever ran the original message.',
+    #                                         ephemeral = True)
+    #
+    #     @self.on_click.timeout
+    #     async def on_timeout():
+    #         if self.prev_msg:
+    #             await self.prev_msg.delete()
+    #             self.prev_msg = None
+    #         await self.msg.edit(content = '(Timed out)\n'+self.msg.content.split('\n')[1],
+    #                        components = [])
 
-        newEvents = None
-        dungeon, TILE_OFFSET = create_map(dungeonMap, newEvents)
-        width, height = dungeon.size
-        width //= TILE_OFFSET
-        height //= TILE_OFFSET
-
-        # dungeon.save(f'Dungeon-Size-{size}-Seed-{seed}.png')
-
-        content = f'(1,1) - Event: nothing\n' \
-                  f'Size: {size} - Seed: {seed}'
-        filename = f'Dungeon-Size-{size}-Seed-{seed}.png'
-        #a necessary evil
-        timeout_msg = 'Creating your dungeon...\n' \
-                      f'The dungeon controls will timeout after {self.timeout//60} minutes of inactivity.'
-        await inter.reply(content = timeout_msg, ephemeral = True)
-
-        self.button_owner = inter.author.id
-
-        self.msg = await Pillow_reply(inter = inter, content = content,
-                           image = dungeon, filename = filename)
-
-        # os.remove(f'Dungeon-Size-{size}-Seed-{seed}.png')
-
-        self.on_click = self.msg.create_click_listener(timeout = self.timeout)
-
-        # inter = await msg.wait_for_button()
-        @self.on_click.matching_id('up')
-        async def on_up_button(inter):
-            # print(inter.message.content)
-            # print(inter.component)
-            if inter.author.id == self.button_owner or not self.author_only:
-                content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id, edge = height)
-                await inter.reply(content = content, type = ResponseType.UpdateMessage)
-            else:
-                await inter.create_response(content = 'The Movement buttons are reserved '
-                                                      'for whoever ran the original message, unless they\'re '
-                                                      'unlocked.',
-                                            ephemeral = True)
-
-        @self.on_click.matching_id('down')
-        async def on_down_button(inter):
-            if inter.author.id == self.button_owner or not self.author_only:
-                content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id, edge = height)
-                await inter.reply(content = content, type = ResponseType.UpdateMessage)
-            else:
-                await inter.create_response(content = 'The Movement buttons are reserved '
-                                                      'for whoever ran the original message, unless they\'re '
-                                                      'unlocked.',
-                                            ephemeral = True)
-
-        @self.on_click.matching_id('left')
-        async def on_left_button(inter):
-            if inter.author.id == self.button_owner or not self.author_only:
-                content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id, edge = width)
-                await inter.reply(content = content, type = ResponseType.UpdateMessage)
-            else:
-                await inter.create_response(content = 'The Movement buttons are reserved '
-                                                      'for whoever ran the original message, unless they\'re '
-                                                      'unlocked.',
-                                            ephemeral = True)
-
-        @self.on_click.matching_id('right')
-        async def on_right_button(inter):
-            if inter.author.id == self.button_owner or not self.author_only:
-                content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id, edge = width)
-                await inter.reply(content = content, type = ResponseType.UpdateMessage)
-            else:
-                await inter.create_response(content = 'The Movement buttons are reserved '
-                                                      'for whoever ran the original message, unless they\'re '
-                                                      'unlocked.',
-                                            ephemeral = True)
-
-        @self.on_click.matching_id('event')
-        async def on_event_button(inter):
-            if inter.author.id == self.button_owner:
-                #event_order
-                content = Modify_Dungeon_Message(inter.message.content, inter.component.custom_id)
-                await inter.reply(content = content, type = ResponseType.UpdateMessage)
-            else:
-                await inter.create_response(content = 'The Event, Update, Delete, and Lock buttons are reserved '
-                                                      'for whoever ran the original message.',
-                                            ephemeral = True)
-
-        @self.on_click.matching_id('dungeon')
-        async def on_dungeon_button(inter):
-            if inter.author.id == self.button_owner:
-                x, y, event = Separate_Params(inter.message.content)
-                if event in ['random']:
-                    event = random.choice(list(event_icons.keys()))
-                content = f'({x},{y}) - Event: {event}'
-                filename = f'tmp_Size-{size}-Seed-{seed}.png'
-                tmp_dungeon = Add_Event(dungeon, event, x, y, TILE_OFFSET)
-                # tmp_dungeon.show()
-                timeout_msg = 'Updating...'
-                await inter.reply(content = timeout_msg, ephemeral = False, delete_after = 1)
-                if self.prev_msg:
-                    await self.prev_msg.delete()
-                    self.prev_msg = None
-                self.prev_msg = await Pillow_reply(inter = inter, content = content,
-                                         image = tmp_dungeon, filename = filename,
-                                              include_descriptions = False)
-            else:
-                await inter.create_response(content = 'The Event, Update, Delete, and Lock buttons are reserved '
-                                                      'for whoever ran the original message.',
-                                            ephemeral = True)
-
-        @self.on_click.matching_id('delete')
-        async def on_delete_button(inter):
-            if inter.author.id == self.button_owner:
-                await self.msg.delete()
-                if self.prev_msg:
-                    await self.prev_msg.delete()
-                    self.prev_msg = None
-            else:
-                await inter.create_response(content = 'The Event, Update, Delete, and Lock buttons are reserved '
-                                                      'for whoever ran the original message.',
-                                            ephemeral = True)
-
-        @self.on_click.matching_id('lock')
-        async def on_lock_button(inter):
-            if inter.author.id == self.button_owner:
-                self.author_only = not self.author_only
-                await inter.reply(content = inter.message.content, type = ResponseType.UpdateMessage,
-                                    components = Make_WASD(self.author_only))
-            else:
-                await inter.create_response(content = 'The Event, Update, Delete, and Lock buttons are reserved '
-                                                      'for whoever ran the original message.',
-                                            ephemeral = True)
-
-        @self.on_click.timeout
-        async def on_timeout():
-            if self.prev_msg:
-                await self.prev_msg.delete()
-                self.prev_msg = None
-            await self.msg.edit(content = '(Timed out)\n'+self.msg.content.split('\n')[1],
-                           components = [])
-
-    @commands.command(
+    @commands.hybrid_command(
         name = 'dungeon',
         aliases = ['dg'],
         help = """Updated: Create a randomly generated dungeon!
@@ -753,8 +756,15 @@ class Maps(commands.Cog):
         e.g. `!dungeon 20 True 12345` will create a dungeon with 20 tiles, events, and the seed will be 12345.
         Events: """ + ', '.join([x[0] for x in event_list])
     )
-    async def make_map(self, ctx, size : int = None,
-                       events : Optional[bool] = False, seed: Optional[int] = None):#, *events):
+    @app_commands.choices(
+        events = [
+            Choice(name = 'Include', value = 1),
+            Choice(name = "Don't include", value = 0)
+        ]
+    )
+    async def make_map(self, ctx, size : app_commands.Range[int, 5, 100] = None,
+                       events : int = 0, seed: int = None):#, *events):
+        events = bool(events)
         if seed is None:
             seed = random.randrange(MAXSIZE)
         random.seed(seed)
@@ -782,5 +792,5 @@ class Maps(commands.Cog):
         os.remove(f'Dungeon-Size-{size}-Seed-{seed}.png')
 
 
-def setup(bot):
-    bot.add_cog(Maps(bot))
+async def setup(bot):
+    await bot.add_cog(Maps(bot))
