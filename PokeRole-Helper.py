@@ -709,6 +709,53 @@ async def list_autocomplete(
         for m_list in pkmnLists if current.lower() in m_list.lower()
     ]
 
+async def move_autocomplete(
+    interaction: discord.Interaction,
+    current: str
+) -> List[Choice[str]]:
+    if len(current) < 2:
+        return {}
+    else:
+        query = f'SELECT name FROM pkmnMoves WHERE lower(name) LIKE "%{current}%"' \
+                f' LIMIT 25'
+        result = [x[0] for x in database.custom_query(query)]
+
+        return [
+            app_commands.Choice(name=m_list, value=m_list)
+            for m_list in result
+        ]
+
+async def pokemon_autocomplete(
+    interaction: discord.Interaction,
+    current: str
+) -> List[Choice[str]]:
+    if len(current) < 2:
+        return {}
+    else:
+        query = f'SELECT name FROM pkmnStats WHERE lower(name) LIKE "%{current}%"' \
+                f' AND generation BETWEEN 1 AND 8 LIMIT 25'
+        result = [x[0] for x in database.custom_query(query)]
+
+        return [
+            app_commands.Choice(name=m_list, value=m_list)
+            for m_list in result
+        ]
+
+async def ability_autocomplete(
+    interaction: discord.Interaction,
+    current: str
+) -> List[Choice[str]]:
+    if len(current) < 2:
+        return {}
+    else:
+        query = f'SELECT name FROM pkmnAbilities WHERE lower(name) LIKE "%{current}%"' \
+                f' LIMIT 25'
+        result = [x[0] for x in database.custom_query(query)]
+
+        return [
+            app_commands.Choice(name=m_list, value=m_list)
+            for m_list in result
+        ]
 
 #######
 
@@ -1576,6 +1623,7 @@ async def pkmn_search_ability(ctx, *, abilityname : pkmn_cap):
     description = 'Display an ability\'s info'
 )
 @app_commands.describe(ability="Which ability?")
+@app_commands.autocomplete(ability = ability_autocomplete)
 async def pkmn_search_ability(inter, *, ability : str):
     ability = pkmn_cap(ability)
     try:
@@ -1640,6 +1688,7 @@ async def pkmn_search_move(ctx, *, movename : pkmn_cap):
     description = 'List a pokemon move traits'
 )
 @app_commands.describe(move = "Which move?")
+@app_commands.autocomplete(move = move_autocomplete)
 async def pkmn_search_move_slash(inter, *, move : str):
     move = pkmn_cap(move)
     await inter.response.send_message(await move_backend(move))
@@ -1849,6 +1898,7 @@ async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
     description = 'Display a pokemon\'s stats'
 )
 @app_commands.describe(pokemon = "Which pokemon?")
+@app_commands.autocomplete(pokemon = pokemon_autocomplete)
 async def pkmn_search_stats_slash(inter, *, pokemon : str):
     pokemon = pkmn_cap(pokemon)
     try:
@@ -1969,6 +2019,7 @@ async def pkmn_search_learns(ctx, *, pokemon : pkmn_cap):
         Choice(name = 'No', value = 0),
     ]
 )
+@app_commands.autocomplete(pokemon = pokemon_autocomplete)
 async def pkmn_search_learns_slash(inter, *, pokemon : str, previous_evo_moves : int = 0):
     previous_evo_moves = bool(previous_evo_moves)
     #known moves is insight + 2
@@ -2663,6 +2714,7 @@ async def smart_pkmn_search(ctx, number : typing.Optional[int] = 1,
         Choice(name = 'No', value = 0),
     ]
 )
+@app_commands.autocomplete(pokemon = pokemon_autocomplete)
 async def smart_pkmn_search_slash(inter,
                             number : app_commands.Range[int, 1, 6] = 1,
                             #rank : ensure_rank = 'Base',
