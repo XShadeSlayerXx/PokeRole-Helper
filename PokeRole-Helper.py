@@ -396,9 +396,11 @@ def displayList(listname : str) -> str:
     return output[:-1] #remove the trailing space
 
 async def getGuilds(ctx):
-    try:
+    if hasattr(ctx, "guild") and ctx.guild:
         guild = ctx.guild.id
-    except:
+    elif hasattr(ctx, "user") and ctx.user:
+        guild = ctx.user
+    else:
         guild = ctx.author.id
     if guild not in pokebotsettings:
         await instantiateSettings(guild)
