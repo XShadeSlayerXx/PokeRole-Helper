@@ -2588,6 +2588,24 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
                     '%encounter [1-6] [1-6 upper bound] [rank/base] <list of pokemon>\n'
                     '"base" means pokemon generated are at suggested ranks\n'
                     'e.g. %encounter 2 amateur eevee, squirtle, pidgey, list1')
+async def pkmn_search_encounter_cmd(ctx, number : typing.Optional[int] = 1,
+                                numberMax : typing.Optional[int] = None,
+                                rank : typing.Optional[ensure_rank] = 'Base',
+                                *, pokelist : (lambda x : x.split(', ')),
+                                boss = False, image = False):
+    #pokelist = pokelist.split(', ')
+    guild = await getGuilds(ctx)
+    if numberMax is not None:
+        number = random.randint(number, numberMax)
+    msg = await pkmn_encounter(ctx, number, rank, pokelist, boss = boss, guild = guild, image = image)
+    if image:
+        return msg
+    if pokebotsettings[guild][10]:
+        codify = True
+    else:
+        codify = False
+    await send_big_msg(ctx, msg, codify = codify)
+
 async def pkmn_search_encounter(ctx, number : typing.Optional[int] = 1,
                                 numberMax : typing.Optional[int] = None,
                                 rank : typing.Optional[ensure_rank] = 'Base',
