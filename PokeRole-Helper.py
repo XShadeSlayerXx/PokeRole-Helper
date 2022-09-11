@@ -466,10 +466,15 @@ async def send_slash_img(inter, content, image, filename, view = None):
         image.save(image_binary, 'PNG')
         image_binary.seek(0)
         file = discord.File(fp = image_binary, filename = filename)
-        msg = await inter.response.send_message(content = content,
-                                file = file,
-                                fetch_response_message = False,
-                                view = view)
+        if view:
+            msg = await inter.followup.send(content = content,
+                                    file = file,
+                                    #fetch_response_message = False,
+                                    view = view)
+        else:
+            msg = await inter.followup.send(content = content,
+                                    file = file)
+
     return msg
 
 #######
