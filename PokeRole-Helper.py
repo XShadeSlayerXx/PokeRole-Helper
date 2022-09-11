@@ -10,9 +10,9 @@ import traceback
 
 import discord
 from discord.ext import commands
-from discord import app_commands
+from discord import app_commands, ui
 from discord.app_commands import Choice
-from discord.ui import button, Button
+from discord.ui import Button
 from dotenv import load_dotenv
 from symspellpy import SymSpell, Verbosity
 # can be replaced when/if i ever convert to nosql
@@ -2960,30 +2960,45 @@ async def rankDisplay(ctx, rank : str = None):
 #SLASH_COMMANDS.append(rankDisplay)
 #####
 
-#TODO: feedback should send me a 'modal' which i can reply to, which sends
-# a ctx.followup.send to the original sender
+class Feedback_Modal(ui.Modal):
+    def __init__(self, reply_func : discord.Interaction.response, title = "???"):
+        super().__init__(title = title)
+        self.reply_func = reply_func
+
+    text = ui.TextInput(label="Response")
+
+    async def on_submit(self, interaction: discord.Interaction, /) -> None:
+        update_message = "~~" + interaction.message.content + "~~"
+        await interaction.response.edit_message(content = update_message, view = None)
+        await self.reply_func(f"*{self.title}...*\nShadeslayer: " + self.children[0].value)
+
+class Feedback_Button(ui.View):
+    def __init__(self, send_modal):
+        super().__init__()
+        self.modal = send_modal
+
+    @ui.button(label="Click to respond", style = discord.ButtonStyle.green)
+    async def butn(self, interaction, button):
+        await interaction.response.send_modal(self.modal)
 
 @bot.hybrid_command(name = 'feedback',
              aliases = ['fb', 'report', 'typo', 'bug'],
              help = 'Send feedback/suggestions/bug reports straight to my creator!')
-async def feedback(ctx, *, info):
-    await bot.appinfo.owner.send(f'{ctx.author.name}: {info}')
-    await ctx.message.add_reaction('\N{HIBISCUS}')
-
-#SLASH_COMMANDS.append(feedback)
-# @app_commands.command(
-#     name = 'feedback',
-#     description = 'Send feedback/suggestions/bug reports/etc straight to my creator!',
-#     options = [
-#         Option('info', "Feedback here!", OptionType.STRING, required = True)
-#     ]
-# )
-# async def feedback_slash(inter, *, info):
-#     await bot.appinfo.owner.send(f'{inter.author.name}: {info}')
-#     await inter.response.send_message("Thank you for your feedback!", ephemeral = True)
-#     # await ctx.message.add_reaction('\N{HIBISCUS}')
-
-
+# @app_commands.command(name = 'feedback')
+async def feedback(ctx : discord.Interaction, *, info : str):
+    reply_func = None
+    which_user = "???: "
+    if hasattr(ctx.interaction, "response"):
+        await ctx.interaction.response.send_message('Feedback received, thank you!')
+        reply_func = ctx.interaction.followup.send
+        which_user = ctx.interaction.user.name
+    else:
+        await ctx.message.add_reaction('\N{HIBISCUS}')
+        reply_func = ctx.reply
+        which_user = ctx.author.name
+    modal = Feedback_Modal(reply_func = reply_func, title = info[:45])
+    butn = Feedback_Button(send_modal = modal)
+    await bot.appinfo.owner.send(which_user + ": " + info, view = butn)
 
 @bot.command(name = 'donate',
              help = 'Support me!')
