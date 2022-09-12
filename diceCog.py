@@ -149,8 +149,8 @@ class Dice(commands.Cog):
         ],
     )
     async def rollDice_slash(self, inter,
-                             sides : app_commands.Range[int, 0, 100] = 6,
-                             dice : app_commands.Range[int, 0, 100] = 1,
+                             sides : app_commands.Range[int, 0, maxPips] = 6,
+                             dice : app_commands.Range[int, 0, maxDice] = 1,
                              flat_addition : int = None,
                              note : str = '',
                              private : int = False):
@@ -167,6 +167,7 @@ class Dice(commands.Cog):
             buttons = RerollButton(timeout = self.timeout,
                                    note = note, sides = sides, dice = dice, flat_addition = flat_addition)
             await inter.response.send_message(msg, view = buttons, ephemeral = private)
+            buttons.message = await inter.original_response()
         else:
             await inter.response.send_message(msg, ephemeral = private)
 
@@ -190,6 +191,8 @@ class RerollButton(View):
             extra = await dice_backend_slash(self.sides, self.dice, self.flat_addition)
             await interaction.response.send_message(extra)
 
+    async def on_timeout(self) -> None:
+        await self.message.edit(view = None)
 
 async def setup(bot):
     await bot.add_cog(Dice(bot))
