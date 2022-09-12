@@ -711,10 +711,23 @@ async def list_autocomplete(
     interaction: discord.Interaction,
     current: str
 ) -> List[Choice[str]]:
+    if len(current) < 2:
+        return {}
     return [
         app_commands.Choice(name=m_list, value=m_list)
         for m_list in pkmnLists if current.lower() in m_list.lower()
-    ]
+    ][:24]
+
+async def habitat_autocomplete(
+    interaction: discord.Interaction,
+    current: str
+) -> List[Choice[str]]:
+    if len(current) < 2:
+        return {}
+    return [
+        app_commands.Choice(name=m_list, value=m_list)
+        for m_list in pkmnHabitats if current.lower() in m_list.lower()
+    ][:24]
 
 async def move_autocomplete(
     interaction: discord.Interaction,
@@ -1060,7 +1073,7 @@ async def show_lists(ctx):
         Choice(name = "delete", value = "del"),
     ]
 )
-# @app_commands.autocomplete(listname = list_autocomplete)
+@app_commands.autocomplete(listname = list_autocomplete)
 async def pkmn_list(ctx, listname : str, which : str = 'show', *, pokelist : str = ''):
     #areListsBroken = [x for x in list(pkmnLists.keys())]
     try:
@@ -1227,7 +1240,7 @@ async def pkmn_list(ctx, listname : str, which : str = 'show', *, pokelist : str
     #         pkmnLists[listname].insert(0, 'i')
     # except:
     #     pass
-    await ctx.message.add_reaction('\N{CYCLONE}')
+    #await ctx.message.add_reaction('\N{CYCLONE}')
     save_obj(pkmnListsPriv, 'pkmnListsPriv')
     save_obj(pkmnLists, 'pkmnLists')
     #if len(pkmnLists.keys()) < len(areListsBroken) - 1:
@@ -1480,7 +1493,7 @@ async def pkmnDictRanks(pokemon : list) -> dict:
         try:
             rank = (await pkmnstatshelper(poke))[20]
         except:
-            #its either nidoran or oricorio
+            #its either nidoran or oricorio or wormadam
             print(pkmnLists[poke.lower()])
             tmppoke = random.choice(random.choice(pkmnLists[poke.lower()][1:])[1:])
             rank = (await pkmnstatshelper(tmppoke))[20]
@@ -1507,7 +1520,18 @@ async def pkmnRankListDisplay(title : str, listname : str) -> str:
 
 @bot.hybrid_command(name = 'habitat', aliases = ['biome', 'h', 'habitats'],
              help = 'List the pokemon for a biome that theworldofpokemon.com suggests.')
-async def pkmn_search_habitat(ctx, *, habitat : str = ''):
+@app_commands.autocomplete(habitat = habitat_autocomplete)
+@app_commands.choices(
+    view_all = [
+        Choice(name = "Yes", value = 1),
+        Choice(name = "No", value = 0)
+    ]
+)
+async def pkmn_search_habitat(ctx, *, habitat : str = '', view_all : int = 0):
+    view_all = bool(view_all)
+    if view_all:
+        await habitat_helper(ctx, habitat)
+        return
     try:
         habitat = habitat.title()
         found = await pkmnhabitatshelper(habitat)
@@ -1592,12 +1616,15 @@ async def pkmn_filter_habitat(ctx, listname : str, rank : typing.Optional[ensure
     else:
         await ctx.send(f'All these pokemon are already in the list \'{listname}\'!')
 
+async def habitat_helper(ctx, habitatlist):
+    separate_poke = sep_biomes(habitatlist)
+    await send_big_msg(ctx, (await pkmnRankDisplay(f'__{habitatlist.title()}__', separate_poke)))
+
 @bot.command(name = 'viewhabitat', aliases = ['vh'],
              help = 'Expand a habitat into a viewable format.\n'
                     'e.g. %vh ocean biomes')
 async def view_habitat(ctx, *, habitatlist : str):
-    separate_poke = sep_biomes(habitatlist)
-    await send_big_msg(ctx, (await pkmnRankDisplay(f'__{habitatlist.title()}__', separate_poke)))
+    await habitat_helper(ctx, habitatlist)
 
 #######
 
