@@ -179,7 +179,10 @@ class Misc(commands.Cog):
 
     @commands.hybrid_command(
         name = 'status',
-        description = "A nice long nap..."
+        description = "A nice long nap...",
+        help = 'Quick reference for statuses.\n'
+             'Type `%status` for a list of all statuses, or'
+             'type `%status burn` for example for an in-depth explanation.'
     )
     @app_commands.describe(
         status = "Which status?"
@@ -195,7 +198,10 @@ class Misc(commands.Cog):
 
     @commands.hybrid_command(
         name = 'weather',
-        description = "Are those clouds?"
+        description = "Are those clouds?",
+        help = 'Quick reference for the weather.\n'
+            'Type `%weather` for a list of all weather types, or'
+            'type `%weather sunny day` for example for an in-depth explanation.'
     )
     @app_commands.describe(
         weather = "Which weather?"
@@ -211,7 +217,10 @@ class Misc(commands.Cog):
 
     @commands.hybrid_command(
         name = 'nature',
-        description = "Who am I?"
+        description = "Who am I?",
+        help = 'Quick reference for natures.\n'
+            'Type `%nature` for a list of all natures, or'
+            'type `%nature bold` for example for an in-depth explanation.'
     )
     @app_commands.describe(
         nature = "Which nature?"
