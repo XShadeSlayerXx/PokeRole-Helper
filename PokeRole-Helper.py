@@ -1840,7 +1840,10 @@ async def pkmn_stat_msg_helper(pokemon, found):
     output += f'**Can Evolve**: {(found[18] or "No")}\n'
     output += f'**Other Forms**: {(found[19] or "No")}\n'
 
-    buttons = discord.ui.View()
+    class temp_button(discord.ui.View):
+        async def on_timeout(self) -> None:
+            await self.message.edit(view = None)
+    buttons = temp_button()
 
     b_moves = Button(
         style = discord.ButtonStyle.blurple,
@@ -1898,7 +1901,7 @@ async def pkmn_search_stats(ctx, *, pokemon : pkmn_cap):
         found = (await pkmnstatshelper(pokemon))[:]
     output, buttons = await pkmn_stat_msg_helper(pokemon, found)
 
-    msg = await ctx.send(output, view = buttons)
+    buttons.message = await ctx.send(output, view = buttons)
 
 @app_commands.command(
     name = 'stats',
@@ -1915,7 +1918,8 @@ async def pkmn_search_stats_slash(inter, *, pokemon : str):
         found = (await pkmnstatshelper(pokemon))[:]
     output, buttons = await pkmn_stat_msg_helper(pokemon, found)
 
-    msg = await inter.response.send_message(output, view = buttons)
+    await inter.response.send_message(output, view = buttons)
+    buttons.message = await inter.original_response()
 
 SLASH_COMMANDS.append(pkmn_search_stats_slash)
 #####
