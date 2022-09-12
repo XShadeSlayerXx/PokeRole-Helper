@@ -3010,7 +3010,7 @@ class Feedback_Modal(ui.Modal):
 
 class Feedback_Button(ui.View):
     def __init__(self, send_modal):
-        super().__init__()
+        super().__init__(timeout = None)
         self.modal = send_modal
 
     @ui.button(label="Click to respond", style = discord.ButtonStyle.green)
