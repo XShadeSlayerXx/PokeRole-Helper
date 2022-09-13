@@ -259,10 +259,13 @@ def lookup_ability(arg : str) -> str:
                      include_unknown = True)[0]
     return suggestion.term
 
-async def send_big_msg(ctx, arg : str, codify : bool = False):
+async def send_big_msg(ctx, arg : str, codify : bool = False, view : ui.View = None):
     #due to hybrid commands, sometimes slash messages can end up here
+    if not view:
+        # discord likes an empty dict more than None on an initial message
+        view = ui.View()
     if isinstance(ctx, discord.Interaction):
-        await send_big_slash_msg(ctx, arg, codify)
+        await send_big_slash_msg(ctx, arg, codify, view = view)
         return
     arg += '\n'
     if codify:
@@ -279,11 +282,18 @@ async def send_big_msg(ctx, arg : str, codify : bool = False):
             msg = f'```{arg[:last_newline]}```'
         else:
             msg = arg[:last_newline]
-        await ctx.send(msg)
+        next_arg = arg[last_newline+1:]
+        if len(next_arg) != 0:
+            await ctx.send(msg)
+        else:
+            await ctx.send(msg, view = view)
         #plus 1 to go over the '\n'
-        arg = arg[last_newline+1:]
+        arg = next_arg
 
-async def send_big_slash_msg(inter, arg : str, codify : bool = False, offset : int = 0):
+async def send_big_slash_msg(inter, arg : str, codify : bool = False, offset : int = 0, view : ui.View = None):
+    if not view:
+        # discord likes an empty dict more than None on an initial message
+        view = ui.View()
     arg += '\n'
     which = True
     if codify:
@@ -300,14 +310,24 @@ async def send_big_slash_msg(inter, arg : str, codify : bool = False, offset : i
             msg = f'```{arg[offset:last_newline]}```'
         else:
             msg = arg[offset:last_newline]
-        if which:
-            await inter.response.send_message(msg)
-            which = not which
-            offset = 0
+        next_arg = arg[last_newline+1:]
+        if len(next_arg) != 0:
+            if which:
+                await inter.response.send_message(msg)
+                which = not which
+                offset = 0
+            else:
+                await inter.followup.send(msg)
         else:
-            await inter.followup.send(msg)
+            if which:
+                await inter.response.send_message(msg, view = view)
+                view.message = await inter.original_response()
+                which = not which
+                offset = 0
+            else:
+                view.message = await inter.followup.send(msg, view = view)
         #plus 1 to go over the '\n'
-        arg = arg[last_newline+1:]
+        arg = next_arg
 
 
 def returnWeights(pokestr : str) -> list:
@@ -776,6 +796,14 @@ async def ability_autocomplete(
             app_commands.Choice(name=m_list, value=m_list)
             for m_list in result
         ]
+
+#######
+# for methods that have buttons
+
+class Timeout_View(discord.ui.View):
+    async def on_timeout(self) -> None:
+        if hasattr(self, "message"):
+            await self.message.edit(view = None)
 
 #######
 
@@ -1867,10 +1895,7 @@ async def pkmn_stat_msg_helper(pokemon, found):
     output += f'**Can Evolve**: {(found[18] or "No")}\n'
     output += f'**Other Forms**: {(found[19] or "No")}\n'
 
-    class temp_button(discord.ui.View):
-        async def on_timeout(self) -> None:
-            await self.message.edit(view = None)
-    buttons = temp_button()
+    buttons = Timeout_View()
 
     b_moves = Button(
         style = discord.ButtonStyle.blurple,
@@ -2247,9 +2272,10 @@ async def calcStats(rank : str, attr : list, maxAttr : list,
 
 async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
                          exact_rank : bool = False, boss : bool = False, guild = None,
-                         image = False):
+                         image = False, condense = False):
     if guild is None:
         guild = await getGuilds(ctx)
+    view_buttons = []
     msg = ''
     rankrandom = False
     rankbase = False
@@ -2539,10 +2565,28 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
                 msg += f'**{skills[x+y][0]}:**'.ljust(11) + ' '+str(skills[x+y][1]) + (' - ' if y!= 3 else '')
             msg+='\n'
 
-        if pokebotsettings[guild][5] and abilitytext != '':
-            msg += f'\n**{ability}**: {abilitytext[0]}\n'
-            if abilitytext[1] != '':
-                msg += f'*{abilitytext[1]}*\n'
+        enc_view = Timeout_View()
+
+        if not condense:
+            if pokebotsettings[guild][5] and abilitytext != '':
+                msg += f'\n**{ability}**: {abilitytext[0]}\n'
+                if abilitytext[1] != '':
+                    msg += f'*{abilitytext[1]}*\n'
+        else:
+            enc_abilities = Button(
+                style = discord.ButtonStyle.blurple,
+                label = ability,
+                custom_id = f'ability({ability})'
+            )
+            async def on_enc_ability_button(inter):
+                enc_abilities.disabled = True
+                await inter.response.edit_message(view = enc_view)
+                ablty = await pkmnabilitieshelper(ability)
+                tmp_msg = f'**{ability}:** {abilitytext[0]}\n*{abilitytext[1]}*'
+                await inter.followup.send(tmp_msg)
+
+            enc_abilities.callback = on_enc_ability_button
+            enc_view.add_item(enc_abilities)
 
         if item != 'None':
             try:
@@ -2556,67 +2600,150 @@ async def pkmn_encounter(ctx, number : int, rank : str, pokelist : list,
         if pokebotsettings[guild][4]:
             #add the moves + their desc
             for x in movelist:
-                try:
-                    # found = await pkmnmovehelper(x)
+                if not condense:
+                    try:
+                        # found = await pkmnmovehelper(x)
+                        found = move_descs[x]
+                        if found[8][-9:-1] == 'Accuracy':
+                            try:
+                                accMod = int(found[8][-11])
+                            except:
+                                accMod = 0
+                        else:
+                            accMod = 0
+                        #todo: differentiate between damaging STAB, non-damaging STAB, and add + after the STAB dmg array
+                        if x.title() not in naturalMoves:
+                            msg += '*'
+                        if found[4]:
+                            powermod2 = f' + {found[4]}'
+                        else:
+                            powermod2 = ''
+                        msg += f'__{x.title()}__\n'
+                        if found[9] != "":
+                            msg += f'*{found[9]}*\n'
+                        msg += f'**Type**: {found[0].capitalize()}'
+                        msg += f' -- **{found[1].capitalize()}**\n'
+                        msg += f'**Target**: {found[7]}'
+                        msg += f' -- **Power**: {found[2]}\n'
+                        numRolls = 4
+
+                        try:
+                            totalDmg = (allAttr[found[3]] or 0) + (allAttr[found[4]] or 0) + int(found[2])
+                            dmgArray = [sum([random.randint(0,1) for _ in range(totalDmg)]) for _ in range(numRolls)]
+                        except:
+                            totalDmg = 0
+                            dmgArray = ''
+                        try:
+                            totalAcc = (allAttr[found[5]] or 0) + (allAttr[found[6]] or 0)
+                            accArray = [sum([random.randint(0,1) for _ in range(totalAcc)])-accMod for _ in range(numRolls)]
+                        except:
+                            totalAcc = 0
+                            accArray = ''
+
+                        if found[1].capitalize() != 'Support':
+                            msg += f'**Dmg Dice**: {(found[3] or "None")}{powermod2}' \
+                                   f' + {found[2]} = {totalDmg}'
+                            msg += f'{" (+1 STAB)" if found[0].capitalize() in (statlist[1],statlist[2]) else ""}'
+                            msg += f' {dmgArray}\n' if pokebotsettings[guild][8] else '\n'
+                        else:
+                            msg += f'**Dmg Dice**: None\n'
+                        msg += f'**Acc Dice**: {(found[5] or "None")} + {(found[6] or "None")} = '
+                        try:
+                            msg += f'({(allAttr[found[5]] or 0)+(allAttr[found[6]] or 0)}'
+                            msg += f" - {accMod} Successes)" if accMod != 0 else ")"
+                        except:
+                            msg += '???'
+                        msg += f' {accArray}\n' if pokebotsettings[guild][8] else '\n'
+                        msg += f'**Effect**: {found[8]}\n\n'
+                    except:
+                        msg += f'__{x.title()}__\n\n'
+                else: #elif condense
                     found = move_descs[x]
+                    # Focus Energy - Normal/Support/Self
+                    msg += f'**{x.title()}** - {found[0].title()}/{found[1].title()}/{found[7]}\n'
+
                     if found[8][-9:-1] == 'Accuracy':
                         try:
-                            accMod = int(found[8][-11])
+                            accTmp = int(found[8][-11])
+                            accMod = f' (-{accTmp} Success'
+                            if accTmp != 1:
+                                accMod += 'es)'
+                            else:
+                                accMod +=')'
                         except:
-                            accMod = 0
+                            accMod = ''
                     else:
-                        accMod = 0
-                    #todo: differentiate between damaging STAB, non-damaging STAB, and add + after the STAB dmg array
-                    if x.title() not in naturalMoves:
-                        msg += '*'
-                    if found[4]:
-                        powermod2 = f' + {found[4]}'
+                        accMod = ''
+                    stab = f'{" (+1 STAB)" if found[0].capitalize() in (statlist[1],statlist[2]) else ""}'
+                    try:
+                        totalDmg = str( (allAttr[found[3]] or 0) + (allAttr[found[4]] or 0) + int(found[2]) )
+                    except:
+                        totalDmg = None
+                    try:
+                        totalAcc = str( (allAttr[found[5]] or 0) + (allAttr[found[6]] or 0) )
+                    except:
+                        totalAcc = "???"
+                    # A: 4 (-2 Successes) | D: 6 (+1 STAB)
+                    if totalDmg:
+                        msg += f'A: {totalAcc}{accMod} | D: {totalDmg}{stab}\n'
                     else:
-                        powermod2 = ''
-                    msg += f'__{x.title()}__\n'
-                    if found[9] != "":
-                        msg += f'*{found[9]}*\n'
-                    msg += f'**Type**: {found[0].capitalize()}'
-                    msg += f' -- **{found[1].capitalize()}**\n'
-                    msg += f'**Target**: {found[7]}'
-                    msg += f' -- **Power**: {found[2]}\n'
-                    numRolls = 4
+                        msg += f'A: {totalAcc}{accMod}\n'
 
-                    try:
-                        totalDmg = (allAttr[found[3]] or 0) + (allAttr[found[4]] or 0) + int(found[2])
-                        dmgArray = [sum([random.randint(0,1) for _ in range(totalDmg)]) for _ in range(numRolls)]
-                    except:
-                        totalDmg = 0
-                        dmgArray = ''
-                    try:
-                        totalAcc = (allAttr[found[5]] or 0) + (allAttr[found[6]] or 0)
-                        accArray = [sum([random.randint(0,1) for _ in range(totalAcc)])-accMod for _ in range(numRolls)]
-                    except:
-                        totalAcc = 0
-                        accArray = ''
+                    # (effect text here)
+                    msg += found[8] + '\n\n'
 
-                    if found[1].capitalize() != 'Support':
-                        msg += f'**Dmg Dice**: {(found[3] or "None")}{powermod2}' \
-                               f' + {found[2]} = {totalDmg}'
-                        msg += f'{" (+1 STAB)" if found[0].capitalize() in (statlist[1],statlist[2]) else ""}'
-                        msg += f' {dmgArray}\n' if pokebotsettings[guild][8] else '\n'
-                    else:
-                        msg += f'**Dmg Dice**: None\n'
-                    msg += f'**Acc Dice**: {(found[5] or "None")} + {(found[6] or "None")} = '
-                    try:
-                        msg += f'({(allAttr[found[5]] or 0)+(allAttr[found[6]] or 0)}'
-                        msg += f" - {accMod} Successes)" if accMod != 0 else ")"
-                    except:
-                        msg += '???'
-                    msg += f' {accArray}\n' if pokebotsettings[guild][8] else '\n'
-                    msg += f'**Effect**: {found[8]}\n\n'
-                except:
-                    msg += f'__{x.title()}__\n\n'
+                    class Move_Button(ui.Button):
+                        def __init__(self, acc = '???', dmg = '', **kwargs):
+                            super().__init__(**kwargs)
+                            self.acc = f' = {acc}'
+                            if dmg not in ('' or '0'):
+                                self.dmg = f' = {dmg}'
+                            else:
+                                self.dmg = ''
+
+                        async def getMove(self):
+                            tmp_move = await move_backend(self.label.title())
+                            final_move = ''
+
+                            dmg_at = tmp_move.find('Damage')
+                            dmg_at = tmp_move.find('\n', dmg_at + 1)
+                            final_move += tmp_move[:dmg_at]
+                            final_move += self.dmg
+
+                            acc_at = tmp_move.find('Accuracy')
+                            acc_at = tmp_move.find('\n', acc_at + 1)
+                            final_move += tmp_move[dmg_at:acc_at]
+                            final_move += self.acc
+
+                            final_move += tmp_move[acc_at:]
+
+                            return final_move
+
+                        async def callback(self, inter):
+                            self.disabled = True
+                            await inter.response.edit_message(view = enc_view)
+                            await inter.followup.send(await self.getMove())
+
+                    #create and add the button
+                    enc_move = Move_Button(
+                        style = discord.ButtonStyle.green,
+                        label = x.title(),
+                        acc = f'{totalAcc}{accMod}',
+                        dmg = f'{totalDmg}{stab}' if totalDmg and found[1].title() != "Support" else ''
+                    )
+
+                    # view_buttons.append(enc_move)
+                    enc_view.add_item(enc_move)
         else:
             for x in movelist:
-                msg += f'{x.title()}\n'
+                msg += f'__{x.title()}__\n'
+    # for button in view_buttons:
+    #     enc_view.add_item(button)
 
-    return msg
+    if condense:
+        return msg, enc_view
+    else:
+        return msg
 
 #####
 
@@ -2648,19 +2775,24 @@ async def pkmn_search_encounter(ctx, number : typing.Optional[int] = 1,
                                 numberMax : typing.Optional[int] = None,
                                 rank : typing.Optional[ensure_rank] = 'Base',
                                 *, pokelist : (lambda x : x.split(', ')),
-                                boss = False, image = False):
+                                boss = False, image = False, condense = False):
     #pokelist = pokelist.split(', ')
     guild = await getGuilds(ctx)
     if numberMax is not None:
         number = random.randint(number, numberMax)
-    msg = await pkmn_encounter(ctx, number, rank, pokelist, boss = boss, guild = guild, image = image)
+    if not condense:
+        msg = await pkmn_encounter(ctx, number, rank, pokelist, boss = boss, guild = guild, image = image)
+        view = None
+    else:
+        msg, view = await pkmn_encounter(ctx, number, rank, pokelist, boss = boss,
+                                         guild = guild, image = image, condense = condense)
     if image:
         return msg
     if pokebotsettings[guild][10]:
         codify = True
     else:
         codify = False
-    await send_big_msg(ctx, msg, codify = codify)
+    await send_big_msg(ctx, msg, codify = codify, view = view)
 
 @bot.command(name = 'wEncounter', aliases = ['we'],
              brief = 'Weighted encounter. %help wEncounter',
@@ -2756,6 +2888,7 @@ async def smart_pkmn_search(ctx, number : typing.Optional[int] = 1,
     pokemon = "Which pokemon?",
     number = "How many? (up to 6)",
     rank = "What rank? (Default: No change)",
+    condense_info = "Condense ability and moves for a smaller message",
     smart_stats = "Use the improved stat distribution? (Default: True)",
     imagify = "Send an image instead? (Note: Forms have default image)"
 )
@@ -2768,6 +2901,10 @@ async def smart_pkmn_search(ctx, number : typing.Optional[int] = 1,
     imagify = [
         Choice(name = 'Yes', value = 1),
         Choice(name = 'No', value = 0),
+    ],
+    condense_info = [
+        Choice(name = 'Yes', value = 1),
+        Choice(name = 'No', value = 0),
     ]
 )
 @app_commands.autocomplete(pokemon = pokemon_autocomplete)
@@ -2775,11 +2912,14 @@ async def smart_pkmn_search_slash(inter,
                             number : app_commands.Range[int, 1, 6] = 1,
                             #rank : ensure_rank = 'Base',
                             rank : str = 'Base',
+                            condense_info : int = 0,
                             smart_stats : int = 1,
                             imagify : int = 0,
                             *, pokemon : str = ''):
     smart_stats = bool(smart_stats)
     imagify = bool(imagify)
+    condense_info = bool(condense_info)
+    view = None
     if imagify:
         await inter.response.send_message('Finding the Pokemon...')
         rnk = f' {rank}' if rank != 'Base' else ''
@@ -2788,7 +2928,6 @@ async def smart_pkmn_search_slash(inter,
         #         label = "Expand Moves",
         #         custom_id = "moves"
         #     ))]
-        view = None
     else:
         rnk, view = None, None
     if pokemon == '':
@@ -2819,9 +2958,15 @@ async def smart_pkmn_search_slash(inter,
             else:
                 if count != 0:
                     msg += f'\t**{count+1}**\n\n'
-                msg += await pkmn_encounter(ctx = inter, number = 1, rank = rank.title(),
-                                            pokelist =  [pkm], boss = smart_stats, guild = guild)
-        if not imagify: await send_big_msg(ctx = inter, arg = msg, codify = codify)
+                if condense_info:
+                    tmpMsg, view = await pkmn_encounter(ctx = inter, number = 1, rank = rank.title(),
+                                                pokelist =  [pkm], boss = smart_stats, guild = guild,
+                                                condense = condense_info)
+                    msg += tmpMsg
+                else:
+                    msg += await pkmn_encounter(ctx = inter, number = 1, rank = rank.title(),
+                                                pokelist =  [pkm], boss = smart_stats, guild = guild)
+        if not imagify: await send_big_msg(ctx = inter, arg = msg, codify = codify, view = view)
     else:
         if imagify:
             for _ in range(number):
@@ -2833,7 +2978,8 @@ async def smart_pkmn_search_slash(inter,
                                      image = msg_img, filename = f'{name}.png', view = view)
         else:
             await pkmn_search_encounter(ctx = inter, number = number, numberMax =  number,
-                                        rank = rank.title(), pokelist =  pokemon.split(', '), boss = smart_stats)
+                                        rank = rank.title(), pokelist =  pokemon.split(', '),
+                                        boss = smart_stats, condense = condense_info)
     # if imagify:
     #     on_click = img_msg.create_click_listener(timeout = 300)
     #
