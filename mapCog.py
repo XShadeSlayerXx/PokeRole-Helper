@@ -763,11 +763,11 @@ class Maps(commands.Cog):
         ]
     )
     async def make_map(self, ctx, size : app_commands.Range[int, 5, 100] = None,
-                       events : int = 0, seed: int = None):#, *events):
+                       events : int = 0, seed: str = None):#, *events):
         events = bool(events)
         if seed is None:
             seed = random.randrange(MAXSIZE)
-        random.seed(seed)
+        random.seed(int(seed))
 
         if size is None:
             size = random.randrange(10,40)
