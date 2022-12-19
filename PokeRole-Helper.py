@@ -1981,7 +1981,11 @@ async def pkmnlearnshelper(poke : str, rank : ensure_rank = 'Master'):
     try:
         found = list(database.query_table('pkmnLearns', 'name', poke)[0][2:])
     except:
-        raise KeyError(poke)
+        #stopgap 'solution', will need to fix the name in the evolutions tree or base name or something
+        if poke == "Flabébé":
+            found = list(database.query_table('pkmnLearns', 'name', "Flabebe")[0][2:])
+        else:
+            raise KeyError(poke)
     #truncate the list to just the valid members
     try:
         found = found[:found.index(None)]
