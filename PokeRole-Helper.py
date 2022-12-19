@@ -839,11 +839,11 @@ def print_settings(guild):
            f'Items in %encounter? **{temp[6]}**\n'
            f'display_list by odds or rank? **{odds}**\n'
            f'arbitrary encounter random_rolls? **{temp[8]}**\n'
-           f'\n"%help settings" for help')
+           f'\n"/help settings" for help')
 
 @bot.command(name = 'settings', aliases = ['setting'],
-             help = '%settings <setting_name> [value]\n'
-                    'e.g. %settings ability_one_chance 50\n'
+             help = '/settings <setting_name> [value]\n'
+                    'e.g. /settings ability_one_chance 50\n'
                     'List: (ability_one_chance value)\n'
                     '(ability_two_chance value)\n'
                     '(ability_hidden_chance value)\n'
@@ -1088,11 +1088,11 @@ async def show_lists(ctx):
         msg = mymsg + '\n-----------\n' + msg
     await send_big_msg(ctx, msg)
 
-@bot.hybrid_command(name = 'list', aliases=['l'], help = '%list <listname> (add/show/del) poke1, poke2, etc\n'
-                                   'or %list <listname> (add/show/del) 43% item1, item2, 10% item3, item4, etc\n'
+@bot.hybrid_command(name = 'list', aliases=['l'], help = '/list <listname> (add/show/del) poke1, poke2, etc\n'
+                                   'or /list <listname> (add/show/del) 43% item1, item2, 10% item3, item4, etc\n'
                                    'In this case, the remaining 47% is no item, for %encounter and %random purposes.\n'
                                    'Lists are unique to people - don\'t forget everyone can see them!\n'
-                                   'Use "%list <listname> access @mention" to give edit permissions to someone\n'
+                                   'Use "/list <listname> access @mention" to give edit permissions to someone\n'
                                    'Their user id will also work (right click their profile --> copy id)')
 @app_commands.choices(
     which = [
@@ -1252,14 +1252,14 @@ async def pkmn_list(ctx, listname : str, which : str = 'show', *, pokelist : str
                     pkmnListsPriv[temp] = set([listname])
                 await ctx.send(f'Access given to {bot.get_user(temp)}')
         else:
-            await ctx.send(f'The format for this command is `%list <listname> (add/del/show/access) poke1, poke2, etc`\n'
+            await ctx.send(f'The format for this command is `/list <listname> (add/del/show/access) poke1, poke2, etc`\n'
                            f'The part for (add/del/show/access) wasn\'t recognized.')
     elif listname not in pkmnListsPriv[ctx.author.id]:
         users = [str(bot.get_user(x)) for x in pkmnListsPriv if listname in pkmnListsPriv[x]]
         if len(users) > 0:
             await ctx.send(f'{", ".join(users)} {"have" if len(users)>1 else "has"} '
                            f'edit access to this. Please ask {"one of" if len(users)>1 else ""} '
-                           f'them to "%list {listname} access @mention" if you want access')
+                           f'them to "/list {listname} access @mention" if you want access')
         else:
             pkmnListsPriv[ctx.author.id].add(listname)
             await ctx.send(f'No users linked to this list. You now have permission, please try again.')
@@ -1411,7 +1411,7 @@ async def pkmn_filter_list(ctx, listname : str, rank : ensure_rank,
     returned = database.custom_query(query)
     returned = [x[0] for x in returned]
 
-    #send the filtered list to %list, which will print it
+    #send the filtered list to /list, which will print it
     if len(returned) == 0:
         await ctx.send(f'I couldn\'t find any pokemon...')
         return
@@ -2799,7 +2799,7 @@ async def pkmn_search_encounter(ctx, number : typing.Optional[int] = 1,
     await send_big_msg(ctx, msg, codify = codify, view = view)
 
 @bot.command(name = 'wEncounter', aliases = ['we'],
-             brief = 'Weighted encounter. %help wEncounter',
+             brief = 'Weighted encounter. /help wEncounter',
              help = 'Simple: %we 95% poke1 5% poke2, list\n'
                     '%wEncounter [1-6] [1-6] (rank/base/random) <True/False> [num]% list [num]% poke1, poke2, list2 [num]% etc\n'
                     'Same as %encounter, but the lists are weighted. Have a common and rare encounter in'
@@ -2844,7 +2844,7 @@ async def weighted_pkmn_search(ctx, number : typing.Optional[int] = 1,
     await send_big_msg(ctx, msg, codify)
 
 @bot.command(name = 'hEncounter', aliases = ['he'],
-             brief = 'Habitat encounter. %help hEncounter',
+             brief = 'Habitat encounter. /help hEncounter',
              help = 'Simple: %he habitat\n'
                     '%encounter [1-6] [1-6] (rank/base/random) habitat 1, habitat 2, etc\n'
                     'Same as %encounter, but draws from the %habitat pools\n'

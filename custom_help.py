@@ -15,7 +15,7 @@ class Help(commands.Cog):
 
     def get_cmd_signature(self, cmd):
         result = []
-        prefix = self.bot.command_prefix
+        prefix = '/'
         if len(cmd.aliases) > 0:
             aliases = '|'.join(cmd.aliases)
             fmt = '{0}[{1.name}|{2}]'
@@ -77,7 +77,7 @@ class Help(commands.Cog):
                 'Reference' : sorted(['ability', 'move', 'pokelearns',
                                       'stats', 'shop', 'item', 'weather', 'status', 'rank']),
                 'Lists' : sorted(['filter', 'list', 'lists', 'listsub']),
-                'Encounters' : sorted(['encounter', 'wEncounter', 'random', 'hEncounter', 'boss']),
+                'Encounters' : sorted(['encounter', 'wEncounter', 'random', 'hEncounter']),
                 'Misc': sorted([
                     'docs', 'donate', 'feedback', 'settings', 'tracker', 'roll',
                     'dungeon', 'habitat', 'quest', 'metronome', 'viewhabitat',
@@ -90,7 +90,7 @@ class Help(commands.Cog):
                 output += f'{category}:\n'
                 for cmd in cmds:
                     output += f'  {cmd:{spacing}}{self.brief_help_msg(cmd_list[cmd])}\n'
-            output += f'\nType {self.bot.command_prefix}help command for more info on a command.\n'
+            output += f'\nType /help command for more info on a command.\n'
         else:
             output = f'```\n{self.big_help_msg(cmd_list[which])}\n'
         output += '```\n'
