@@ -243,6 +243,7 @@ def write_moves(draw_object, moves, types = None):
                                       fill = fill,
                                       radius = move_radius)
         # print(str(move))
+        # give text a decent contrast so it will be readable
         text_clr = ((255, 255, 255) if sum(move.type_color)//3  < 110 else (0, 0, 0))
         #move name
         write = move.name.title()
