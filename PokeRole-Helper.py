@@ -206,9 +206,10 @@ async def sync_commands_guilds(ctx, *, copy : str = None):
     global test_guilds
 
     for guild in test_guilds:
-        bot.tree.clear_commands(guild = discord.Object(id = guild))
-        bot.tree.copy_global_to(guild = discord.Object(id = guild))
-        await bot.tree.sync(guild = discord.Object(id = guild))
+        guildObj = discord.Object(id = guild)
+        bot.tree.clear_commands(guild = guildObj)
+        bot.tree.copy_global_to(guild = guildObj)
+        await bot.tree.sync(guild = guildObj)
     await ctx.message.add_reaction('\N{HIBISCUS}')
 
 #######
@@ -1092,7 +1093,7 @@ async def show_lists(ctx):
                                    'or /list <listname> (add/show/del) 43% item1, item2, 10% item3, item4, etc\n'
                                    'In this case, the remaining 47% is no item, for %encounter and %random purposes.\n'
                                    'Lists are unique to people - don\'t forget everyone can see them!\n'
-                                   'Use "/list <listname> access @mention" to give edit permissions to someone\n'
+                                   'Use "%list <listname> access @mention" to give edit permissions to someone\n'
                                    'Their user id will also work (right click their profile --> copy id)')
 @app_commands.choices(
     which = [
@@ -1190,7 +1191,7 @@ async def pkmn_list(ctx, listname : str, which : str = 'show', *, pokelist : str
                 for name in range(len(bad)):
                     #this doesnt always work, especially if the word is too far from the real one
                     tempmsg += (f'{bad[name]}' if isItem else f'{bad[name]} --> {correct[name]}') + '  |  '
-                await ctx.send(f'{tempmsg[:-4]}\n(Pokemon with multiple forms may not show correctly)\n'
+                await ctx.send(f'Failed to add: {tempmsg[:-4]}\n(Pokemon with multiple forms may not show correctly)\n'
                                f'The list "{listname}" was not changed.')
                 return
     if listname not in pkmnLists and pokelist != '':
