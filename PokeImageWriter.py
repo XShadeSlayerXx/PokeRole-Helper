@@ -82,7 +82,7 @@ class Pokemon:
         initiative = f'd6 + {self.stats[1] + self.skills[4]}'
         will = f'{self.stats[4] + 2}'
         evasion = f'{self.stats[1] + self.skills[3]}'
-        clash = f'{self.stats[1] + self.skills[2]}'
+        clash = f'{self.stats[0] + self.skills[2]} / {self.stats[3] + self.skills[2]}'
         defense = f'{self.stats[2]} / {self.stats[4]}'
         draw_quick_reference(out, hp, will, initiative, evasion, clash, defense)
 
