@@ -1506,10 +1506,13 @@ async def shop_items(ctx, pricePoint : int = None, showHigherPriced : bool = Fal
 #######
 
 async def instantiateHabitatsList():
-    with open('habitats.csv', 'r', encoding = 'UTF-8') as file:
-        reader = csv.reader(file)
-        for row in reader:
-            pkmnHabitats[row[0]] = [x for x in row[1:]]
+    try:
+        with open('habitats.csv', 'r', encoding = 'UTF-8') as file:
+            reader = csv.reader(file)
+            for row in reader:
+                pkmnHabitats[row[0]] = [x for x in row[1:]]
+    except:
+        print('ERROR: habitats file not found!')
 
 async def pkmnhabitatshelper(habitat):
     if len(pkmnHabitats.keys()) == 0:
