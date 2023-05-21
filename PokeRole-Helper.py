@@ -125,6 +125,7 @@ github_files = [
     ('pokeMoveSorted.csv', 'UTF-8'),
     ('PokeLearnMovesFull.csv', 'UTF-8'),
     ('PokeroleStats.csv', 'WINDOWS-1252'),
+    ('pokeEvoListFull.csv', 'UTF-8'),
 ]
 
 # save and load functions
@@ -148,6 +149,9 @@ async def on_ready():
     global database
     global restartError
     global SLASH_COMMANDS
+
+    if not await checkFilesExist([x[0] for x in github_files]):
+        await init_files()
 
     for cog in cogs:
        await bot.load_extension(cog)
@@ -630,6 +634,21 @@ async def functionChecks(ctx, which : typing.Optional[int] = 0):
 async def reloadCogs(ctx):
     for mycog in cogs:
         bot.reload_extension(mycog)
+
+async def checkFilesExist(filenames : list):
+    for file in filenames:
+        if not os.path.exists(file):
+            return False
+    return True
+
+async def init_files():
+    print('Downloading missing .csv files...')
+    for file in github_files:
+        r = requests.get(github_base+file[0])
+        with open(file[0], 'w', encoding = file[1]) as f:
+            r = r.text.replace('\r\n', '\n')
+            f.write(r)
+    print('Redownloaded the necessary .csv files')
 
 @commands.is_owner()
 @bot.command(name = 'updateLists', hidden = True)
