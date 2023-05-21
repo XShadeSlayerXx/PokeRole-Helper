@@ -127,6 +127,12 @@ github_files = [
     ('PokeroleStats.csv', 'WINDOWS-1252'),
     ('pokeEvoListFull.csv', 'UTF-8'),
 ]
+extra_files = [ #assuming UTF-8
+    'habitats.csv',
+    'nature.csv',
+    'status.csv',
+    'weather.csv'
+]
 
 # save and load functions
 def save_obj(obj: object, name: str):
@@ -152,6 +158,8 @@ async def on_ready():
 
     if not await checkFilesExist([x[0] for x in github_files]):
         await init_files()
+    if not await checkFilesExist(extra_files):
+        await init_extra_files()
 
     for cog in cogs:
        await bot.load_extension(cog)
@@ -649,6 +657,15 @@ async def init_files():
             r = r.text.replace('\r\n', '\n')
             f.write(r)
     print('Redownloaded the necessary .csv files')
+
+async def init_extra_files():
+    print('Downloading missing extra .csv files...')
+    for file in extra_files:
+        r = requests.get(github_base+file)
+        with open(file, 'w', encoding = 'UTF-8') as f:
+            r = r.text.replace('\r\n', '\n')
+            f.write(r)
+    print('Redownloaded the necessary extra .csv files')
 
 @commands.is_owner()
 @bot.command(name = 'updateLists', hidden = True)
