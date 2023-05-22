@@ -103,7 +103,7 @@ class Misc(commands.Cog):
         if len(self.weather) == 0:
             await self.instantiateWeather()
         output = ''
-        weatherrepl = '\n\t- '
+        weatherrepl = '\n- '
         if weather == '':
             #list all weather
             for k, v in list(self.weather.items()):
@@ -129,7 +129,7 @@ class Misc(commands.Cog):
         if len(self.status) == 0:
             await self.instantiateStatus()
         output = ''
-        statusrepl = '\n\t- '
+        statusrepl = '\n- '
         if status == '':
             #list all status
             for k, v in list(self.status.items()):
