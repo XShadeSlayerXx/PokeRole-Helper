@@ -63,12 +63,20 @@ async def dice_backend(ctx, *, mc = ''):
         ran = random.randrange(6) + 1
         return msg + f'a {ran}'
 
-async def dice_backend_slash(sides, dice, addition, success_threshold = 4):
+async def dice_backend_slash(sides, dice, addition, success_threshold = 4, accuracy = 0):
     msg = ''
     if sides or dice or addition:
-        # are we rolling random dice?
+        # account for accuracy and success threshold in the message
+        # accuracy is weird, so it needs separate cases
+        thresh_str = f'>{success_threshold-1}' if success_threshold != 4 else ''
+        if accuracy > 0:
+            rolled = f'({dice}+{accuracy})d{sides}{thresh_str}'
+            dice += accuracy
+        # elif accuracy < 0:
+        #     rolled = f'({dice}d{sides}{thresh_str})+{accuracy}'
+        else:
+            rolled = f'{dice}d{sides}{thresh_str}'
         total = [random.randrange(int(sides)) + 1 for _ in range(int(dice))]
-        rolled = f'{dice}d{sides}'
         numSuccesses = None
         if sides == 6 and addition is None:
             msg += f'{rolled} -- '
@@ -86,7 +94,14 @@ async def dice_backend_slash(sides, dice, addition, success_threshold = 4):
         if addition is not None:
             msg += f' + {addition} = {sum(total) + addition}'
         if numSuccesses is not None:
-            msg += (f'\n{numSuccesses} Successes' if numSuccesses != 1 else f'\n{numSuccesses} Success')
+            if accuracy < 0:
+                acc_success = numSuccesses + accuracy
+                if acc_success < 0:
+                    acc_success = 0
+                addition_str = f'\n{numSuccesses} - {-accuracy} = {acc_success}'
+                msg += (f'{addition_str} Successes' if acc_success != 1 else f'{addition_str} Success')
+            else:
+                msg += (f'\n{numSuccesses} Successes' if numSuccesses != 1 else f'\n{numSuccesses} Success')
         return msg
     else:
         ran = random.randrange(6) + 1
@@ -140,6 +155,7 @@ class Dice(commands.Cog):
         sides = "Number of sides each die has (up to 100)",
         flat_addition = "Add a flat number to the roll",
         success_threshold = "What number is needed to succeed the roll? (default: 4)",
+        accuracy = "Add an accuracy modifier to the roll",
         note = "Add a note for future reference",
         private = "Send a private message to you in this chat? (default: False)"
     )
@@ -154,20 +170,22 @@ class Dice(commands.Cog):
                              dice : app_commands.Range[int, 0, maxDice] = 1,
                              flat_addition : int = None,
                              success_threshold : int = 4,
+                             accuracy : int = 0,
                              note : str = '',
                              private : int = False):
         private = bool(private)
         dice = sorted((1, dice, maxDice))[1]
         sides = sorted((2, sides, maxPips))[1]
 
-        msg = await dice_backend_slash(sides, dice, flat_addition, success_threshold = success_threshold)
+        msg = await dice_backend_slash(sides, dice, flat_addition, success_threshold = success_threshold, accuracy = accuracy)
         if note != '':
             note = f'*{note}*\n'
             msg = note + msg
 
         if not private:
             buttons = RerollButton(timeout = self.timeout,
-                                   note = note, sides = sides, dice = dice, flat_addition = flat_addition, success_threshold = success_threshold)
+                                   note = note, sides = sides, dice = dice, flat_addition = flat_addition,
+                                   success_threshold = success_threshold, accuracy = accuracy)
             await inter.response.send_message(msg, view = buttons, ephemeral = private)
             buttons.message = await inter.original_response()
         else:
@@ -176,7 +194,7 @@ class Dice(commands.Cog):
 class RerollButton(View):
     def __init__(self, *, timeout : int = 180,
                  note = None, sides = None, dice = None, flat_addition = None,
-                 mc = None, success_threshold = 4):
+                 mc = None, success_threshold = 4, accuracy = 0):
         super().__init__(timeout = timeout)
         self.note = note
         self.sides = sides
@@ -184,6 +202,7 @@ class RerollButton(View):
         self.flat_addition = flat_addition
         self.mc = mc
         self.success_threshold = success_threshold
+        self.accuracy = accuracy
 
     @button(label = "Roll Again", style = ButtonStyle.gray)
     async def reroll_button(self, interaction : Interaction, button : Button):
@@ -191,7 +210,7 @@ class RerollButton(View):
             extra = await dice_backend(self.mc)
             await interaction.send(extra)
         else:
-            extra = await dice_backend_slash(self.sides, self.dice, self.flat_addition, self.success_threshold)
+            extra = await dice_backend_slash(self.sides, self.dice, self.flat_addition, self.success_threshold, self.accuracy)
             await interaction.response.send_message(extra)
 
     async def on_timeout(self) -> None:
