@@ -1,3 +1,5 @@
+import random
+
 from PIL import Image, ImageDraw, ImageFont
 from os.path import exists
 from numpy import asarray, uint8
@@ -130,7 +132,7 @@ move_boxh_offset = 460
 move_boxv_offset = 175
 move_boxtotal_offset = 20
 move_radius = 50
-move_effect_length = 40
+move_effect_length = 36
 
 #always has been
 insight_offset = (11,2)
@@ -242,8 +244,13 @@ def write_moves(draw_object, moves, types = None):
                                        (ofs[0] + move_boxh_offset, ofs[1] + move_boxv_offset)),
                                       fill = fill,
                                       radius = move_radius)
+        #draw a white rectangle for better contrast
+        draw_object.rounded_rectangle(((ofs[0] - move_boxtotal_offset + 13, ofs[1] - move_boxtotal_offset + font_size['moves'] * 1.38),
+                                       (ofs[0] + move_boxh_offset - 13, ofs[1] + move_boxv_offset - 14)),
+                                      fill = (255,255,255),
+                                      radius = move_radius / 1.5)
         # print(str(move))
-        # give text a decent contrast so it will be readable
+        # give the title a decent contrast so it will be readable
         text_clr = ((255, 255, 255) if sum(move.type_color)//3  < 110 else (0, 0, 0))
         #move name
         write = move.name.title()
@@ -257,6 +264,9 @@ def write_moves(draw_object, moves, types = None):
             except:
                 pass
         draw_object.multiline_text(ofs, write, font = fnt, fill = text_clr)
+        #the text color will be black to contrast with the white background we've created
+        text_clr = (0,0,0)
+
         # #move power
         # write = f'{move.pow2}'
         # next_offset = (ofs[0], ofs[1] + move_power_offset)
@@ -292,9 +302,9 @@ def write_moves(draw_object, moves, types = None):
             except:
                 write.append(move.effect[place:])
                 break
-        if len(write) > 4:
-            write = write[:4]
-            write[-1] += '...'
+        if len(write) > 3:
+            write = write[:3]
+            write[-1] = write[-1][:-1] + '...'
         write = '\n'.join(write)
         next_offset = (ofs[0], ofs[1] + move_power_offset*2 + 5)
         draw_object.multiline_text(next_offset, write, font = fnt, fill = text_clr)
@@ -375,7 +385,10 @@ if __name__ == "__main__":
         return choice(list(type_colors.keys()))
     def getEffect():
         #return ''.join([choice('abcdefghijklmnopqrstuvwxyz        ') for _ in range((randrange(15, 70)))])
-        return 'the quick brown fox jumped over the lazy dog '*2
+        if random.random() < .5:
+            return 'the quick brown fox jumped over the lazy dog '*3
+        else:
+            return "Reduce the foe's Defense by 2. Sound Based."
     move_list = [
         Move(x[0], getType(), stats[1], skills[0], stats[0], randrange(0, 3), randrange(0, 3), getEffect())
             for x in move_examples
