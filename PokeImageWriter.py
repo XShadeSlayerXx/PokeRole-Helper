@@ -132,7 +132,7 @@ move_boxh_offset = 460
 move_boxv_offset = 175
 move_boxtotal_offset = 20
 move_radius = 50
-move_effect_length = 36
+move_effect_length = 34
 
 #always has been
 insight_offset = (11,2)
@@ -245,7 +245,7 @@ def write_moves(draw_object, moves, types = None):
                                       fill = fill,
                                       radius = move_radius)
         #draw a white rectangle for better contrast
-        draw_object.rounded_rectangle(((ofs[0] - move_boxtotal_offset + 13, ofs[1] - move_boxtotal_offset + font_size['moves'] * 1.38),
+        draw_object.rounded_rectangle(((ofs[0] - move_boxtotal_offset + 13, ofs[1] - move_boxtotal_offset + font_size['moves'] * 1.35),
                                        (ofs[0] + move_boxh_offset - 13, ofs[1] + move_boxv_offset - 14)),
                                       fill = (255,255,255),
                                       radius = move_radius / 1.5)
@@ -281,7 +281,7 @@ def write_moves(draw_object, moves, types = None):
         except:
             pow = '???'
         debuff = f' ( - {move.acc_debuff})' if move.acc_debuff else ''
-        write = f'acc: {acc}{debuff:<15}dmg: {pow}{stab}'
+        write = f'acc: {acc}{debuff:<11}dmg: {pow}{stab}'
         # next_offset = (ofs[0], ofs[1] + move_dice_offset)
         next_offset = (ofs[0], ofs[1] + move_power_offset)
         draw_object.multiline_text(next_offset, write, font = fnt, fill = text_clr)
@@ -388,7 +388,7 @@ if __name__ == "__main__":
         if random.random() < .5:
             return 'the quick brown fox jumped over the lazy dog '*3
         else:
-            return "Reduce the foe's Defense by 2. Sound Based."
+            return "Roll 1 Chance Dice to Freeze those affected."
     move_list = [
         Move(x[0], getType(), stats[1], skills[0], stats[0], randrange(0, 3), randrange(0, 3), getEffect())
             for x in move_examples
