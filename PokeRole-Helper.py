@@ -636,7 +636,7 @@ async def reloadCogs(ctx):
 async def reloadLists(ctx):
     global database
     for cog in cogs:
-        bot.unload_extension(cog)
+        await bot.unload_extension(cog)
     for file in github_files:
         r = requests.get(github_base+file[0])
         with open(file[0], 'w', encoding = file[1]) as f:
@@ -644,7 +644,7 @@ async def reloadLists(ctx):
             f.write(r)
     database.reloadLists()
     for cog in cogs:
-        bot.load_extension(cog)
+        await bot.load_extension(cog)
     await ctx.message.add_reaction('\N{CYCLONE}')
 
 @commands.is_owner()
