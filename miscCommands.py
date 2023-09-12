@@ -61,6 +61,34 @@ natures = [
     'Timid'
 ]
 
+effects = [
+    'Physical',
+    'Special',
+    'Support',
+    'Chance Dice',
+    'Is Never Affected/Is Always Affected',
+    'Reduced Accuracy',
+    'Target',
+    'Increase/Reduce Box',
+    'Modified Damage',
+    'Block',
+    'Charge',
+    'Fist Based',
+    'Heal',
+    'High Crit',
+    'Lethal',
+    'Must Recharge',
+    'Never Fail',
+    'Priority/Low Priority',
+    'Rampage',
+    'Recoil',
+    'Shield',
+    'Sound Based',
+    'Status Condition Box',
+    'Successive Actions',
+    'Switcher Move',
+]
+
 async def send_msg(context, msg):
     if isinstance(context, discord.Interaction):
         await context.response.send_message(msg)
@@ -74,6 +102,7 @@ class Misc(commands.Cog):
         self.weather = dict()
         self.status = dict()
         self.nature = dict()
+        self.effects = dict()
 
     async def instantiateWeather(self):
         # 0 is name, 1 is description, 2 is effect
@@ -93,6 +122,12 @@ class Misc(commands.Cog):
             reader = csv.reader(file)
             for row in reader:
                 self.nature[row[0]] = row[1:]
+
+    async def instantiateEffects(self):
+        with open('effects.csv', 'r', encoding = "UTF-8") as file:
+            reader = csv.reader(file)
+            for row in reader:
+                self.effects[row[0]] = row[1]
 
     # @commands.command(name = 'weather',
     #              aliases = ['w'],
@@ -176,6 +211,29 @@ class Misc(commands.Cog):
                          + naturerepl.join([str(k) for k in self.nature.keys()])
         await send_msg(ctx, output)
 
+    async def effect_func(self, ctx, *, effect = ''):
+        if len(self.effects) == 0:
+            await self.instantiateEffects()
+        output = ''
+        effectrepl = '\n- '
+        if effect == '':
+            #list all effects
+            for k, v in list(self.effects.items()):
+                output += f'**{k}**{effectrepl}*{v[0]}*\n'
+        else:
+            #list a single effect description
+            effect = effect.title()
+            #if f'{effect} Effect' in self.effects:
+            #    effect += ' Effect'
+            if effect in self.effects:
+                effect2 = self.effects[effect].replace('. ', '.'+effectrepl)
+                #output = f'**{effect}**:\n*{self.effects[effect]}*{effectrepl}{effect2}'
+                output = f'**{effect}**:{effectrepl}{effect2}'
+            else:
+                output = f'`{effect}` wasn\'t found in the effect list:{effectrepl}'\
+                         + effectrepl.join([str(k) for k in self.effects.keys()])
+        await send_msg(ctx, output)
+
 
     @commands.hybrid_command(
         name = 'status',
@@ -232,6 +290,24 @@ class Misc(commands.Cog):
     )
     async def slash_nature(self, inter, *, nature : str):
         await self.nature_func(ctx = inter, nature = nature)
+
+
+    @commands.hybrid_command(
+        name = 'effect',
+        description = "A basic description of the symbols",
+        help = 'A quick reference for the effect boxes.'
+    )
+    @app_commands.describe(
+        effect = "Which effect?"
+    )
+    @app_commands.choices(
+        effect = [
+            Choice(name = x, value = x) for x in list(effects)
+        ]
+    )
+    async def slash_effect(self, inter, *, effect : str):
+        await self.effect_func(ctx = inter, effect = effect)
+
 
 async def setup(bot):
     await bot.add_cog(Misc(bot))
