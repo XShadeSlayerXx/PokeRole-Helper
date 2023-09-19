@@ -64,6 +64,7 @@ pkmnWeather = dict()
 database = None
 restartError = True
 
+regions = ['Kanto', 'Johto', 'Hoenn', 'Sinnoh', 'Unova', 'Kalos', 'Alola', 'Galar']
 ranks = ['Starter', 'Beginner', 'Amateur', 'Ace', 'Pro', 'Master', 'Champion']
 def rank_dist():
     return random.choice(['Starter']*2 + ['Beginner']*5 + ['Amateur']*7 + ['Ace', 'Pro'])
@@ -2997,6 +2998,104 @@ async def smart_pkmn_search_slash(inter,
     #         await img_msg.response.send_message(content = moveset)
 
 SLASH_COMMANDS.append(smart_pkmn_search_slash)
+
+
+@app_commands.command(
+    name = 'encounter_region',
+    description = 'Encounter Ace Kalos!'
+)
+@app_commands.describe(
+    region = "Which region?",
+    #number = "How many? (up to 6)",
+    rank = "What rank? (Default: No change)",
+    condense_info = "Condense ability and moves for a smaller message",
+    smart_stats = "Use the improved stat distribution? (Default: True)",
+    imagify = "Send an image instead? (Note: Forms have default image)"
+)
+@app_commands.choices(
+    region = [Choice(name = x, value = x) for x in regions],
+    rank = [Choice(name = x, value = x) for x in ["Base"] + ranks],
+    smart_stats = [
+        Choice(name = 'Yes', value = 1),
+        Choice(name = 'No', value = 0),
+    ],
+    imagify = [
+        Choice(name = 'Yes', value = 1),
+        Choice(name = 'No', value = 0),
+    ],
+    condense_info = [
+        Choice(name = 'Yes', value = 1),
+        Choice(name = 'No', value = 0),
+    ]
+)
+async def smart_region_search_slash(inter,
+                            region : str,
+                            #number : app_commands.Range[int, 1, 6] = 1,
+                            #rank : ensure_rank = 'Base',
+                            rank : str = 'Base',
+                            condense_info : int = 0,
+                            smart_stats : int = 1,
+                            imagify : int = 0):
+    number = 1
+    smart_stats = bool(smart_stats)
+    imagify = bool(imagify)
+    condense_info = bool(condense_info)
+    view = None
+    if imagify:
+        await inter.response.send_message('Searching the region...')
+        rnk = f' {rank}' if rank != 'Base' else ''
+        # view = [ActionRow(Button(
+        #         style = ButtonStyle.gray,
+        #         label = "Expand Moves",
+        #         custom_id = "moves"
+        #     ))]
+    else:
+        rnk, view = None, None
+    region = regions.index(region) + 1
+    if rank == 'Base':
+        rank = rank_dist()
+    elif rank == 'Champion':
+        await inter.response.send_message('Since there are no pokemon who naturally have the '
+                                          'Champion rank, a random pokemon cannot be generated from this pool.',
+                                          ephemeral = True)
+        return
+    guild = await getGuilds(inter)
+    if pokebotsettings[guild][10]:
+        codify = True
+    else:
+        codify = False
+    if rank == 'Base':
+        rank = rank_dist()
+    elif rank == 'Champion':
+        await inter.response.send_message('Since there are no pokemon who naturally have the '
+                          'Champion rank, a random pokemon cannot be generated from this pool.', ephemeral = True)
+        return
+    # random poke from database at rank
+    query = f'SELECT name FROM pkmnStats WHERE rank="{rank}"' \
+            f' AND generation="{region}" ORDER BY RANDOM() LIMIT {number}'
+    pkm = database.custom_query(query)[0][0]
+    #print(pkm)
+    msg = ''
+    if imagify:
+        msg_img, moves = await pkmn_search_encounter(ctx = inter, number = number, numberMax =  number,
+                                    rank = rank.title(), pokelist =  [pkm],
+                                    boss = smart_stats, image = True)
+        name = f'{rank}_{pkm}'
+        img_msg = await send_slash_img(inter = inter, content = f'Found a{rnk} {pkmn_cap(pkm)}!',
+                             image = msg_img, filename = f'{name}.png', view = view)
+    else:
+        if condense_info:
+            tmpMsg, view = await pkmn_encounter(ctx = inter, number = 1, rank = rank.title(),
+                                        pokelist =  [pkm], boss = smart_stats, guild = guild,
+                                        condense = condense_info)
+            msg += tmpMsg
+        else:
+            msg += await pkmn_encounter(ctx = inter, number = 1, rank = rank.title(),
+                                        pokelist =  [pkm], boss = smart_stats, guild = guild)
+    if not imagify: await send_big_msg(ctx = inter, arg = msg, codify = codify, view = view)
+
+SLASH_COMMANDS.append(smart_region_search_slash)
+
 #####
 
 async def form_helper(name):
