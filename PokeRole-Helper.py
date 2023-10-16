@@ -2030,7 +2030,7 @@ async def move_aggregator_tmp(poke : str, rank : str, denote_moves : bool = Fals
             if x in movelist:
                 for name in y:
                     if denote_moves and depth != 0 and name not in movelist[x]:
-                        movelist[x].add('*'+name)
+                        movelist[x].add('\*'+name)
                     else:
                         movelist[x].add(name)
             else:
