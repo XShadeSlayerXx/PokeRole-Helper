@@ -1109,12 +1109,17 @@ async def pkmn_list_override(ctx, listname, who : discord.Member):
 
 @bot.command(name = 'lists', help = 'Displays all the lists people have made in the format:\n- list1 (#) / list2 (#)\n')
 async def show_lists(ctx):
+    # msg and mymsg are both strings that contain the names of lists and the number of items in them
+    # the difference is that mymsg contains lists that are 'owned' by the user
     msg = ''
     mymsg = ''
+    # up and myUp are used to alternate when a newline should be sent
     up = True
     myUp = True
+    # check which lists the user owns
     permissibleLists = pkmnListsPriv[ctx.author.id]
     for x, y in pkmnLists.items():
+        # check howMany items are in the current list
         howMany = sum([len(z)-1 for z in y[1:]])
         if x in permissibleLists:
             mymsg += ('\n - ' if myUp else ' / ') + f'{x} ({str(howMany)}{" "+y[0] if y[0] == "i" else ""})'
@@ -1122,6 +1127,7 @@ async def show_lists(ctx):
         else:
             msg += ('\n - ' if up else ' / ') + f'{x} ({str(howMany)}{" "+y[0] if y[0] == "i" else ""})'
             up = not up
+    # send the lists that the user owns and then the lists that the user does not own, seperated by dashes
     if mymsg != '':
         msg = mymsg + '\n-----------\n' + msg
     await send_big_msg(ctx, msg)
