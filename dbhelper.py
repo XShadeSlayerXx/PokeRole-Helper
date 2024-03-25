@@ -5,6 +5,15 @@ import os
 
 db_file = 'pokerole.db'
 
+table_names = {
+    'pkmnStats': 'pkmnStats',
+    'pkmnLearns': 'pkmnLearns',
+    'pkmnMoves': 'pkmnMoves',
+    'pkmnAbilities': 'pkmnAbilities',
+    'pkmnItems': 'pkmnItems',
+    'pkmnEvo': 'pkmnEvo'
+}
+
 def create_connection(file):
     connection = None
     try:
@@ -29,6 +38,7 @@ def get_generation(number : str) -> int:
 class Database:
     def __init__(self):
         self.connection = create_connection(db_file)
+        self.checkIntegrity()
 
     def reloadLists(self):
         try:
@@ -39,6 +49,19 @@ class Database:
             os.remove(db_file)
             self.connection = create_connection(db_file)
             self.instantiateAllLists()
+
+    def checkIntegrity(self):
+        cursor = self.connection.cursor()
+        cursor.execute('SELECT name FROM sqlite_master WHERE type="table" AND name NOT LIKE "SQLITE_%"')
+        result = cursor.fetchall()
+        result = [x[0] for x in result] #strip the single tuple to be a readable string
+        cursor.close()
+
+        for val in table_names.values():
+            if val not in result:
+                print(f'Needed to refresh the tables, "{val}" was missing')
+                self.reloadLists()
+                break
 
     def instantiateAllLists(self):
         self.instantiatePkmnLearnsList()
@@ -101,7 +124,7 @@ class Database:
 
     def instantiateEvoList(self):
         cursor = self.connection.cursor()
-        tblnm = 'pkmnEvo'
+        tblnm = table_names['pkmnEvo']
         vals = """
         name text PRIMARY KEY,
         previous text
@@ -118,7 +141,7 @@ class Database:
 
     def instantiatePkmnStatList(self):
         cursor = self.connection.cursor()
-        tblnm = 'pkmnStats'
+        tblnm = table_names['pkmnStats']
         vals = """
         number text NOT NULL,
         name text PRIMARY KEY,
@@ -162,7 +185,7 @@ class Database:
 
     def instantiatePkmnLearnsList(self):
         cursor = self.connection.cursor()
-        tblnm = 'pkmnLearns'
+        tblnm = table_names['pkmnLearns']
         vals = 'number integer NOT NULL, name text PRIMARY KEY' + ''.join(
             [f', move{x} text, rank{x} integer' for x in range(28)])
         ranks = {'Starter': 0, 'Beginner': 1, 'Amateur': 2, 'Ace': 3, 'Pro': 4, 'Master': 5, 'Champion': 6}
@@ -190,7 +213,7 @@ class Database:
 
     def instantiatePkmnMoveList(self):
         cursor = self.connection.cursor()
-        tblnm = 'pkmnMoves'
+        tblnm = table_names['pkmnMoves']
         vals = """
         name text PRIMARY KEY,
         type text NOT NULL,
@@ -215,7 +238,7 @@ class Database:
 
     def instantiatePkmnAbilityList(self):
         cursor = self.connection.cursor()
-        tblnm = 'pkmnAbilities'
+        tblnm = table_names['pkmnAbilities']
         vals = """
         name text PRIMARY KEY,
         effect text NOT NULL,
@@ -232,7 +255,7 @@ class Database:
 
     def instantiatePkmnItemList(self):
         cursor = self.connection.cursor()
-        tblnm = 'pkmnItems'
+        tblnm = table_names['pkmnItems']
         vals = """
         name text PRIMARY KEY,
         description text,

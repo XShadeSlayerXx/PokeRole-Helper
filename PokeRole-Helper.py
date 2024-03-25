@@ -126,6 +126,13 @@ github_files = [
     ('pokeMoveSorted.csv', 'UTF-8'),
     ('PokeLearnMovesFull.csv', 'UTF-8'),
     ('PokeroleStats.csv', 'WINDOWS-1252'),
+    ('pokeEvoListFull.csv', 'UTF-8'),
+]
+extra_files = [ #assuming UTF-8
+    'habitats.csv',
+    'nature.csv',
+    'status.csv',
+    'weather.csv'
 ]
 
 # save and load functions
@@ -149,6 +156,11 @@ async def on_ready():
     global database
     global restartError
     global SLASH_COMMANDS
+
+    if not await checkFilesExist([x[0] for x in github_files]):
+        await init_files()
+    if not await checkFilesExist(extra_files):
+        await init_extra_files()
 
     for cog in cogs:
        await bot.load_extension(cog)
@@ -631,6 +643,30 @@ async def functionChecks(ctx, which : typing.Optional[int] = 0):
 async def reloadCogs(ctx):
     for mycog in cogs:
         bot.reload_extension(mycog)
+
+async def checkFilesExist(filenames : list):
+    for file in filenames:
+        if not os.path.exists(file):
+            return False
+    return True
+
+async def init_files():
+    print('Downloading missing .csv files...')
+    for file in github_files:
+        r = requests.get(github_base+file[0])
+        with open(file[0], 'w', encoding = file[1]) as f:
+            r = r.text.replace('\r\n', '\n')
+            f.write(r)
+    print('Redownloaded the necessary .csv files')
+
+async def init_extra_files():
+    print('Downloading missing extra .csv files...')
+    for file in extra_files:
+        r = requests.get(github_base+file)
+        with open(file, 'w', encoding = 'UTF-8') as f:
+            r = r.text.replace('\r\n', '\n')
+            f.write(r)
+    print('Redownloaded the necessary extra .csv files')
 
 @commands.is_owner()
 @bot.command(name = 'updateLists', hidden = True)
@@ -1507,10 +1543,13 @@ async def shop_items(ctx, pricePoint : int = None, showHigherPriced : bool = Fal
 #######
 
 async def instantiateHabitatsList():
-    with open('habitats.csv', 'r', encoding = 'UTF-8') as file:
-        reader = csv.reader(file)
-        for row in reader:
-            pkmnHabitats[row[0]] = [x for x in row[1:]]
+    try:
+        with open('habitats.csv', 'r', encoding = 'UTF-8') as file:
+            reader = csv.reader(file)
+            for row in reader:
+                pkmnHabitats[row[0]] = [x for x in row[1:]]
+    except:
+        print('ERROR: habitats file not found!')
 
 async def pkmnhabitatshelper(habitat):
     if len(pkmnHabitats.keys()) == 0:
