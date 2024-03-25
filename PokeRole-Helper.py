@@ -193,7 +193,13 @@ async def on_ready():
             tempf = open(file[0] + ".pkl", "w")
             tempf.close()
             save_obj(file[1], file[0])
-    await instantiateHabitatsList()
+    if not dev_env:
+        await instantiateHabitatsList()
+    else:
+        try:
+            await instantiateHabitatsList()
+        except Exception as e:
+            print(e)
 
     #tree init
     for command in SLASH_COMMANDS:
