@@ -1,8 +1,8 @@
 # PokeRole-Helper
 Where pokerole-helper bot lives
 
-- Note: March 25, 2024
-All of the init and generation code is in PokeRole-Helper.py.
+---
+- Note: March 25, 2024 - All of the init and generation code is in PokeRole-Helper.py.
 If you're looking to modify the code, be warned that it's only loosely organized.
 ---
 
