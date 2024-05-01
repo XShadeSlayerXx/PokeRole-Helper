@@ -819,7 +819,8 @@ class Maps(commands.Cog):
 
         class GenerationView(discord.ui.View):
             def __init__(self):
-                super().__init__(timeout=None)
+                super().__init__()
+                self.message = None
 
             if events:
                 @discord.ui.button(label="Clear Events", style=discord.ButtonStyle.blurple, custom_id="clear")
@@ -848,9 +849,10 @@ class Maps(commands.Cog):
                 if hasattr(self, "message"):
                     await self.message.edit(view=None)
 
+        view = GenerationView()
         # content = f'*{seed}*'
-        await ctx.send(file=File(f'Dungeon-Size-{size}-Seed-{seed}.png'),
-                       view=GenerationView())
+        view.message = await ctx.send(file=File(f'Dungeon-Size-{size}-Seed-{seed}.png'),
+                                      view=view)
 
         os.remove(f'Dungeon-Size-{size}-Seed-{seed}.png')
 
