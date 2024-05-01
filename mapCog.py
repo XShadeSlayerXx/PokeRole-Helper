@@ -819,10 +819,10 @@ class Maps(commands.Cog):
 
         class GenerationView(discord.ui.View):
             def __init__(self):
-                super().__init__()
+                super().__init__(timeout=None)
 
             if events:
-                @discord.ui.button(label="Clear Events", style=discord.ButtonStyle.gray, custom_id="clear")
+                @discord.ui.button(label="Clear Events", style=discord.ButtonStyle.blurple, custom_id="clear")
                 async def degenerate(self, inter: discord.Interaction, button: discord.ui.Button):
                     await inter.response.defer()  # why is this required
                     await inter.edit_original_response(view=None)
