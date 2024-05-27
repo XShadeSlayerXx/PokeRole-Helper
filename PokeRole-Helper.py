@@ -1200,12 +1200,13 @@ async def show_lists(ctx):
     await send_big_msg(ctx, msg)
 
 
-@bot.hybrid_command(name='list', aliases=['l'], help='/list <listname> (add/show/del) poke1, poke2, etc\n'
-                                                     'or /list <listname> (add/show/del) 43% item1, item2, 10% item3, item4, etc\n'
-                                                     'In this case, the remaining 47% is no item, for %encounter and %random purposes.\n'
-                                                     'Lists are unique to people - don\'t forget everyone can see them!\n'
-                                                     'Use "%list <listname> access @mention" to give edit permissions to someone\n'
-                                                     'Their user id will also work (right click their profile --> copy id)')
+#TODO: re-add 'list access' if anyone complains
+@app_commands.command(name='list', description='/list <listname> (add/show/del) poke1, poke2, 40% poke3, etc\n')
+                                                 #'or /list <listname> (add/show/del) 43% item1, item2, 10% item3, item4, etc\n'
+                                                 #'In this case, the remaining 47% is no item, for %encounter and %random purposes.\n'
+                                                 #'Lists are unique to people - don\'t forget everyone can see them!\n'
+                                                 #'Use "%list <listname> access @mention" to give edit permissions to someone\n'
+                                                 #'Their user id will also work (right click their profile --> copy id)')
 @app_commands.choices(
     which=[
         Choice(name="add", value="add"),
@@ -1214,18 +1215,24 @@ async def show_lists(ctx):
     ]
 )
 @app_commands.autocomplete(listname=list_autocomplete)
-async def pkmn_list(ctx, listname: str, which: str = 'show', *, pokelist: str = ''):
+async def pkmn_list_caller(ctx : discord.Interaction, listname: str, which: str = 'show', *, pokelist: str = ''):
+    await pkmn_list(ctx=ctx, listname=listname, which=which, pokelist=pokelist)
+
+SLASH_COMMANDS.append(pkmn_list_caller)
+
+async def pkmn_list(ctx: discord.Interaction, listname: str, which: str = 'show', *, pokelist: str = ''):
     # areListsBroken = [x for x in list(pkmnLists.keys())]
+    print(ctx.user.id)
     try:
         # initialize pkmnstats and check if listname is a valid pokemon
         await pkmnstatshelper(listname)
-        await ctx.send('Lists may not be named after pokemon')
+        await ctx.response.send_message('Lists may not be named after pokemon')
         return
     except:
         pass
     try:
         await pkmnitemhelper(listname)
-        await ctx.send('Lists may not be named after items')
+        await ctx.response.send_message('Lists may not be named after items')
         return
     except:
         pass
@@ -1236,8 +1243,8 @@ async def pkmn_list(ctx, listname: str, which: str = 'show', *, pokelist: str = 
     except:
         pass
     # make sure the author is registered, regardless of what they do
-    if ctx.author.id not in pkmnListsPriv:
-        pkmnListsPriv[ctx.author.id] = set()
+    if ctx.user.id not in pkmnListsPriv:
+        pkmnListsPriv[ctx.user.id] = set()
     # is this a task that looks at the pokelist parameter?
     if which not in ['access', 'show']:
         # split up the pokelist argument into separate bits... 'bulbasaur' --> [(100, 'bulbasaur')]
@@ -1302,8 +1309,8 @@ async def pkmn_list(ctx, listname: str, which: str = 'show', *, pokelist: str = 
                 for name in range(len(bad)):
                     # this doesnt always work, especially if the word is too far from the real one
                     tempmsg += (f'{bad[name]}' if isItem else f'{bad[name]} --> {correct[name]}') + '  |  '
-                await ctx.send(f'Failed to add: {tempmsg[:-4]}\n(Pokemon with multiple forms may not show correctly)\n'
-                               f'The list "{listname}" was not changed.')
+                await ctx.response.send_message(f'Failed to add: {tempmsg[:-4]}\n(Pokemon with multiple forms may not show correctly)\n'
+                                                f'The list "{listname}" was not changed.')
                 return
     if listname not in pkmnLists and pokelist != '':
         pkmnLists[listname] = []
@@ -1311,27 +1318,27 @@ async def pkmn_list(ctx, listname: str, which: str = 'show', *, pokelist: str = 
             pkmnLists[listname].append('i')
         else:
             pkmnLists[listname].append('p')
-        if ctx.author.id in pkmnListsPriv:
-            pkmnListsPriv[ctx.author.id] = set(pkmnListsPriv[ctx.author.id])
-            pkmnListsPriv[ctx.author.id].add(listname)
+        if ctx.user.id in pkmnListsPriv:
+            pkmnListsPriv[ctx.user.id] = set(pkmnListsPriv[ctx.user.id])
+            pkmnListsPriv[ctx.user.id].add(listname)
         else:
-            pkmnListsPriv[ctx.author.id] = set([listname])
+            pkmnListsPriv[ctx.user.id] = set([listname])
     if which == 'show':
         if listname in pkmnLists and len(pkmnLists[listname]) > 0:
             # is it an item?
             if pkmnLists[listname][0] == 'i':
                 msg = displayList(listname)
-                await ctx.send(msg)
+                await ctx.response.send_message(msg)
             else:
                 # ...not an item
                 guild = await getGuilds(ctx)
                 if pokebotsettings[guild][7]:
-                    await ctx.send(await pkmnRankListDisplay(f'__{listname}__', listname))
+                    await ctx.response.send_message(await pkmnRankListDisplay(f'__{listname}__', listname))
                 else:
-                    await ctx.send(f'__{listname}__\n' + displayList(listname))
+                    await ctx.response.send_message(f'__{listname}__\n' + displayList(listname))
         else:
-            await ctx.send(f'List {listname} is empty')
-    elif listname in pkmnListsPriv[ctx.author.id]:
+            await ctx.response.send_message(f'List {listname} is empty')
+    elif listname in pkmnListsPriv[ctx.user.id]:
         # need permissions for these commands
         if which == 'add':
             modifyList(True, pokelist, listname)
@@ -1345,8 +1352,8 @@ async def pkmn_list(ctx, listname: str, which: str = 'show', *, pokelist: str = 
             else:
                 msg = modifyList(False, pokelist, listname)
                 if len(msg) > 0:
-                    await ctx.send(f'There was a problem removing: {", ".join(msg)}.\nPokemon still in list:')
-            await pkmn_list(ctx, listname, 'show')
+                    await ctx.response.send_message(f'There was a problem removing: {", ".join(msg)}.\nPokemon still in list:')
+            await pkmn_list(ctx=ctx, listname=listname, which='show')
         elif which == 'access':
             # i could probably use the User converter but ehh
             if pokelist[0] == '<':
@@ -1362,20 +1369,20 @@ async def pkmn_list(ctx, listname: str, which: str = 'show', *, pokelist: str = 
                     pkmnListsPriv[temp].add(listname)
                 except:
                     pkmnListsPriv[temp] = set([listname])
-                await ctx.send(f'Access given to {bot.get_user(temp)}')
+                await ctx.response.send_message(f'Access given to {bot.get_user(temp)}')
         else:
-            await ctx.send(
+            await ctx.response.send_message(
                 f'The format for this command is `/list <listname> (add/del/show/access) poke1, poke2, etc`\n'
                 f'The part for (add/del/show/access) wasn\'t recognized.')
-    elif listname not in pkmnListsPriv[ctx.author.id]:
+    elif listname not in pkmnListsPriv[ctx.user.id]:
         users = [str(bot.get_user(x)) for x in pkmnListsPriv if listname in pkmnListsPriv[x]]
         if len(users) > 0:
-            await ctx.send(f'{", ".join(users)} {"have" if len(users) > 1 else "has"} '
+            await ctx.response.send_message(f'{", ".join(users)} {"have" if len(users) > 1 else "has"} '
                            f'edit access to this. Please ask {"one of" if len(users) > 1 else ""} '
                            f'them to "/list {listname} access @mention" if you want access')
         else:
-            pkmnListsPriv[ctx.author.id].add(listname)
-            await ctx.send(f'No users linked to this list. You now have permission, please try again.')
+            pkmnListsPriv[ctx.user.id].add(listname)
+            await ctx.response.send_message(f'No users linked to this list. You now have permission, please try again.')
     # try:
     #     if isItem and pkmnLists[listname][0] != 'i':
     #         pkmnLists[listname].insert(0, 'i')
@@ -1387,8 +1394,6 @@ async def pkmn_list(ctx, listname: str, which: str = 'show', *, pokelist: str = 
     # if len(pkmnLists.keys()) < len(areListsBroken) - 1:
     #    await bot.appinfo.owner.send(f'{listname} {which} {pokelist}')
 
-
-# SLASH_COMMANDS.append(pkmn_list)
 ###
 
 @bot.command(name='listsub', help='Subtract two lists.\n'
