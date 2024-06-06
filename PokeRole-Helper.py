@@ -1199,6 +1199,14 @@ async def show_lists(ctx):
         msg = mymsg + '\n-----------\n' + msg
     await send_big_msg(ctx, msg)
 
+@bot.command(name='list', help='/list <listname> (add/show/del) poke1, poke2, 40% poke3, etc\n'
+                                                 'or /list <listname> (add/show/del) 43% item1, item2, 10% item3, item4, etc\n'
+                                                 'In this case, the remaining 47% is no item, for %encounter and %random purposes.\n'
+                                                 'Lists are unique to people - don\'t forget everyone can see them!\n'
+                                                 'Use "%list <listname> access @mention" to give edit permissions to someone\n'
+                                                 'Their user id will also work (right click their profile --> copy id)')
+async def pkmn_list_cmd(ctx, listname, which, *, pokelist=''):
+    await pkmn_list(ctx=ctx, listname=listname, which=which, pokelist=pokelist)
 
 #TODO: re-add 'list access' if anyone complains
 @app_commands.command(name='list', description='/list <listname> (add/show/del) poke1, poke2, 40% poke3, etc\n')
