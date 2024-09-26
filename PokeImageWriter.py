@@ -181,7 +181,10 @@ def get_image(number, name):
     return path
 
 def get_font(size):
-    return ImageFont.truetype('Candara.ttf', size)
+    try:
+        return ImageFont.truetype('Candara.ttf', size)
+    except OSError:
+        return ImageFont.load_default(size)
 
 def add_word(draw_object, which, what):
     fnt = get_font(font_size[which])
