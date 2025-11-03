@@ -83,15 +83,8 @@ class Database:
 
     def instantiateAllLists(self):
         self.build_tables()
-        # self.instantiatePkmnLearnsList()
-        # self.instantiatePkmnStatList()
-        # self.instantiateEvoList()
         self.instantiatePokemonLists()
-
-        # self.instantiatePkmnMoveList()
         self.instantiateMoveList()
-
-        # self.instantiatePkmnAbilityList()
         self.instantiateAbilityList()
 
         self.instantiatePkmnItemList()
@@ -358,137 +351,6 @@ class Database:
                 except Exception as e:
                     print(raw_move, e)
         item_cursor.close()
-        self.connection.commit()
-
-    def instantiateEvoList(self):
-        cursor = self.connection.cursor()
-        tblnm = table_names['pkmnEvo']
-        vals = """
-        name text PRIMARY KEY,
-        previous text
-        """
-        self.create_table(tblnm, vals)
-        with open('pokeEvoListFull.csv', 'r', newline = '', encoding = "UTF-8") as infile:
-            reader = csv.reader(infile)
-            next(reader)  #skip the header
-            for row in reader:
-                tmp = ','.join('?' * len(row))
-                cursor.execute(f'INSERT OR REPLACE INTO {tblnm} values ({tmp})', row)
-        cursor.close()
-        self.connection.commit()
-
-    def instantiatePkmnStatList(self):
-        cursor = self.connection.cursor()
-        tblnm = table_names['pkmnStats']
-        vals = """
-        number text NOT NULL,
-        name text PRIMARY KEY,
-        type1 text NOT NULL,
-        type2 text,
-        hp integer NOT NULL,
-        str integer NOT NULL,
-        maxstr integer NOT NULL,
-        dex integer NOT NULL,
-        maxdex integer NOT NULL,
-        vit integer NOT NULL,
-        maxvit integer NOT NULL,
-        spc integer NOT NULL,
-        maxspc integer NOT NULL,
-        ins integer NOT NULL,
-        maxins integer NOT NULL,
-        ability text,
-        ability2 text,
-        abilityhidden text,
-        abilityevent text,
-        unevolved text,
-        form text,
-        rank text,
-        gender text,
-        generation integer NOT NULL
-        """
-        self.create_table(tblnm, vals)
-        with open('PokeroleStats.csv', 'r', newline = '', encoding = "WINDOWS-1252") as infile:
-            reader = csv.reader(infile)
-            next(reader)  #skip the header
-            for row in reader:
-                tmp = ','.join('?' * (len(row) + 1)) #add 1 for generation
-                num = row[0][1:]
-                #frick farfetch'd
-                name = row[1].replace("'", "\'")
-                gen = get_generation(num)
-                newrow = [num] + [name] + row[2:] + [gen]
-                cursor.execute(f'INSERT OR REPLACE INTO {tblnm} values ({tmp})', newrow)
-        cursor.close()
-        self.connection.commit()
-
-    def instantiatePkmnLearnsList(self):
-        cursor = self.connection.cursor()
-        tblnm = table_names['pkmnLearns']
-        vals = 'number integer NOT NULL, name text PRIMARY KEY' + ''.join(
-            [f', move{x} text, rank{x} integer' for x in range(28)])
-        ranks = {'Starter': 0, 'Beginner': 1, 'Amateur': 2, 'Ace': 3, 'Pro': 4, 'Master': 5, 'Champion': 6}
-        self.create_table(tblnm, vals)
-        with open('PokeLearnMovesFull.csv', 'r', newline = '', encoding = "UTF-8") as infile:
-            reader = csv.reader(infile)
-            for row in reader:
-                value = row[1:]
-                # value[1::2] = [ranks[x] for x in value[1::2] if x != '']
-                for x in range(len(value)):
-                    if value[x] == '':
-                        value = value[:x]
-                        break
-                    if x % 2 == 1:
-                        value[x] = ranks[value[x]]
-                value += [None] * (56 - len(value))  #pad value to number of moves maximum
-                num = row[0][:3]
-                #frick farfetch'd
-                nam = row[0][4:].replace("'", "\'")
-                tmp = ','.join('?' * 58)
-                newrow = [num, nam] + value
-                cursor.execute(f'INSERT OR REPLACE INTO {tblnm} values ({tmp})', newrow)
-        cursor.close()
-        self.connection.commit()
-
-    def instantiatePkmnMoveList(self):
-        cursor = self.connection.cursor()
-        tblnm = table_names['pkmnMoves']
-        vals = """
-        name text PRIMARY KEY,
-        type text NOT NULL,
-        pwrtype text NOT NULL,
-        power integer NOT NULL,
-        dmg1 text,
-        dmg2 text,
-        acc1 text,
-        acc2 text,
-        foe text NOT NULL,
-        effect text,
-        description text
-        """
-        self.create_table(tblnm, vals)
-        with open('pokeMoveSorted.csv', 'r', newline = '', encoding = "UTF-8") as infile:
-            reader = csv.reader(infile)
-            for row in reader:
-                tmp = ','.join('?' * len(row))
-                cursor.execute(f'INSERT OR REPLACE INTO {tblnm} values ({tmp})', row)
-        cursor.close()
-        self.connection.commit()
-
-    def instantiatePkmnAbilityList(self):
-        cursor = self.connection.cursor()
-        tblnm = table_names['pkmnAbilities']
-        vals = """
-        name text PRIMARY KEY,
-        effect text NOT NULL,
-        description text
-        """
-        self.create_table(tblnm, vals)
-        with open('PokeRoleAbilities.csv', 'r', newline = '', encoding = "UTF-8") as infile:
-            reader = csv.reader(infile)
-            next(reader)  #skip the header
-            for row in reader:
-                tmp = ','.join('?' * len(row))
-                cursor.execute(f'INSERT OR REPLACE INTO {tblnm} values ({tmp})', row)
         self.connection.commit()
 
     def instantiatePkmnItemList(self):
