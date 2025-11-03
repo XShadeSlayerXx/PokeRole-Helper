@@ -274,7 +274,9 @@ class Database:
 
                     # then the learnset
 
-                    ranks = {'Starter': 0, 'Beginner': 1, 'Amateur': 2, 'Ace': 3, 'Pro': 4, 'Master': 5, 'Champion': 6}
+                    ranks = {'Starter': 0, 'Beginner': 1, 'Amateur': 2,
+                             'Ace': 3, 'Pro': 4, 'Master': 5, 'Champion': 6,
+                             'Rookie': -1, 'Standard': -2, 'Advanced': -3, 'Expert': -4}
                     moves = [tmp_info['Number'], tmp_info['Name']]  # pokedex num and name
                     for move in tmp_info['Moves']:
                         moves.append(move['Name'])
@@ -282,8 +284,8 @@ class Database:
                     moves += [None] * (58 - len(moves))  # pad value to number of moves maximum
                     tmp = ','.join('?' * 58)
                     pkmn_cursor.execute(f'INSERT OR REPLACE INTO {learns_table} values ({tmp})', moves)
-                except KeyError: # need to implement the new ranks
-                    pass
+                except KeyError as e: # need to implement the new ranks
+                    print(e)
                 except json.JSONDecodeError as e:
                     print(raw_poke, e)
                 except Exception as e:
