@@ -1,0 +1,4 @@
+[submodule "pokerole_data"]
+	path = pokerole_data
+	url = https://github.com/Pokerole-Software-Development/Pokerole-Data.git
+	branch = 3.0-Migration
