@@ -700,7 +700,7 @@ async def reloadLists(ctx):
     for cog in cogs:
         await bot.unload_extension(cog)
     # if we needed to do more than just pull the submodule i would add GitPython
-    subprocess.run(["git", "submodule", "update", "--init"])
+    subprocess.run(["git", "submodule", "update", "--init", "--remote", "pokerole_data"])
     database.reloadLists()
     for cog in cogs:
         await bot.load_extension(cog)
