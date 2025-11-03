@@ -3,6 +3,7 @@ import os
 import pickle
 import random
 import re
+import subprocess
 import typing
 from typing import Literal, List
 import sys
@@ -123,15 +124,6 @@ ability_dict.load_dictionary('AbilityDictionary.txt', 0, 1, separator='$')
 
 # github stuff for updating the lists
 github_base = 'https://raw.githubusercontent.com/XShadeSlayerXx/PokeRole-Discord.py-Base/master/'
-github_files = [
-    ('PokeRoleItems.csv', 'UTF-8'),
-    ('PokeRoleAbilities.csv', 'UTF-8'),
-    ('PokeRoleItems.csv', 'UTF-8'),
-    ('pokeMoveSorted.csv', 'UTF-8'),
-    ('PokeLearnMovesFull.csv', 'UTF-8'),
-    ('PokeroleStats.csv', 'WINDOWS-1252'),
-    ('pokeEvoListFull.csv', 'UTF-8'),
-]
 extra_files = [  # assuming UTF-8
     'habitats.csv',
     'nature.csv',
@@ -165,8 +157,6 @@ async def on_ready():
     global restartError
     global SLASH_COMMANDS
 
-    if not await checkFilesExist([x[0] for x in github_files]):
-        await init_files()
     if not await checkFilesExist(extra_files):
         await init_extra_files()
 
@@ -692,15 +682,6 @@ async def checkFilesExist(filenames: list):
     return True
 
 
-async def init_files():
-    print('Downloading missing .csv files...')
-    for file in github_files:
-        r = requests.get(github_base + file[0])
-        with open(file[0], 'w', encoding=file[1]) as f:
-            r = r.text.replace('\r\n', '\n')
-            f.write(r)
-    print('Redownloaded the necessary .csv files')
-
 
 async def init_extra_files():
     print('Downloading missing extra .csv files...')
@@ -718,11 +699,8 @@ async def reloadLists(ctx):
     global database
     for cog in cogs:
         await bot.unload_extension(cog)
-    for file in github_files:
-        r = requests.get(github_base + file[0])
-        with open(file[0], 'w', encoding=file[1]) as f:
-            r = r.text.replace('\r\n', '\n')
-            f.write(r)
+    # if we needed to do more than just pull the submodule i would add GitPython
+    subprocess.run(["git", "submodule", "update", "--init"])
     database.reloadLists()
     for cog in cogs:
         await bot.load_extension(cog)
