@@ -41,7 +41,7 @@ def get_generation(number : str) -> int:
     elif 'D' in number: #Delta... (Pokemon Insurgence?)
         return -1
     elif 'M' in number: #Mega
-        return -1
+        number = number[:number.index("M")]
     elif 'H' in number: #Hisuian
         return 9
     elif 'P' in number: #Paldean
