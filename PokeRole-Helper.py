@@ -451,7 +451,7 @@ async def getGuilds(ctx):
     if hasattr(ctx, "guild") and ctx.guild:
         guild = ctx.guild.id
     elif hasattr(ctx, "user") and ctx.user:
-        guild = ctx.user
+        guild = ctx.user.id
     else:
         guild = ctx.author.id
     if guild not in pokebotsettings:
@@ -643,8 +643,8 @@ async def functionChecks(ctx, which: typing.Optional[int] = 0):
 
     errors = []
 
-    oldV1, oldV2 = pokebotsettings[ctx.author.id][4], pokebotsettings[ctx.author.id][5]
-    pokebotsettings[ctx.author.id][4], pokebotsettings[ctx.author.id][5] = False, False
+    oldV1, oldV2 = pokebotsettings[ctx.user.id][4], pokebotsettings[ctx.user.id][5]
+    pokebotsettings[ctx.user.id][4], pokebotsettings[ctx.user.id][5] = False, False
 
     for x in range(2):
         if which == 0:
@@ -661,7 +661,7 @@ async def functionChecks(ctx, which: typing.Optional[int] = 0):
                 print(traceback.print_exc())
                 errors.append(func[2])
 
-    pokebotsettings[ctx.author.id][4], pokebotsettings[ctx.author.id][5] = oldV1, oldV2
+    pokebotsettings[ctx.user.id][4], pokebotsettings[ctx.user.id][5] = oldV1, oldV2
     if errors:
         await ctx.send('Errors:\n' + '\n'.join([error for error in errors]))
     else:
@@ -952,7 +952,7 @@ async def settings(ctx, setting='', value=''):
         if guild == 245675629515767809:  # main pokerole server
             return
     except:
-        guild = ctx.author.id
+        guild = ctx.user.id
     try:
         pokebotsettings[guild]
     except:
@@ -1090,7 +1090,7 @@ async def settings_slash(
         if guild == 245675629515767809:  # prevent modifications to the main pokerole server
             return
     except:
-        guild = inter.author.id
+        guild = inter.user.id
     if ability_one_chance: pokebotsettings[guild][0] = ability_one_chance
     if ability_two_chance: pokebotsettings[guild][1] = ability_two_chance
     if ability_hidden_chance: pokebotsettings[guild][2] = ability_hidden_chance
@@ -1185,7 +1185,7 @@ async def show_lists(ctx):
     up = True
     myUp = True
     # check which lists the user owns
-    permissibleLists = pkmnListsPriv[ctx.author.id]
+    permissibleLists = pkmnListsPriv[ctx.user.id]
     for x, y in pkmnLists.items():
         # check howMany items are in the current list
         howMany = sum([len(z) - 1 for z in y[1:]])
@@ -1425,7 +1425,7 @@ async def pkmn_listsub(ctx, list1: str, list2: str):
         if x not in pkmnLists:
             msg += f'Is {x} a list?\n'
             bad = True
-    if not bad and list1 not in pkmnListsPriv[ctx.author.id]:
+    if not bad and list1 not in pkmnListsPriv[ctx.user.id]:
         msg += f'You do not have permission to modify the list {list1}'
         bad = True
     if bad:
@@ -3367,7 +3367,7 @@ async def form_finder(ctx, *, name: str = ''):
 async def tracker(ctx, cmd='', *, mc=''):
     cmd = cmd.lower()
     mc = mc.title()
-    name_key = ctx.author.id
+    name_key = ctx.user.id
     if name_key not in pokeStatus or not pokeStatus[name_key]:
         pokeStatus[name_key] = []
     if cmd == 'add':
