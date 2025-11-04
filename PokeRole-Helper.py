@@ -1105,6 +1105,7 @@ async def settings_slash(
     if pokerole_version is not None: pokebotsettings[guild][11] = pokerole_version
 
     await inter.response.send_message(print_settings(guild))
+    save_obj(pokebotsettings, 'pokebotsettings')
 
 
 SLASH_COMMANDS.append(settings_slash)
