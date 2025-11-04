@@ -500,13 +500,13 @@ def pokesFromBiome(name: str) -> list:
     return biomes
 
 
-async def getPokemonAbilities(pkmn):
+async def getPokemonAbilities(pkmn, version="v3.0"):
     query = f'SELECT ability, ability2, abilityhidden, abilityevent FROM pkmnStats WHERE name="{pkmn}"'
-    query = database.custom_query(query)[0]
+    query = database.custom_query(query, version=version)[0]
     ability = list(query)
     while '' in ability:
         ability.remove('')
-    ability_expanded = [(await pkmnabilitieshelper(x)) for x in ability]
+    ability_expanded = [(await pkmnabilitieshelper(x, version=version)) for x in ability]
 
     output = ''
     for name, (effect, desc) in zip(ability, ability_expanded):
@@ -682,7 +682,6 @@ async def checkFilesExist(filenames: list):
     return True
 
 
-
 async def init_extra_files():
     print('Downloading missing extra .csv files...')
     for file in extra_files:
@@ -701,7 +700,8 @@ async def reloadLists(ctx):
         await bot.unload_extension(cog)
     # if we needed to do more than just pull the submodule i would add GitPython
     subprocess.run(["git", "submodule", "update", "--init", "--remote", "pokerole_data"])
-    database.reloadLists()
+    # we only really need to update the latest dataset
+    database.reloadLists("v3.0")
     for cog in cogs:
         await bot.load_extension(cog)
     await ctx.message.add_reaction('\N{CYCLONE}')
@@ -721,17 +721,18 @@ async def updateSettings(ctx):
 @commands.is_owner()
 @bot.command(name='devQuery', hidden=True)
 async def query(ctx, *, msg=''):
+    version = "v3.0"
     try:
         if len(msg.split()) == 1:
-            returned = database.custom_query(f"PRAGMA table_info({msg})")
+            returned = database.custom_query(f"PRAGMA table_info({msg})", version=version)
             await ctx.send(', '.join([x[1] for x in returned]))
             return
         elif msg == '':
             returned = database.custom_query(
-                'SELECT name FROM sqlite_master WHERE type="table" AND name NOT LIKE "SQLITE_%"')
+                'SELECT name FROM sqlite_master WHERE type="table" AND name NOT LIKE "SQLITE_%"', version=version)
             await ctx.send(', '.join([x[0] for x in returned]))
             return
-        returned = database.custom_query(msg)
+        returned = database.custom_query(msg, version=version)
         if returned is None:
             await ctx.send('Error: no results')
             return
@@ -754,7 +755,9 @@ async def checkLearnables(ctx, *, msg=''):
     move = lookup_move(msg.title())
     query = 'SELECT name FROM pkmnLearns where '
     query += ' or '.join([f'move{x}="{move}"' for x in range(28)])
-    returned = database.custom_query(query)
+    guild = await getGuilds(ctx)
+    version = version_converter[pokebotsettings[guild][11]]
+    returned = database.custom_query(query, version=version)
     if not returned:
         returned = 'None'
     else:
@@ -826,9 +829,11 @@ async def move_autocomplete(
     if len(current) < 2:
         return {}
     else:
+        guild = await getGuilds(interaction)
+        version = version_converter[pokebotsettings[guild][11]]
         query = f'SELECT name FROM pkmnMoves WHERE lower(name) LIKE "%{current}%"' \
                 f' LIMIT 25'
-        result = [x[0] for x in database.custom_query(query)]
+        result = [x[0] for x in database.custom_query(query, version=version)]
 
         return [
             app_commands.Choice(name=m_list, value=m_list)
@@ -843,9 +848,11 @@ async def pokemon_autocomplete(
     if len(current) < 2:
         return {}
     else:
+        guild = await getGuilds(interaction)
+        version = version_converter[pokebotsettings[guild][11]]
         query = f'SELECT name FROM pkmnStats WHERE lower(name) LIKE "%{current}%"' \
                 f' AND generation BETWEEN 1 AND 8 LIMIT 25'
-        result = [x[0] for x in database.custom_query(query)]
+        result = [x[0] for x in database.custom_query(query, version=version)]
 
         return [
             app_commands.Choice(name=m_list, value=m_list)
@@ -860,9 +867,11 @@ async def ability_autocomplete(
     if len(current) < 2:
         return {}
     else:
+        guild = await getGuilds(interaction)
+        version = version_converter[pokebotsettings[guild][11]]
         query = f'SELECT name FROM pkmnAbilities WHERE lower(name) LIKE "%{current}%"' \
                 f' LIMIT 25'
-        result = [x[0] for x in database.custom_query(query)]
+        result = [x[0] for x in database.custom_query(query, version=version)]
 
         return [
             app_commands.Choice(name=m_list, value=m_list)
@@ -881,10 +890,13 @@ class Timeout_View(discord.ui.View):
 
 #######
 
+version_converter = ["v2.0", "v3.0"]
+
+
 # [ability1, ability2, ability3, shiny, show_move_desc, show ability desc, the item list used in encounter,
-# display lists pokemon by rank or odds]
+# display lists pokemon by rank or odds, book version to use]
 async def instantiateSettings(where: str):
-    defaults = [50, 49, 1, .00012, True, True, False, True, False, 0, False]
+    defaults = [50, 49, 1, .00012, True, True, False, True, False, 0, False, 0]
     if where not in pokebotsettings:
         pokebotsettings[where] = defaults
         return
@@ -905,7 +917,9 @@ def print_settings(guild):
         odds = 'Rank'
     else:
         odds = 'Odds'
-    return (f'Current settings:\n(Ability1/Ability2/AbilityHidden)\n**{temp[0], temp[1], temp[2]}**\n'
+    version = version_converter[temp[11]]
+    return (f'Current settings:\nPokerole version: **{version}**\n'
+            f'(Ability1/Ability2/AbilityHidden)\n**{temp[0], temp[1], temp[2]}**\n'
             f'Shiny chance: {temp[3]} out of 1, **{temp[3] * 100}%**\n'
             f'Allow previous evolution moves in `%encounter`? **{pre_evo}**\n'
             f'Display `%encounter` text in a code block format: **{temp[10]}\n**'
@@ -1019,7 +1033,8 @@ async def settings(ctx, setting='', value=''):
     show_ability_description="Expand ability descriptions by default in generated pokemon?",
     item_list_in_encounter="Which item list should be used in encounters? (type 'False' to clear)",
     display_lists_by="Choose to display specific lists by Rank or Odds",
-    random_rolls_in_encounter="Have 4 suggested rolls for Accuracy and Damage in encounters?"
+    random_rolls_in_encounter="Have 4 suggested rolls for Accuracy and Damage in encounters?",
+    pokerole_version="The pokerole version"
 )
 @app_commands.choices(
     # this looks like the wrong order but it's correct
@@ -1047,6 +1062,10 @@ async def settings(ctx, setting='', value=''):
     random_rolls_in_encounter=[
         Choice(name='Yes', value=1),
         Choice(name='No', value=0),
+    ],
+    pokerole_version=[
+        Choice(name="v2.0", value=0),
+        Choice(name="v3.0", value=1)
     ]
 )
 async def settings_slash(
@@ -1061,15 +1080,17 @@ async def settings_slash(
         show_ability_description: int = None,
         item_list_in_encounter: str = None,
         display_lists_by: int = None,
-        random_rolls_in_encounter: int = None
+        random_rolls_in_encounter: int = None,
+        pokerole_version: int = None
 ):
+    # ensure the guild id exists
+    await getGuilds(inter)
     try:
         guild = inter.guild.id
         if guild == 245675629515767809:  # prevent modifications to the main pokerole server
             return
     except:
         guild = inter.author.id
-
     if ability_one_chance: pokebotsettings[guild][0] = ability_one_chance
     if ability_two_chance: pokebotsettings[guild][1] = ability_two_chance
     if ability_hidden_chance: pokebotsettings[guild][2] = ability_hidden_chance
@@ -1081,6 +1102,7 @@ async def settings_slash(
     if random_rolls_in_encounter: pokebotsettings[guild][8] = bool(random_rolls_in_encounter)
     if previous_evolution_moves: pokebotsettings[guild][9] = previous_evolution_moves
     if code_block_format: pokebotsettings[guild][10] = bool(code_block_format)
+    if pokerole_version is not None: pokebotsettings[guild][11] = pokerole_version
 
     await inter.response.send_message(print_settings(guild))
 
@@ -1177,22 +1199,24 @@ async def show_lists(ctx):
         msg = mymsg + '\n-----------\n' + msg
     await send_big_msg(ctx, msg)
 
+
 @bot.command(name='list', help='/list <listname> (add/show/del) poke1, poke2, 40% poke3, etc\n'
-                                                 'or /list <listname> (add/show/del) 43% item1, item2, 10% item3, item4, etc\n'
-                                                 'In this case, the remaining 47% is no item, for %encounter and %random purposes.\n'
-                                                 'Lists are unique to people - don\'t forget everyone can see them!\n'
-                                                 'Use "%list <listname> access @mention" to give edit permissions to someone\n'
-                                                 'Their user id will also work (right click their profile --> copy id)')
+                               'or /list <listname> (add/show/del) 43% item1, item2, 10% item3, item4, etc\n'
+                               'In this case, the remaining 47% is no item, for %encounter and %random purposes.\n'
+                               'Lists are unique to people - don\'t forget everyone can see them!\n'
+                               'Use "%list <listname> access @mention" to give edit permissions to someone\n'
+                               'Their user id will also work (right click their profile --> copy id)')
 async def pkmn_list_cmd(ctx, listname, which, *, pokelist=''):
     await pkmn_list(ctx=ctx, listname=listname, which=which, pokelist=pokelist)
 
-#TODO: re-add 'list access' if anyone complains
+
+# TODO: re-add 'list access' if anyone complains
 @app_commands.command(name='list', description='/list <listname> (add/show/del) poke1, poke2, 40% poke3, etc\n')
-                                                 #'or /list <listname> (add/show/del) 43% item1, item2, 10% item3, item4, etc\n'
-                                                 #'In this case, the remaining 47% is no item, for %encounter and %random purposes.\n'
-                                                 #'Lists are unique to people - don\'t forget everyone can see them!\n'
-                                                 #'Use "%list <listname> access @mention" to give edit permissions to someone\n'
-                                                 #'Their user id will also work (right click their profile --> copy id)')
+# 'or /list <listname> (add/show/del) 43% item1, item2, 10% item3, item4, etc\n'
+# 'In this case, the remaining 47% is no item, for %encounter and %random purposes.\n'
+# 'Lists are unique to people - don\'t forget everyone can see them!\n'
+# 'Use "%list <listname> access @mention" to give edit permissions to someone\n'
+# 'Their user id will also work (right click their profile --> copy id)')
 @app_commands.choices(
     which=[
         Choice(name="add", value="add"),
@@ -1201,14 +1225,18 @@ async def pkmn_list_cmd(ctx, listname, which, *, pokelist=''):
     ]
 )
 @app_commands.autocomplete(listname=list_autocomplete)
-async def pkmn_list_caller(ctx : discord.Interaction, listname: str, which: str = 'show', *, pokelist: str = ''):
+async def pkmn_list_caller(ctx: discord.Interaction, listname: str, which: str = 'show', *, pokelist: str = ''):
     await pkmn_list(ctx=ctx, listname=listname, which=which, pokelist=pokelist)
 
+
 SLASH_COMMANDS.append(pkmn_list_caller)
+
 
 async def pkmn_list(ctx: discord.Interaction, listname: str, which: str = 'show', *, pokelist: str = ''):
     # areListsBroken = [x for x in list(pkmnLists.keys())]
     print(ctx.user.id)
+    guild = await getGuilds(ctx)
+    version = version_converter[pokebotsettings[guild][11]]
     try:
         # initialize pkmnstats and check if listname is a valid pokemon
         await pkmnstatshelper(listname)
@@ -1245,7 +1273,7 @@ async def pkmn_list(ctx: discord.Interaction, listname: str, which: str = 'show'
             # item or pokemon?
             isItem = True
             try:
-                if database.query_table('pkmnStats', 'name', pokelist[0][1]):
+                if database.query_table('pkmnStats', 'name', pokelist[0][1], version=version):
                     # if lookup_poke(pokelist[0][1]) not in pkmnStats:
                     isItem = False
             except:
@@ -1270,7 +1298,7 @@ async def pkmn_list(ctx: discord.Interaction, listname: str, which: str = 'show'
                         pokelist.remove('')
                         continue
                     try:
-                        database.query_table('pkmnItems', 'name', x)
+                        database.query_table('pkmnItems', 'name', x, version=version)
                         tmp = True
                     except:
                         tmp = False
@@ -1282,7 +1310,7 @@ async def pkmn_list(ctx: discord.Interaction, listname: str, which: str = 'show'
                             correct.append(lookup_poke(x))
                     if whichList:
                         try:
-                            database.query_table('pkmnStats', 'name', x)
+                            database.query_table('pkmnStats', 'name', x, version=version)
                         except:
                             bad.append(x)
                             if x in pkmnLists:
@@ -1295,8 +1323,9 @@ async def pkmn_list(ctx: discord.Interaction, listname: str, which: str = 'show'
                 for name in range(len(bad)):
                     # this doesnt always work, especially if the word is too far from the real one
                     tempmsg += (f'{bad[name]}' if isItem else f'{bad[name]} --> {correct[name]}') + '  |  '
-                await ctx.response.send_message(f'Failed to add: {tempmsg[:-4]}\n(Pokemon with multiple forms may not show correctly)\n'
-                                                f'The list "{listname}" was not changed.')
+                await ctx.response.send_message(
+                    f'Failed to add: {tempmsg[:-4]}\n(Pokemon with multiple forms may not show correctly)\n'
+                    f'The list "{listname}" was not changed.')
                 return
     if listname not in pkmnLists and pokelist != '':
         pkmnLists[listname] = []
@@ -1338,7 +1367,8 @@ async def pkmn_list(ctx: discord.Interaction, listname: str, which: str = 'show'
             else:
                 msg = modifyList(False, pokelist, listname)
                 if len(msg) > 0:
-                    await ctx.response.send_message(f'There was a problem removing: {", ".join(msg)}.\nPokemon still in list:')
+                    await ctx.response.send_message(
+                        f'There was a problem removing: {", ".join(msg)}.\nPokemon still in list:')
             await pkmn_list(ctx=ctx, listname=listname, which='show')
         elif which == 'access':
             # i could probably use the User converter but ehh
@@ -1364,8 +1394,8 @@ async def pkmn_list(ctx: discord.Interaction, listname: str, which: str = 'show'
         users = [str(bot.get_user(x)) for x in pkmnListsPriv if listname in pkmnListsPriv[x]]
         if len(users) > 0:
             await ctx.response.send_message(f'{", ".join(users)} {"have" if len(users) > 1 else "has"} '
-                           f'edit access to this. Please ask {"one of" if len(users) > 1 else ""} '
-                           f'them to "/list {listname} access @mention" if you want access')
+                                            f'edit access to this. Please ask {"one of" if len(users) > 1 else ""} '
+                                            f'them to "/list {listname} access @mention" if you want access')
         else:
             pkmnListsPriv[ctx.user.id].add(listname)
             await ctx.response.send_message(f'No users linked to this list. You now have permission, please try again.')
@@ -1379,6 +1409,7 @@ async def pkmn_list(ctx: discord.Interaction, listname: str, which: str = 'show'
     save_obj(pkmnLists, 'pkmnLists')
     # if len(pkmnLists.keys()) < len(areListsBroken) - 1:
     #    await bot.appinfo.owner.send(f'{listname} {which} {pokelist}')
+
 
 ###
 
@@ -1452,16 +1483,20 @@ def pkmn_random_driver(listname: str, giveList=False) -> str:
 async def pkmn_randomitem_driver(ctx, howMany: typing.Optional[int] = 1, *, listname: str):
     combined_list = []
     errors = []
+    guild = await getGuilds(ctx)
+    version = version_converter[pokebotsettings[guild][11]]
     for name in listname.split(', '):
         # not using if/else because otherwise i would need the queries up front
         if name in pkmnLists:
             combined_list += pkmn_full_list(name)
             continue
-        item_query = database.custom_query(f'SELECT name FROM pkmnItems WHERE category="{name.title()}"')
+        item_query = database.custom_query(f'SELECT name FROM pkmnItems WHERE category="{name.title()}"',
+                                           version=version)
         if item_query:
             combined_list += [x[0] for x in item_query]
             continue
-        poke_query = database.custom_query(f'SELECT name FROM pkmnStats WHERE name="{lookup_poke(name)}"')
+        poke_query = database.custom_query(f'SELECT name FROM pkmnStats WHERE name="{lookup_poke(name)}"',
+                                           version=version)
         if poke_query:
             combined_list += [x[0] for x in poke_query]
             continue
@@ -1517,7 +1552,9 @@ async def pkmn_filter_list(ctx, listname: str, rank: ensure_rank,
             (f'AND type2="{type2}")'
              f' OR ( type1="{type2}" AND type2="{type1}") ) AND (' if type2 != 'Any' else ') ) AND (') + \
             ' OR '.join([f'rank="{x}"' for x in rank]) + ')' + gen + ' ORDER BY number ASC'
-    returned = database.custom_query(query)
+    guild = await getGuilds(ctx)
+    version = version_converter[pokebotsettings[guild][11]]
+    returned = database.custom_query(query, version)
     returned = [x[0] for x in returned]
 
     # send the filtered list to /list, which will print it
@@ -1633,11 +1670,11 @@ async def pkmnhabitatshelper(habitat):
     return pkmnHabitats[habitat]
 
 
-async def pkmnDictRanks(pokemon: list) -> dict:
+async def pkmnDictRanks(pokemon: list, version: str) -> dict:
     level = dict()
     for poke in pokemon:
         try:
-            rank = (await pkmnstatshelper(poke))[20]
+            rank = (await pkmnstatshelper(poke, version=version))[20]
         except:
             # its either nidoran or oricorio or wormadam
             print(pkmnLists[poke.lower()])
@@ -1649,9 +1686,9 @@ async def pkmnDictRanks(pokemon: list) -> dict:
     return level
 
 
-async def pkmnRankDisplay(title: str, pokemon: typing.Union[list, dict]) -> str:
+async def pkmnRankDisplay(title: str, pokemon: typing.Union[list, dict], version: str) -> str:
     if isinstance(pokemon, list):
-        pokemon = await pkmnDictRanks(pokemon)
+        pokemon = await pkmnDictRanks(pokemon, version=version)
     output = title + '\n'
     for rank in ranks:
         if rank in pokemon:
@@ -1659,12 +1696,12 @@ async def pkmnRankDisplay(title: str, pokemon: typing.Union[list, dict]) -> str:
     return output
 
 
-async def pkmnRankListDisplay(title: str, listname: str) -> str:
+async def pkmnRankListDisplay(title: str, listname: str, version: str) -> str:
     pokelist = []
     # for tuple in the list
     for x in pokesFromList(listname):
         pokelist.append(x)
-    return await pkmnRankDisplay(title, pokelist)
+    return await pkmnRankDisplay(title, pokelist, version=version)
 
 
 @bot.hybrid_command(name='habitat', aliases=['biome', 'h', 'habitats'],
@@ -1689,8 +1726,10 @@ async def pkmn_search_habitat(ctx, *, habitat: str = '', view_all: int = 0):
     if habitat != '':
         try:
             if not habitat.endswith('Biomes'):
+                guild = await getGuilds(ctx)
+                version = version_converter[pokebotsettings[guild][11]]
                 # this is a biome with pokebois
-                output = await pkmnRankDisplay(f'__{habitat}__', found)
+                output = await pkmnRankDisplay(f'__{habitat}__', found, version=version)
                 await send_big_msg(ctx, output)
             else:
                 output = f'__{habitat}__\n - '
@@ -1734,7 +1773,9 @@ async def pkmn_filter_habitat(ctx, listname: str, rank: typing.Optional[ensure_r
         return
 
     # get the pokemon's ranks
-    ranklist = await pkmnDictRanks(found)
+    guild = await getGuilds(ctx)
+    version = version_converter[pokebotsettings[guild][11]]
+    ranklist = await pkmnDictRanks(found, version=version)
     # convert it into a list of tuples... for each, [0] is the rank, [1] is the poke list
     temp = []
     for ranking in ranks:
@@ -1767,36 +1808,40 @@ async def pkmn_filter_habitat(ctx, listname: str, rank: typing.Optional[ensure_r
         await ctx.send(f'All these pokemon are already in the list \'{listname}\'!')
 
 
-async def habitat_helper(ctx, habitatlist):
+async def habitat_helper(ctx, habitatlist, version: str):
     separate_poke = sep_biomes(habitatlist)
-    await send_big_msg(ctx, (await pkmnRankDisplay(f'__{habitatlist.title()}__', separate_poke)))
+    await send_big_msg(ctx, (await pkmnRankDisplay(f'__{habitatlist.title()}__', separate_poke, version=version)))
 
 
 @bot.command(name='viewhabitat', aliases=['vh'],
              help='Expand a habitat into a viewable format.\n'
                   'e.g. %vh ocean biomes')
 async def view_habitat(ctx, *, habitatlist: str):
-    await habitat_helper(ctx, habitatlist)
+    guild = await getGuilds(ctx)
+    version = version_converter[pokebotsettings[guild][11]]
+    await habitat_helper(ctx, habitatlist, version=version)
 
 
 #######
 
-async def pkmnabilitieshelper(ability):
+async def pkmnabilitieshelper(ability, version: str):
     global database
     try:
-        return list(database.query_table('pkmnAbilities', 'name', ability)[0])[1:]
+        return list(database.query_table('pkmnAbilities', 'name', ability, version=version)[0])[1:]
     except:
         raise KeyError(f'{ability} wasn\'t recognized as an ability.')
 
 
 @bot.command(name='ability', aliases=['a'], help='List a pokemon ability\'s traits')
 async def pkmn_search_ability(ctx, *, abilityname: pkmn_cap):
+    guild = await getGuilds(ctx)
+    version = version_converter[pokebotsettings[guild][11]]
     try:
         try:
-            found = await pkmnabilitieshelper(abilityname)
+            found = await pkmnabilitieshelper(abilityname, version=version)
         except:
             abilityname = lookup_ability(abilityname)
-            found = await pkmnabilitieshelper(abilityname)
+            found = await pkmnabilitieshelper(abilityname, version=version)
 
         output = f'**{abilityname}:** {found[0]}'
         if found[1] != '':
@@ -1815,12 +1860,14 @@ async def pkmn_search_ability(ctx, *, abilityname: pkmn_cap):
 @app_commands.autocomplete(ability=ability_autocomplete)
 async def pkmn_search_ability(inter, *, ability: str):
     ability = pkmn_cap(ability)
+    guild = await getGuilds(inter)
+    version = version_converter[pokebotsettings[guild][11]]
     try:
         try:
-            found = await pkmnabilitieshelper(ability)
+            found = await pkmnabilitieshelper(ability, version=version)
         except:
             ability = lookup_ability(ability)
-            found = await pkmnabilitieshelper(ability)
+            found = await pkmnabilitieshelper(ability, version=version)
 
         output = f'**{ability}:** {found[0]}'
         if found[1] != '':
@@ -1836,19 +1883,19 @@ SLASH_COMMANDS.append(pkmn_search_ability)
 
 #######
 
-async def pkmnmovehelper(move):
+async def pkmnmovehelper(move, version: str):
     global database
-    return list(database.query_table('pkmnMoves', 'name', move)[0])[1:]
+    return list(database.query_table('pkmnMoves', 'name', move, version=version)[0])[1:]
 
 
-async def move_backend(movename):
+async def move_backend(movename, version: str):
     try:
         movename = movename.title()
         try:
-            found = await pkmnmovehelper(movename)
+            found = await pkmnmovehelper(movename, version=version)
         except:
             movename = lookup_move(movename)
-            found = await pkmnmovehelper(movename)
+            found = await pkmnmovehelper(movename, version=version)
 
         output = f'__{movename}__\n'
         if not found[4]:  # there is no second damage mod, use the power
@@ -1872,7 +1919,9 @@ async def move_backend(movename):
 
 @bot.command(name='move', aliases=['m'], help='List a pokemon move traits')
 async def pkmn_search_move(ctx, *, movename: pkmn_cap):
-    await ctx.send(await move_backend(movename))
+    guild = await getGuilds(ctx)
+    version = version_converter[pokebotsettings[guild][11]]
+    await ctx.send(await move_backend(movename, version=version))
 
 
 @app_commands.command(
@@ -1883,13 +1932,15 @@ async def pkmn_search_move(ctx, *, movename: pkmn_cap):
 @app_commands.autocomplete(move=move_autocomplete)
 async def pkmn_search_move_slash(inter, *, move: str):
     move = pkmn_cap(move)
-    await inter.response.send_message(await move_backend(move))
+    guild = await getGuilds(inter)
+    version = version_converter[pokebotsettings[guild][11]]
+    await inter.response.send_message(await move_backend(move, version=version))
 
 
 SLASH_COMMANDS.append(pkmn_search_move_slash)
 
 
-async def metronome_backend(type, lower, higher):
+async def metronome_backend(type, lower, higher, version: str):
     have_and = True
     custom_query = 'SELECT name FROM pkmnMoves '
     if lower and higher:
@@ -1908,7 +1959,7 @@ async def metronome_backend(type, lower, higher):
             custom_query += f' type="{type.lower()}"'
 
     custom_query += ' ORDER BY RANDOM() LIMIT 1'
-    result = database.custom_query(custom_query)
+    result = database.custom_query(custom_query, version=version)
 
     return result[0][0]
 
@@ -1930,6 +1981,8 @@ async def metronome_backend(type, lower, higher):
              %metronome dragon
                 Any dragon type move. `support` instead of a type would give a random support move.""")
 async def metronome(ctx, *, parameters: str = ''):
+    guild = await getGuilds(ctx)
+    version = version_converter[pokebotsettings[guild][11]]
     parameters = parameters.replace(' ', '')
     power = None
     max_power = None
@@ -1946,7 +1999,7 @@ async def metronome(ctx, *, parameters: str = ''):
         int(parameters)
     except:
         type = parameters
-    move = await metronome_backend(type=type, lower=power, higher=max_power)
+    move = await metronome_backend(type=type, lower=power, higher=max_power, version=version)
 
     try:
         await pkmn_search_move(ctx=ctx, movename=move)
@@ -1981,10 +2034,12 @@ async def metronome_slash(
         max_power: app_commands.Range[int, 0, 10] = None,
         private: int = 0):
     private = bool(private)
+    guild = await getGuilds(inter)
+    version = version_converter[pokebotsettings[guild][11]]
     if power and max_power and power > max_power:
         min_power, max_power = max_power, power
-    move = await metronome_backend(type=move_type, lower=power, higher=max_power)
-    move = await move_backend(movename=move)
+    move = await metronome_backend(type=move_type, lower=power, higher=max_power, version=version)
+    move = await move_backend(movename=move, version=version)
     await inter.response.send_message(move, ephemeral=private)
 
 
@@ -1993,17 +2048,17 @@ SLASH_COMMANDS.append(metronome_slash)
 
 #####
 
-async def pkmnstatshelper(poke: str):
+async def pkmnstatshelper(poke: str, version: str):
     global database
     try:
-        tmp = list(database.query_table('pkmnStats', 'name', poke)[0])
+        tmp = list(database.query_table('pkmnStats', 'name', poke, version=version)[0])
     except:
         raise KeyError(poke)
     tmp = [f'#{tmp[0]}'] + tmp[2:]
     return tmp
 
 
-async def pkmn_stat_msg_helper(pokemon, found):
+async def pkmn_stat_msg_helper(pokemon, found, version: str):
     for x in range(4, 14, 2):
         found[x + 1] = "⭘" * (int(found[x + 1]) - int(found[x]))
         found[x] = "⬤" * int(found[x])
@@ -2041,7 +2096,7 @@ async def pkmn_stat_msg_helper(pokemon, found):
     )
 
     async def on_move_button(inter):
-        moves = await pkmnlearnshelper(pokemon)
+        moves = await pkmnlearnshelper(pokemon, version=version)
 
         output = f'__{pokemon.title()}__\n'
         for x in moves.keys():
@@ -2062,7 +2117,7 @@ async def pkmn_stat_msg_helper(pokemon, found):
     async def on_ability_button(inter):
         b_abilities.disabled = True
         await inter.response.edit_message(view=buttons)
-        await inter.followup.send(await getPokemonAbilities(pokemon))
+        await inter.followup.send(await getPokemonAbilities(pokemon, version=version))
 
     b_abilities.callback = on_ability_button
     buttons.add_item(b_abilities)
@@ -2075,9 +2130,9 @@ async def pkmn_stat_msg_helper(pokemon, found):
     async def on_form_button(inter):
         b_forms.disabled = True
         await inter.response.edit_message(view=buttons)
-        output = await form_helper(pokemon)
+        output = await form_helper(pokemon, version=version)
         if '\n' in output:
-            await inter.followup.send(await form_helper(pokemon))
+            await inter.followup.send(await form_helper(pokemon, version=version))
 
     b_forms.callback = on_form_button
     buttons.add_item(b_forms)
@@ -2088,12 +2143,14 @@ async def pkmn_stat_msg_helper(pokemon, found):
 @bot.command(name='stats', aliases=['s', 'info'], help='List a pokemon\'s stats. '
                                                        'Emote on the message to expand the abilities!')
 async def pkmn_search_stats(ctx, *, pokemon: pkmn_cap):
+    guild = await getGuilds(ctx)
+    version = version_converter[pokebotsettings[guild][11]]
     try:
-        found = (await pkmnstatshelper(pokemon))[:]
+        found = (await pkmnstatshelper(pokemon, version=version))[:]
     except:
         pokemon = lookup_poke(pokemon)
-        found = (await pkmnstatshelper(pokemon))[:]
-    output, buttons = await pkmn_stat_msg_helper(pokemon, found)
+        found = (await pkmnstatshelper(pokemon, version=version))[:]
+    output, buttons = await pkmn_stat_msg_helper(pokemon, found, version=version)
 
     buttons.message = await ctx.send(output, view=buttons)
 
@@ -2106,12 +2163,14 @@ async def pkmn_search_stats(ctx, *, pokemon: pkmn_cap):
 @app_commands.autocomplete(pokemon=pokemon_autocomplete)
 async def pkmn_search_stats_slash(inter, *, pokemon: str):
     pokemon = pkmn_cap(pokemon)
+    guild = await getGuilds(inter)
+    version = version_converter[pokebotsettings[guild][11]]
     try:
-        found = (await pkmnstatshelper(pokemon))[:]
+        found = (await pkmnstatshelper(pokemon, version=version))[:]
     except:
         pokemon = lookup_poke(pokemon)
-        found = (await pkmnstatshelper(pokemon))[:]
-    output, buttons = await pkmn_stat_msg_helper(pokemon, found)
+        found = (await pkmnstatshelper(pokemon, version=version))[:]
+    output, buttons = await pkmn_stat_msg_helper(pokemon, found, version=version)
 
     await inter.response.send_message(output, view=buttons)
     buttons.message = await inter.original_response()
@@ -2122,14 +2181,14 @@ SLASH_COMMANDS.append(pkmn_search_stats_slash)
 
 #####
 
-async def pkmnlearnshelper(poke: str, rank: ensure_rank = 'Master'):
+async def pkmnlearnshelper(poke: str, rank: ensure_rank = 'Master', version: str = "v3.0"):
     global database
     try:
-        found = list(database.query_table('pkmnLearns', 'name', poke)[0][2:])
+        found = list(database.query_table('pkmnLearns', 'name', poke, version=version)[0][2:])
     except:
         # stopgap 'solution', will need to fix the name in the evolutions tree or base name or something
         if poke == "Flabébé":
-            found = list(database.query_table('pkmnLearns', 'name', "Flabebe")[0][2:])
+            found = list(database.query_table('pkmnLearns', 'name', "Flabebe", version=version)[0][2:])
         else:
             raise KeyError(poke)
     # truncate the list to just the valid members
@@ -2158,14 +2217,14 @@ async def pkmnlearnshelper(poke: str, rank: ensure_rank = 'Master'):
 
 
 # returns the moves of a pokemon + all it's devolutions
-async def move_aggregator_tmp(poke: str, rank: str, denote_moves: bool = False) -> dict:
+async def move_aggregator_tmp(poke: str, rank: str, denote_moves: bool = False, version: str = "v3.0") -> dict:
     movelist = {}  # init final dict
     allPokes = [poke]
     result = False
     depth = -1
     while result is not None:
         query = f'SELECT previous FROM pkmnEvo WHERE name="{allPokes[-1]}"'
-        result = database.custom_query(query, multiple=False)
+        result = database.custom_query(query, multiple=False, version=version)
         if result:
             allPokes.append(result[0])
     for pkmn in allPokes:
@@ -2191,12 +2250,14 @@ async def move_aggregator_tmp(poke: str, rank: str, denote_moves: bool = False) 
              help='Lists what moves a pokemon can learn\ne.g. %pokelearns vulpix')
 async def pkmn_search_learns(ctx, *, pokemon: pkmn_cap):
     # known moves is insight + 2
+    guild = await getGuilds(ctx)
+    version = version_converter[pokebotsettings[guild][11]]
     try:
         try:
-            moves = await pkmnlearnshelper(pokemon)
+            moves = await pkmnlearnshelper(pokemon, version=version)
         except:
             pokemon = lookup_poke(pokemon)
-            moves = await pkmnlearnshelper(pokemon)
+            moves = await pkmnlearnshelper(pokemon, version=version)
         output = f'__{pokemon.title()}__\n'
 
         for x in moves.keys():
@@ -2240,18 +2301,20 @@ async def pkmn_search_learns_slash(inter, *, pokemon: str, previous_evo_moves: i
     previous_evo_moves = bool(previous_evo_moves)
     # known moves is insight + 2
     pokemon = pkmn_cap(pokemon)
+    guild = await getGuilds(inter)
+    version = version_converter[pokebotsettings[guild][11]]
     try:
         try:
             if not previous_evo_moves:
-                moves = await pkmnlearnshelper(pokemon)
+                moves = await pkmnlearnshelper(pokemon, version=version)
             else:
-                moves = await move_aggregator_tmp(pokemon, 'Master', denote_moves=previous_evo_moves)
+                moves = await move_aggregator_tmp(pokemon, 'Master', denote_moves=previous_evo_moves, version=version)
         except:
             pokemon = lookup_poke(pokemon)
             if not previous_evo_moves:
-                moves = await pkmnlearnshelper(pokemon)
+                moves = await pkmnlearnshelper(pokemon, version=version)
             else:
-                moves = await move_aggregator_tmp(pokemon, 'Master', denote_moves=previous_evo_moves)
+                moves = await move_aggregator_tmp(pokemon, 'Master', denote_moves=previous_evo_moves, version=version)
         output = f'__{pokemon.title()}__\n'
 
         for x in moves.keys():
@@ -2272,13 +2335,13 @@ SLASH_COMMANDS.append(pkmn_search_learns_slash)
 #####
 
 # returns the moves of a pokemon + all it's devolutions
-async def move_aggregator(poke: str, rank: str) -> dict:
+async def move_aggregator(poke: str, rank: str, version: str) -> dict:
     movelist = {}  # init final dict
     allPokes = [poke]
     result = False
     while result is not None:
         query = f'SELECT previous FROM pkmnEvo WHERE name="{allPokes[-1]}"'
-        result = database.custom_query(query, multiple=False)
+        result = database.custom_query(query, multiple=False, version=version)
         if result:
             allPokes.append(result[0])
     for pkmn in allPokes:
@@ -2444,6 +2507,8 @@ async def pkmn_encounter(ctx, number: int, rank: str, pokelist: list,
     if rank == 'Base':
         rankbase = True
 
+    version = version_converter[pokebotsettings[guild][11]]
+
     tempList = []
     for name in pokelist:
         name = name.strip()
@@ -2496,11 +2561,11 @@ async def pkmn_encounter(ctx, number: int, rank: str, pokelist: list,
                 nextpoke = random.choice(pokelist)
                 # get the attributes
                 try:
-                    statlist = await pkmnstatshelper(nextpoke)
+                    statlist = await pkmnstatshelper(nextpoke, version=version)
                 except:
                     # name is a typo
                     nextpoke = lookup_poke(nextpoke)
-                    statlist = await pkmnstatshelper(nextpoke)
+                    statlist = await pkmnstatshelper(nextpoke, version=version)
                 foundrank = statlist[20].title()
 
         # to differentiate between naturally learned moves at an evolution
@@ -2512,7 +2577,7 @@ async def pkmn_encounter(ctx, number: int, rank: str, pokelist: list,
             await instantiateSettings(guild)
             setting = pokebotsettings[guild][9]
         if setting == 0:  # all moves at rank from poke and pre evos
-            movelist = await move_aggregator(nextpoke, rank)
+            movelist = await move_aggregator(nextpoke, rank, version=version)
         if setting == 1:  # previous behaviour
             movelist = naturalMoves.copy()
         elif setting == 2:  # previous evos at lower rank
@@ -2582,7 +2647,7 @@ async def pkmn_encounter(ctx, number: int, rank: str, pokelist: list,
                 temp = random.choice(movelist)
                 newMoves.append(temp)
                 movelist.remove(temp)
-                move_descs[temp] = await pkmnmovehelper(temp)
+                move_descs[temp] = await pkmnmovehelper(temp, version=version)
         movelist = newMoves
 
         # base 14, second 15, hidden 16, event 17
@@ -2619,7 +2684,7 @@ async def pkmn_encounter(ctx, number: int, rank: str, pokelist: list,
         if image:
             tmpMoves = []
             for move in move_descs:
-                stf = await pkmnmovehelper(move)
+                stf = await pkmnmovehelper(move, version=version)
                 accMod = 0
                 try:
                     if stf[8][-9:-1] == 'Accuracy':
@@ -2651,12 +2716,13 @@ async def pkmn_encounter(ctx, number: int, rank: str, pokelist: list,
                 name=nextpoke,
                 moves=tmpMoves,
                 max_stats=maxattr[1:6],
+                version=version
             ).create_stat_sheet(), move_descs
 
         abilitytext = ''
         if pokebotsettings[guild][5]:
             try:
-                abilitytext = await pkmnabilitieshelper(ability)
+                abilitytext = await pkmnabilitieshelper(ability, version=version)
             except:
                 pass
 
@@ -2738,7 +2804,7 @@ async def pkmn_encounter(ctx, number: int, rank: str, pokelist: list,
             async def on_enc_ability_button(inter):
                 enc_abilities.disabled = True
                 await inter.response.edit_message(view=enc_view)
-                ablty = await pkmnabilitieshelper(ability)
+                ablty = await pkmnabilitieshelper(ability, version=version)
                 tmp_msg = f'**{ability}:** {abilitytext[0]}\n*{abilitytext[1]}*'
                 await inter.followup.send(tmp_msg)
 
@@ -2860,7 +2926,7 @@ async def pkmn_encounter(ctx, number: int, rank: str, pokelist: list,
                                 self.dmg = ''
 
                         async def getMove(self):
-                            tmp_move = await move_backend(self.label.title())
+                            tmp_move = await move_backend(self.label.title(), version=version)
                             final_move = ''
 
                             dmg_at = tmp_move.find('Damage')
@@ -3096,6 +3162,7 @@ async def smart_pkmn_search_slash(inter,
         rnk, view = None, None
     if pokemon == '':
         guild = await getGuilds(inter)
+        version = version_converter[pokebotsettings[guild][11]]
         if pokebotsettings[guild][10]:
             codify = True
         else:
@@ -3110,7 +3177,7 @@ async def smart_pkmn_search_slash(inter,
         # random poke from database at rank
         query = f'SELECT name FROM pkmnStats WHERE rank="{rank}"' \
                 f' AND generation BETWEEN 1 AND 8 ORDER BY RANDOM() LIMIT {number}'
-        pokemon = database.custom_query(query)
+        pokemon = database.custom_query(query, version=version)
         msg = ''
         for count, pkm in enumerate([x[0] for x in pokemon]):
             if imagify:
@@ -3234,7 +3301,8 @@ async def smart_region_search_slash(inter,
     # random poke from database at rank
     query = f'SELECT name FROM pkmnStats WHERE rank="{rank}"' \
             f' AND generation="{region}" ORDER BY RANDOM() LIMIT {number}'
-    pkm = database.custom_query(query)[0][0]
+    version = version_converter[pokebotsettings[guild][11]]
+    pkm = database.custom_query(query, version=version)[0][0]
     # print(pkm)
     msg = ''
     if imagify:
@@ -3261,10 +3329,10 @@ SLASH_COMMANDS.append(smart_region_search_slash)
 
 #####
 
-async def form_helper(name):
+async def form_helper(name, version: str):
     query = f'SELECT name FROM pkmnStats WHERE name LIKE "%{name}%" ' \
             f'AND generation BETWEEN 1 AND 8'
-    result = database.custom_query(query)
+    result = database.custom_query(query, version=version)
     if len(result) > 20:
         msg = f'Too many results with `{name}`. Try a longer string?'
     elif len(result) == 0:
@@ -3279,7 +3347,9 @@ async def form_helper(name):
              help='A way to find pokemon with forms or similar names.\n'
                   '`%forms Lycanroc` (Capitalization should not matter)')
 async def form_finder(ctx, *, name: str = ''):
-    msg = await form_helper(name)
+    guild = await getGuilds(ctx)
+    version = version_converter[pokebotsettings[guild][11]]
+    msg = await form_helper(name, version=version)
     await ctx.send(msg)
 
 
