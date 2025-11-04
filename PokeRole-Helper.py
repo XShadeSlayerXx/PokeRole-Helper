@@ -2544,11 +2544,11 @@ async def pkmn_encounter(ctx, number: int, rank: str, pokelist: list,
             nextpoke = random.choice(pokelist)
             # get the attributes
             try:
-                statlist = await pkmnstatshelper(nextpoke)
+                statlist = await pkmnstatshelper(nextpoke, version=version)
             except:
                 # name is a typo
                 nextpoke = lookup_poke(nextpoke)
-                statlist = await pkmnstatshelper(nextpoke)
+                statlist = await pkmnstatshelper(nextpoke, version=version)
             if rankbase:
                 # 20 is suggested rank
                 rank = statlist[20].title()
