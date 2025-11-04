@@ -67,6 +67,11 @@ class Database:
             return self.connection_old.cursor()
         return self.connection.cursor()
 
+    def connection_commit(self, version : str = "v3.0"):
+        if version in ["v2.0", "v2", "2"]:
+            return self.connection_old.commit()
+        return self.connection.commit()
+
     def reloadLists(self, version : str = "v3.0"):
         if version in ["v2.0", "v2", "2"]:
             try:
@@ -311,7 +316,7 @@ class Database:
                 except Exception as e:
                     print("unknown exception: ", raw_poke, e)
         pkmn_cursor.close()
-        self.connection.commit()
+        self.connection_commit(version)
 
     def instantiateMoveList(self, version : str = "v3.0"):
         print("Creating the move table...")
@@ -332,7 +337,7 @@ class Database:
                 except Exception as e:
                     print(raw_move, e)
         move_cursor.close()
-        self.connection.commit()
+        self.connection_commit(version)
 
     def instantiateAbilityList(self, version : str = "v3.0"):
         print("Creating the ability tables...")
@@ -350,7 +355,7 @@ class Database:
                 except Exception as e:
                     print(raw_ability, e)
         ability_cursor.close()
-        self.connection.commit()
+        self.connection_commit(version)
 
     def instantiateItemList(self, version : str = "v3.0"):
         print("Creating the item tables...")
@@ -373,7 +378,7 @@ class Database:
                 except Exception as e:
                     print(raw_move, e)
         item_cursor.close()
-        self.connection.commit()
+        self.connection_commit(version)
 
     def instantiatePkmnItemList(self):
         cursor = self.get_cursor(version="v2.0")
