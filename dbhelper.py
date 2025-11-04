@@ -5,8 +5,10 @@ from sqlite3 import Error
 import csv
 import os
 
-db_file = 'pokerole.db'
-data_path = 'pokerole_data/v3.0'
+db_file_v2 = 'pokerole.db'
+db_file_v3 = 'pokerole_v3.db'
+data_path = 'pokerole_data/'
+versions = ['v2.0', 'v3.0']
 data_folders = {
     'pkmn': '/Pokedex',
     'moves': '/Moves',
@@ -55,21 +57,39 @@ def get_generation(number : str) -> int:
 
 class Database:
     def __init__(self):
-        self.connection = create_connection(db_file)
-        self.checkIntegrity()
+        self.connection = create_connection(db_file_v3)
+        self.connection_old = create_connection(db_file_v2)
+        for version in versions:
+            self.checkIntegrity(version=version)
 
-    def reloadLists(self):
-        try:
-            self.connection.close()
-        except:
-            pass
-        finally:
-            os.remove(db_file)
-            self.connection = create_connection(db_file)
-            self.instantiateAllLists()
+    def get_cursor(self, version : str = "v3.0"):
+        if version in ["v2.0", "v2", "2"]:
+            return self.connection_old.cursor()
+        return self.connection.cursor()
 
-    def checkIntegrity(self):
-        cursor = self.connection.cursor()
+    def reloadLists(self, version : str = "v3.0"):
+        if version in ["v2.0", "v2", "2"]:
+            try:
+                self.connection_old.close()
+            except:
+                pass
+            finally:
+                os.remove(db_file_v2)
+                self.connection_old = create_connection(db_file_v2)
+                self.instantiateAllLists(version="v2.0")
+
+        else:
+            try:
+                self.connection.close()
+            except:
+                pass
+            finally:
+                os.remove(db_file_v3)
+                self.connection = create_connection(db_file_v3)
+                self.instantiateAllLists(version="v3.0")
+
+    def checkIntegrity(self, version = "v3.0"):
+        cursor = self.get_cursor(version=version)
         cursor.execute('SELECT name FROM sqlite_master WHERE type="table" AND name NOT LIKE "SQLITE_%"')
         result = cursor.fetchall()
         result = [x[0] for x in result] #strip the single tuple to be a readable string
@@ -77,15 +97,15 @@ class Database:
 
         for val in table_names.values():
             if val not in result:
-                print(f'Needed to refresh the tables, "{val}" was missing')
-                self.reloadLists()
+                print(f'Needed to refresh the {version} tables, "{val}" was missing')
+                self.reloadLists(version=version)
                 break
 
-    def instantiateAllLists(self):
-        self.build_tables()
-        self.instantiatePokemonLists()
-        self.instantiateMoveList()
-        self.instantiateAbilityList()
+    def instantiateAllLists(self, version : str = "v3.0"):
+        self.build_tables(version=version)
+        self.instantiatePokemonLists(version=version)
+        self.instantiateMoveList(version=version)
+        self.instantiateAbilityList(version=version)
 
         self.instantiatePkmnItemList()
         # self.instantiateItemList()
@@ -93,12 +113,12 @@ class Database:
     def close_connection(self):
         self.connection.close()
 
-    def create_table(self, name, values):
+    def create_table(self, name, values, version : str = "v3.0"):
         # values in the format
         # name type conditions, name2 type2 conditions2, etc
         cmd = f"CREATE TABLE IF NOT EXISTS {name} ( {values} );"
         try:
-            cursor = self.connection.cursor()
+            cursor = self.get_cursor(version)
             cursor.execute(cmd)
         except Error as e:
             print(e)
@@ -115,8 +135,8 @@ class Database:
         self.connection.commit()
         return tmp
 
-    def custom_query(self, query, multiple : bool = True):
-        cursor = self.connection.cursor()
+    def custom_query(self, query, multiple : bool = True, version : str = "v3.0"):
+        cursor = self.get_cursor(version)
         cursor.execute(query)
         if multiple:
             rows = cursor.fetchall()
@@ -126,8 +146,8 @@ class Database:
         cursor.close()
         return rows
 
-    def query_table(self, tablename, qtype, val):
-        cursor = self.connection.cursor()
+    def query_table(self, tablename, qtype, val, version : str = "v3.0"):
+        cursor = self.get_cursor(version)
         cursor.execute(f'SELECT * FROM {tablename} WHERE {qtype}="{val}"')
         rows = cursor.fetchall()
 
@@ -141,13 +161,13 @@ class Database:
         cursor.close()
         self.connection.commit()
 
-    def build_tables(self):
+    def build_tables(self, version : str = "v3.0"):
         tblnm = table_names['pkmnEvo']
         vals = """
         name text PRIMARY KEY,
         previous text
         """
-        self.create_table(tblnm, vals)
+        self.create_table(tblnm, vals, version=version)
         #####
         tblnm = table_names['pkmnStats']
         vals = """
@@ -176,12 +196,12 @@ class Database:
         gender text,
         generation integer NOT NULL
         """
-        self.create_table(tblnm, vals)
+        self.create_table(tblnm, vals, version=version)
         #####
         tblnm = table_names['pkmnLearns']
         vals = 'number integer NOT NULL, name text PRIMARY KEY' + ''.join(
             [f', move{x} text, rank{x} integer' for x in range(28)])
-        self.create_table(tblnm, vals)
+        self.create_table(tblnm, vals, version=version)
         #####
         tblnm = table_names['pkmnMoves']
         vals = """
@@ -197,7 +217,7 @@ class Database:
         effect text,
         description text
         """
-        self.create_table(tblnm, vals)
+        self.create_table(tblnm, vals, version=version)
         #####
         tblnm = table_names['pkmnAbilities']
         vals = """
@@ -205,7 +225,7 @@ class Database:
         effect text NOT NULL,
         description text
         """
-        self.create_table(tblnm, vals)
+        self.create_table(tblnm, vals, version=version)
         #####
         tblnm = table_names['pkmnItems']
         vals = """
@@ -228,17 +248,17 @@ class Database:
         pmd_price text,
         category text
         """
-        self.create_table(tblnm, vals)
+        self.create_table(tblnm, vals, version=version)
 
 
-    def instantiatePokemonLists(self):
+    def instantiatePokemonLists(self, version : str = "v3.0"):
         print("Creating the pokemon tables...")
         # the pokemon in the pokemon folder contain stats, evo info, and the learns list
         stat_table = table_names['pkmnStats']
         evo_table = table_names['pkmnEvo']
         learns_table = table_names['pkmnLearns']
-        pkmn_cursor = self.connection.cursor()
-        p = Path(data_path + data_folders['pkmn'])
+        pkmn_cursor = self.get_cursor(version)
+        p = Path(data_path + version + data_folders['pkmn'])
         for raw_poke in p.iterdir():
             with open(raw_poke, encoding="utf-8") as f:
                 try:
@@ -289,15 +309,15 @@ class Database:
                 except json.JSONDecodeError as e:
                     print(raw_poke, e)
                 except Exception as e:
-                    print(raw_poke, e)
+                    print("unknown exception: ", raw_poke, e)
         pkmn_cursor.close()
         self.connection.commit()
 
-    def instantiateMoveList(self):
+    def instantiateMoveList(self, version : str = "v3.0"):
         print("Creating the move table...")
         move_table = table_names['pkmnMoves']
-        move_cursor = self.connection.cursor()
-        p = Path(data_path + data_folders['moves'])
+        move_cursor = self.get_cursor(version)
+        p = Path(data_path + version + data_folders['moves'])
         for raw_move in p.iterdir():
             with open(raw_move, encoding="utf-8") as f:
                 try:
@@ -314,11 +334,11 @@ class Database:
         move_cursor.close()
         self.connection.commit()
 
-    def instantiateAbilityList(self):
+    def instantiateAbilityList(self, version : str = "v3.0"):
         print("Creating the ability tables...")
         ability_table = table_names['pkmnAbilities']
-        ability_cursor = self.connection.cursor()
-        p = Path(data_path + data_folders['abilities'])
+        ability_cursor = self.get_cursor(version)
+        p = Path(data_path + version + data_folders['abilities'])
         for raw_ability in p.iterdir():
             with open(raw_ability, encoding="utf-8") as f:
                 try:
@@ -332,11 +352,11 @@ class Database:
         ability_cursor.close()
         self.connection.commit()
 
-    def instantiateItemList(self):
+    def instantiateItemList(self, version : str = "v3.0"):
         print("Creating the item tables...")
         items_table = table_names['pkmnItems']
         # need a way to add custom items?
-        item_cursor = self.connection.cursor()
+        item_cursor = self.get_cursor(version)
         p = Path(data_path + data_folders['items'])
         for raw_move in p.iterdir():
             with open(raw_move, encoding="utf-8") as f:
@@ -356,7 +376,7 @@ class Database:
         self.connection.commit()
 
     def instantiatePkmnItemList(self):
-        cursor = self.connection.cursor()
+        cursor = self.get_cursor(version="v2.0")
         tblnm = table_names['pkmnItems']
         vals = """
         name text PRIMARY KEY,
