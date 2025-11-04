@@ -1105,6 +1105,7 @@ async def settings_slash(
     if code_block_format: pokebotsettings[guild][10] = bool(code_block_format)
 
     await inter.response.send_message(print_settings(guild))
+    save_obj(pokebotsettings, 'pokebotsettings')
 
 
 SLASH_COMMANDS.append(settings_slash)
