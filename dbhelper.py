@@ -256,8 +256,8 @@ class Database:
         self.create_table(tblnm, vals, version=version)
 
 
-    def instantiatePokemonLists(self, version : str = "v3.0"):
-        print("Creating the pokemon tables...")
+    def instantiatePokemonLists(self, version : str):
+        print(f"Creating the {version} pokemon tables...")
         # the pokemon in the pokemon folder contain stats, evo info, and the learns list
         stat_table = table_names['pkmnStats']
         evo_table = table_names['pkmnEvo']
@@ -318,8 +318,8 @@ class Database:
         pkmn_cursor.close()
         self.connection_commit(version)
 
-    def instantiateMoveList(self, version : str = "v3.0"):
-        print("Creating the move table...")
+    def instantiateMoveList(self, version : str):
+        print(f"Creating the {version} move table...")
         move_table = table_names['pkmnMoves']
         move_cursor = self.get_cursor(version)
         p = Path(data_path + version + data_folders['moves'])
@@ -340,7 +340,7 @@ class Database:
         self.connection_commit(version)
 
     def instantiateAbilityList(self, version : str = "v3.0"):
-        print("Creating the ability tables...")
+        print(f"Creating the {version} ability table...")
         ability_table = table_names['pkmnAbilities']
         ability_cursor = self.get_cursor(version)
         p = Path(data_path + version + data_folders['abilities'])
@@ -358,11 +358,11 @@ class Database:
         self.connection_commit(version)
 
     def instantiateItemList(self, version : str = "v3.0"):
-        print("Creating the item tables...")
+        print(f"Creating the {version} item table...")
         items_table = table_names['pkmnItems']
         # need a way to add custom items?
         item_cursor = self.get_cursor(version)
-        p = Path(data_path + data_folders['items'])
+        p = Path(data_path + version + data_folders['items'])
         for raw_move in p.iterdir():
             with open(raw_move, encoding="utf-8") as f:
                 try:
