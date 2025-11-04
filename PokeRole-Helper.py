@@ -852,7 +852,7 @@ async def pokemon_autocomplete(
         guild = await getGuilds(interaction)
         version = version_converter[pokebotsettings[guild][11]]
         query = f'SELECT name FROM pkmnStats WHERE lower(name) LIKE "%{current}%"' \
-                f' AND generation BETWEEN 1 AND 8 LIMIT 25'
+                f' AND generation BETWEEN 1 AND 10 LIMIT 25'
         result = [x[0] for x in database.custom_query(query, version=version)]
 
         return [
@@ -1518,12 +1518,12 @@ async def pkmn_randomitem_driver(ctx, howMany: typing.Optional[int] = 1, *, list
                   ' <generation>\n'
                   'type1 & type2 - can be Any or None\n'
                   'includeLowerRanks - if <rank> is ace, do you want starter/beginner/amateur/ace?\n'
-                  'generation - any number between 1 and 9 (kanto through galar + delta pkmn)\n'
+                  'generation - any number between 1 and 10 (kanto through paldean pkmn)\n'
                   '%filter forest beginner grass None\n'
                   '  --> Adds beginner rank pure grass types to the list forest\n'
                   '%filter forest ace bug any True 4-6\n'
                   '  --> Adds up to Ace rank bug/Any types from gen 4 to 6 to the list forest\n'
-                  'Note: generation 1-8 is default, and to change it you will need to include all parameters')
+                  'Note: generation 1-10 is default, and to change it you will need to include all parameters')
 async def pkmn_filter_list(ctx, listname: str, rank: ensure_rank,
                            type1: str, type2: str = 'Any',
                            includeLowerRanks: bool = False, generation: str = ''):
@@ -1541,7 +1541,7 @@ async def pkmn_filter_list(ctx, listname: str, rank: ensure_rank,
         type2 = ''
 
     if generation == '':
-        generation = '1-8'
+        generation = '1-10'
 
     generation = generation.replace(' ', '').split('-')
     if len(generation) == 1:
@@ -3178,7 +3178,7 @@ async def smart_pkmn_search_slash(inter,
             return
         # random poke from database at rank
         query = f'SELECT name FROM pkmnStats WHERE rank="{rank}"' \
-                f' AND generation BETWEEN 1 AND 8 ORDER BY RANDOM() LIMIT {number}'
+                f' AND generation BETWEEN 1 AND 10 ORDER BY RANDOM() LIMIT {number}'
         pokemon = database.custom_query(query, version=version)
         msg = ''
         for count, pkm in enumerate([x[0] for x in pokemon]):
@@ -3333,7 +3333,7 @@ SLASH_COMMANDS.append(smart_region_search_slash)
 
 async def form_helper(name, version: str):
     query = f'SELECT name FROM pkmnStats WHERE name LIKE "%{name}%" ' \
-            f'AND generation BETWEEN 1 AND 8'
+            f'AND generation BETWEEN 1 AND 10'
     result = database.custom_query(query, version=version)
     if len(result) > 20:
         msg = f'Too many results with `{name}`. Try a longer string?'
