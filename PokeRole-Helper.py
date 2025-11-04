@@ -721,7 +721,8 @@ async def updateSettings(ctx):
 @commands.is_owner()
 @bot.command(name='devQuery', hidden=True)
 async def query(ctx, *, msg=''):
-    version = "v3.0"
+    guild = await getGuilds(ctx)
+    version = version_converter[pokebotsettings[guild][11]]
     try:
         if len(msg.split()) == 1:
             returned = database.custom_query(f"PRAGMA table_info({msg})", version=version)
