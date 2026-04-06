@@ -2216,7 +2216,7 @@ async def pkmnlearnshelper(poke: str, rank: ensure_rank = 'Master', version: str
         found = list(database.query_table('pkmnLearns', 'name', poke, version=version)[0][2:])
     except:
         # stopgap 'solution', will need to fix the name in the evolutions tree or base name or something
-        if poke == "Flabébé":
+        if poke == "Flabébé" and version == "v2.0":
             found = list(database.query_table('pkmnLearns', 'name', "Flabebe", version=version)[0][2:])
         else:
             raise KeyError(poke)
