@@ -68,13 +68,18 @@ restartError = True
 
 regions = ['Kanto', 'Johto', 'Hoenn', 'Sinnoh', 'Unova', 'Kalos', 'Alola', 'Galar']
 ranks = ['Starter', 'Beginner', 'Amateur', 'Ace', 'Pro', 'Master', 'Champion']
+ranks_v3 = ['Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master', 'Champion']
 
 
-def rank_dist():
-    return random.choice(['Starter'] * 2 + ['Beginner'] * 5 + ['Amateur'] * 7 + ['Ace', 'Pro'])
+def rank_dist(version="v2.0"):
+    if version is "v3.0":
+        return random.choice([ranks_v3[0]] * 2 + [ranks_v3[1]] * 5 + [ranks_v3[2]] * 7 +
+                             [ranks_v3[3]] * 2 + [ranks_v3[3], ranks_v3[4]])
+    return random.choice([ranks[0]] * 2 + [ranks[1]] * 5 + [ranks[2]] * 7 + [ranks[3], ranks[4]])
 
 
 rankBias = [1, 3, 5, 7, 9, 10, 11]
+rankBias_v3 = [1, 2, 3, 5, 7, 9, 10, 11]
 natures = ['Hardy (9)', 'Lonely (5)', 'Brave (9)', 'Adamant (4)', 'Naughty (6)',
            'Bold (9)', 'Docile (7)', 'Relaxed (8)', 'Impish (7)',
            'Lax (8)', 'Timid (4)', 'Hasty (7)', 'Serious (4)', 'Jolly (10)',
@@ -96,6 +101,14 @@ attributeAmount = (0, 2, 4, 6, 8, 8, 14)
 skillAmount = (5, 9, 12, 14, 15, 15, 16)
 # highest any single skill can be
 limit = (1, 2, 3, 4, 5, 5, 5)
+
+# v3 total attributes at a rank (base/social)
+# attributes are limited by poke
+attributeAmount_v3 = (0, 2, 4, 6, 8, 10, 10, 14)
+# total skill points at a rank
+skillAmount_v3 = (5, 10, 14, 17, 19, 20, 22, 25)
+# highest any single skill can be
+limit_v3 = (1, 2, 3, 4, 5, 5, 6, 6)
 
 # lists are global...
 #   pokemon list:
@@ -793,9 +806,16 @@ async def ranks_autocomplete(
         interaction: discord.Interaction,
         current: str
 ) -> List[Choice[str]]:
+    guild = await getGuilds(interaction)
+    version = version_converter[pokebotsettings[guild][11]]
+    which_ranks = None
+    if version == "v2.0":
+        which_ranks = ranks
+    elif version == "v3.0":
+        which_ranks = ranks_v3
     return [
         app_commands.Choice(name=m_type, value=m_type)
-        for m_type in ranks if current.lower() in m_type.lower()
+        for m_type in which_ranks if current.lower() in m_type.lower()
     ]
 
 
@@ -2358,19 +2378,30 @@ async def move_aggregator(poke: str, rank: str, version: str) -> dict:
 
 
 async def calcStats(rank: str, attr: list, maxAttr: list,
-                    movelist: dict = {}, additionalIns: int = 0,
-                    additionalVit: int = 0) -> (list, list, list, int):
+                    movelist=None, additionalIns: int = 0,
+                    additionalVit: int = 0, version: str = version_converter[0]) -> (list, list, list, int):
     # initialize base stats
+    if movelist is None:
+        movelist = {}
     bhp = attr[0]
     attributes = attr[1:]
     maxattr = maxAttr[1:]
-    # no limits on socials (except max of 5)
+    # no limits on socials (except max of 5) in v2.0
     socials = bot.socials[:]
-    extraSocial = 6 if rank == 'Master' else 0
+    extraSocial = 0
+    if version is "v2.0" and rank is "Master":
+        extraSocial = 6
     # limited by rank
     skills = bot.skills[:]
-    rankIndex = ranks.index(rank)
-    pointsToAllocate = attributeAmount[rankIndex] - (additionalIns + additionalVit)
+    rankIndex = None
+    pointsToAllocate = None
+    if version is "v2.0":
+        rankIndex = ranks.index(rank)
+        pointsToAllocate = attributeAmount[rankIndex]
+    elif version is "v3.0":
+        rankIndex = ranks_v3.index(rank)
+        pointsToAllocate = attributeAmount_v3[rankIndex]
+    pointsToAllocate -= (additionalIns + additionalVit)
     attributes[2] += additionalVit
 
     def normalize(array) -> list:
@@ -2384,7 +2415,11 @@ async def calcStats(rank: str, attr: list, maxAttr: list,
             final_list = choice(list(range(low, high)), number, replace=replace)
         return final_list
 
-    bias_amt = rankBias[rankIndex]
+    bias_amt = None
+    if version is "v2.0":
+        bias_amt = rankBias[rankIndex]
+    elif version is "v3.0":
+        bias_amt = rankBias[rankIndex]
 
     attrWeight = [1] * len(attributes)
     socialWeight = [1] * len(socials)
@@ -2422,7 +2457,7 @@ async def calcStats(rank: str, attr: list, maxAttr: list,
     fullStats = [False] * (len(attributes) + 1)
     x = 0  # count allocated stats
     # need "- attrMod" because insight may already be allocated
-    if rank == 'Champion':
+    if rank == 'Champion':  # both v2 and v3
         maxattr = [x + 2 for x in maxattr]
     while x < pointsToAllocate and len(attributes) > 0:
         attrWeight = normalize(attrWeight)
@@ -2634,7 +2669,8 @@ async def pkmn_encounter(ctx, number: int, rank: str, pokelist: list,
         if boss:  # allocate stats since we didn't before (and adjust insight accordingly)
             insightAdded = numMoves - 2 - baseattr[5]
             attributes, socials, skills, leftover = await calcStats(rank, baseattr, maxattr,
-                                                                    move_descs, insightAdded)  # , numVitality)
+                                                                    move_descs, insightAdded,
+                                                                    version=version)  # , numVitality)
             attributes[5] += insightAdded
             if rank == 'Champion':
                 lowerBound = maxattr[5] - attributes[5] + 2
@@ -2717,8 +2753,7 @@ async def pkmn_encounter(ctx, number: int, rank: str, pokelist: list,
                 number=statlist[0],
                 name=nextpoke,
                 moves=tmpMoves,
-                max_stats=maxattr[1:6],
-                version=version
+                max_stats=maxattr[1:6]  # I don't think we need version here
             ).create_stat_sheet(), move_descs
 
         abilitytext = ''
@@ -3441,44 +3476,107 @@ async def tracker(ctx, cmd='', *, mc=''):
 @app_commands.autocomplete(rank=ranks_autocomplete)
 async def rankDisplay(ctx, rank: str = None):
     if rank: rank = rank.title()
-    rank_info = {
-        'Starter': [['Get your Trainer\'s License', 'Get your first Pokemon'],
-                    ['5 Skill Points (Skill Limit 1)', 'Can target a Max of 2 Pokemon (including itself)']],
-        'Beginner': [
-            ['Successfully understand your Pokemon\'s gestures', 'Train a Pokemon', 'Catch your second Pokemon',
-             'Win your first Official Battle against a Trainer'],
-            ['2 more Points to distribute on Attributes (total: 2)',
-             '2 more points to distribute on Social Attributes (total: 2)',
-             '4 more Skill Points to distribute (Skill Limit 2) (apply previous ranks\' points in order)',
-             'Can Target a Max of 2 Pokemon (including itself)']],
-        'Amateur': [['Evolve a Pokemon', 'Win your first Badge', 'Increase a Pokemon\'s Loyalty & Happiness'],
-                    ['2 more Points to distribute on Attributes (total: 4)',
-                     '2 more Points to distribute on Social Attributes (total: 4)',
-                     '3 more Skill Points to distribute (Skill Limit 3) (apply previous ranks\' points in order)',
-                     'Can Target a Max of 3 Pokemon (including itself)']],
-        'Ace': [['Win 8 badges',
-                 'Get a full party of 6 evolved Pokemon',
-                 'Defeat your Rival'],
-                ['2 more Points to distribute on Attributes (total: 6)',
-                 '2 more Points to distribute on Social Attributes (total: 6)',
-                 '2 more Skill Points to distribute (Skill Limit 4) (apply previous ranks\' points in order)',
-                 'Can Target a Max of 5 Pokemon (including itself)']],
-        'Pro': [['Get a Pokemon-related job',
-                 'Clear the Victory Road',
-                 'Catch a Professional-Rank Pokemono'],
-                ['2 more Points to distribute on Attributes (total: 8)',
-                 '2 more Points to distribute on Social Attributes (total: 8)',
-                 '1 more Skill Points to distribute (Skill Limit 5) (apply previous ranks\' points in order)',
-                 'Can Target a Max of 6 Pokemon (including itself)']],
-        'Master': [['Find and study all Pokemon species in your Region'],
-                   ['6 more Points to distribute on Social Attributes (total: 14)',
-                    'Roll 2 additional dice on all Skill Rolls',
-                    'Passive Traits such as HP, Will, Initiative, DEF/S.DEF are increased by 2']],
-        'Champion': [['Defeat the Champion in the League\'s Challenge'],
-                     ['6 more Points to distribute on Social Attributes (total: 14)',
-                      'Can raise Attributes up to 2 Points beyond the Limit'
-                      '1 more Skill Point to distribute']]
-    }
+    rank_info = None
+
+    guild = await getGuilds(ctx)
+    version = version_converter[pokebotsettings[guild][11]]
+    # it might be worth moving the information out into a text file
+    if version == "v3.0":
+        rank_info = {
+            'Starter': [["Befriend a Pokemon", "Read book about Pokemon", "Watch Pokemon Tournaments on your TV"],
+                        ["5 Skill Points to distribute",
+                         "Skill Limit 1 (No more than 1 Point per Skill)",
+                         "Can target a Max of 1 Pokemon in-battle"]],
+            'Rookie': [['Get your Trainer\'s License', 'Get your first Pokemon', "Embark on a journey through the Pokemon World"],
+                       ["2 Points to distribute on Attributes",
+                        "2 Points to distribute on Social Attributes",
+                        '10 Skill Points to distribute',
+                        "Skill Limit 2 (No more than 2 Points per Skill)",
+                        'Can target a Max of 2 Pokemon in-battle']],
+            'Standard': [['Evolve a Pokemon', 'Win your first Badge', 'Max out a Pokemon\'s Loyalty or Happiness'],
+                         ['4 Points to distribute on Attributes',
+                          '4 Points to distribute on Social Attributes',
+                          '14 Skill Points to distribute',
+                          "Skill Limit 3 (No more than 3 Points per Skill)",
+                          'Can Target a Max of 3 Pokemon in-battle']],
+            'Advanced': [
+                ["Win 1st, 2nd, or 3rd place in a Tournament", "Win at least 4 Gym Badges", "See at least 30 different Pokemon species"],
+                ['6 Points to distribute on Attributes',
+                 '6 Points to distribute on Social Attributes',
+                 '17 Skill Points to distribute',
+                 "Skill Limit 4 (No more than 4 Points per Skill)",
+                 'Can Target a Max of 4 Pokemon in-battle']],
+            'Expert': [['Win 8 Gym Medals',
+                        'Have at least 6 fully Evolved Pokemon',
+                        'See at least 50 different Pokemon species'],
+                       ['8 Points to distribute on Attributes',
+                        '8 Points to distribute on Social Attributes',
+                        '19 Skill Points to distribute',
+                        "Skill Limit 5 (No more than 5 Points per Skill)",
+                        'Can Target a Max of 5 Pokemon in-battle']],
+            'Ace': [["Be in the League's Tournament Top 8",
+                     'Catch an Ace Rank Pokemon',
+                     'See at least 80 different types of Pokemon'],
+                    ['10 Points to distribute on Attributes',
+                     '10 Points to distribute on Social Attributes',
+                     '20 Skill Points to distribute',
+                     "Skill Limit 5 (No more than 5 Points per Skill)",
+                     'Can Target a Max of 6 Pokemon in-battle']],
+            'Master': [['Clear the Victory Road',
+                        'Defeat your Rival',
+                        'Find and study at least 150 Pokemon species'],
+                       ['10 Points to distribute on Attributes',
+                        '10 Points to distribute on Social Attributes',
+                        '22 Skill Points to distribute'
+                        'Roll 2 additional dice on all Rolls involving a Skill',
+                        'Passive Traits such as HP, Will, Initiative, DEF/S.DEF are increased by 3',
+                        'Can Target a Max of 8 Pokemon in-battle']],
+            'Champion': [['Defeat all members of the Elite Four', 'Defeat the Champion in the League\'s Challenge'],
+                         ['14 Points to distribute on Attributes',
+                          '14 Points to distribute on Social Attributes',
+                          '25 Skill Points to distribute',
+                          'Attribute Scores can go up to 2 Points beyond the Limit'
+                          'Can Target a Max of 10 Pokemon in-battle']]
+        }
+    else:
+        rank_info = {
+            'Starter': [['Get your Trainer\'s License', 'Get your first Pokemon'],
+                        ['5 Skill Points (Skill Limit 1)', 'Can target a Max of 2 Pokemon (including itself)']],
+            'Beginner': [
+                ['Successfully understand your Pokemon\'s gestures', 'Train a Pokemon', 'Catch your second Pokemon',
+                 'Win your first Official Battle against a Trainer'],
+                ['2 more Points to distribute on Attributes (total: 2)',
+                 '2 more Points to distribute on Social Attributes (total: 2)',
+                 '4 more Skill Points to distribute (Skill Limit 2) (apply previous ranks\' points in order)',
+                 'Can Target a Max of 2 Pokemon (including itself)']],
+            'Amateur': [['Evolve a Pokemon', 'Win your first Badge', 'Increase a Pokemon\'s Loyalty & Happiness'],
+                        ['2 more Points to distribute on Attributes (total: 4)',
+                         '2 more Points to distribute on Social Attributes (total: 4)',
+                         '3 more Skill Points to distribute (Skill Limit 3) (apply previous ranks\' points in order)',
+                         'Can Target a Max of 3 Pokemon (including itself)']],
+            'Ace': [['Win 8 badges',
+                     'Get a full party of 6 evolved Pokemon',
+                     'Defeat your Rival'],
+                    ['2 more Points to distribute on Attributes (total: 6)',
+                     '2 more Points to distribute on Social Attributes (total: 6)',
+                     '2 more Skill Points to distribute (Skill Limit 4) (apply previous ranks\' points in order)',
+                     'Can Target a Max of 5 Pokemon (including itself)']],
+            'Pro': [['Get a Pokemon-related job',
+                     'Clear the Victory Road',
+                     'Catch a Professional-Rank Pokemon'],
+                    ['2 more Points to distribute on Attributes (total: 8)',
+                     '2 more Points to distribute on Social Attributes (total: 8)',
+                     '1 more Skill Points to distribute (Skill Limit 5) (apply previous ranks\' points in order)',
+                     'Can Target a Max of 6 Pokemon (including itself)']],
+            'Master': [['Find and study all Pokemon species in your Region'],
+                       ['6 more Points to distribute on Social Attributes (total: 14)',
+                        'Roll 2 additional dice on all Skill Rolls',
+                        'Passive Traits such as HP, Will, Initiative, DEF/S.DEF are increased by 2']],
+            'Champion': [['Defeat the Champion in the League\'s Challenge'],
+                         ['6 more Points to distribute on Social Attributes (total: 14)',
+                          'Can raise Attributes up to 2 Points beyond the Limit'
+                          '1 more Skill Point to distribute']]
+        }
     if rank not in rank_info:
         await ctx.send(' - ' + '\n- '.join(list(rank_info.keys())))
     else:
