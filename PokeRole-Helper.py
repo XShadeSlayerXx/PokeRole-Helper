@@ -63,7 +63,7 @@ pokeStatus = dict()
 pkmnMoves = dict()
 pkmnHabitats = dict()
 pkmnWeather = dict()
-database = None
+database: Database = None
 restartError = True
 
 regions = ['Kanto', 'Johto', 'Hoenn', 'Sinnoh', 'Unova', 'Kalos', 'Alola', 'Galar']
@@ -1261,7 +1261,7 @@ async def pkmn_list(ctx: discord.Interaction, listname: str, which: str = 'show'
     version = version_converter[pokebotsettings[guild][11]]
     try:
         # initialize pkmnstats and check if listname is a valid pokemon
-        await pkmnstatshelper(listname)
+        await pkmnstatshelper(listname, version=version)
         await ctx.response.send_message('Lists may not be named after pokemon')
         return
     except:
@@ -1370,7 +1370,7 @@ async def pkmn_list(ctx: discord.Interaction, listname: str, which: str = 'show'
                 # ...not an item
                 guild = await getGuilds(ctx)
                 if pokebotsettings[guild][7]:
-                    await ctx.response.send_message(await pkmnRankListDisplay(f'__{listname}__', listname))
+                    await ctx.response.send_message(await pkmnRankListDisplay(f'__{listname}__', listname, version=version))
                 else:
                     await ctx.response.send_message(f'__{listname}__\n' + displayList(listname))
         else:
@@ -1701,7 +1701,7 @@ async def pkmnDictRanks(pokemon: list, version: str) -> dict:
             # its either nidoran or oricorio or wormadam
             print(pkmnLists[poke.lower()])
             tmppoke = random.choice(random.choice(pkmnLists[poke.lower()][1:])[1:])
-            rank = (await pkmnstatshelper(tmppoke))[20]
+            rank = (await pkmnstatshelper(tmppoke, version=version))[20]
         if rank not in level:
             level[rank] = []
         level[rank].append(poke)
@@ -1737,8 +1737,10 @@ async def pkmnRankListDisplay(title: str, listname: str, version: str) -> str:
 )
 async def pkmn_search_habitat(ctx, *, habitat: str = '', view_all: int = 0):
     view_all = bool(view_all)
+    guild = await getGuilds(ctx)
+    version = version_converter[pokebotsettings[guild][11]]
     if view_all:
-        await habitat_helper(ctx, habitat)
+        await habitat_helper(ctx, habitat, version=version)
         return
     try:
         habitat = habitat.title()
@@ -2205,6 +2207,11 @@ SLASH_COMMANDS.append(pkmn_search_stats_slash)
 
 async def pkmnlearnshelper(poke: str, rank: ensure_rank = 'Master', version: str = "v3.0"):
     global database
+    which_ranks = None
+    if version == "v3.0":
+        which_ranks = ranks_v3
+    else:
+        which_ranks = ranks
     try:
         found = list(database.query_table('pkmnLearns', 'name', poke, version=version)[0][2:])
     except:
@@ -2220,7 +2227,7 @@ async def pkmnlearnshelper(poke: str, rank: ensure_rank = 'Master', version: str
         pass
     # works if the ranks are 'starter', etc, or numbers
     try:
-        found[1::2] = [ranks[x] for x in found[1::2]]
+        found[1::2] = [which_ranks[x] for x in found[1::2]]
     except:
         pass
     done = False
@@ -2229,7 +2236,7 @@ async def pkmnlearnshelper(poke: str, rank: ensure_rank = 'Master', version: str
         if done:
             break
         if found[x + 1] not in moves:
-            if rank == 'Master' or ranks.index(found[x + 1]) <= ranks.index(rank):
+            if rank == 'Master' or which_ranks.index(found[x + 1]) <= which_ranks.index(rank):
                 moves[found[x + 1]] = [found[x]]
             else:
                 done = True
@@ -2546,6 +2553,12 @@ async def pkmn_encounter(ctx, number: int, rank: str, pokelist: list,
 
     version = version_converter[pokebotsettings[guild][11]]
 
+    which_ranks = None
+    if version == "v3.0":
+        which_ranks = ranks_v3
+    else:
+        which_ranks = ranks
+
     tempList = []
     for name in pokelist:
         name = name.strip()
@@ -2622,7 +2635,7 @@ async def pkmn_encounter(ctx, number: int, rank: str, pokelist: list,
             if newrank != 0:
                 newrank -= 1
             newrank = ranks[newrank]
-            movelist = await move_aggregator(nextpoke, newrank)
+            movelist = await move_aggregator(nextpoke, newrank, version=version)
         naturalMoves = [item for sublist in list(naturalMoves.values()) for item in sublist]
 
         # 3/4/6/8/10/12 == b.hp/str/dex/vit/spe/ins
@@ -2635,7 +2648,7 @@ async def pkmn_encounter(ctx, number: int, rank: str, pokelist: list,
         if boss:  # we need insight for # of moves
             attrNum = len(baseattr)
             numMoves = baseattr[5]
-            for _ in range(attributeAmount[ranks.index(rank.title())]):
+            for _ in range(attributeAmount[which_ranks.index(rank.title())]):
                 randnum = random.random()
                 # if randnum < 1/(attrNum*2) and baseattr[3] + numVitality < maxattr[3]: #chance for vitality
                 #     numVitality += 1
@@ -2664,7 +2677,7 @@ async def pkmn_encounter(ctx, number: int, rank: str, pokelist: list,
 
         move_descs = {}
         for move in newMoves:
-            move_descs[move] = await pkmnmovehelper(move)
+            move_descs[move] = await pkmnmovehelper(move, version=version)
 
         if boss:  # allocate stats since we didn't before (and adjust insight accordingly)
             insightAdded = numMoves - 2 - baseattr[5]
@@ -3160,7 +3173,6 @@ async def smart_pkmn_search(ctx, number: typing.Optional[int] = 1,
     imagify="Send an image instead? (Note: Forms have default image)"
 )
 @app_commands.choices(
-    rank=[Choice(name=x, value=x) for x in ["Base"] + ranks],
     smart_stats=[
         Choice(name='Yes', value=1),
         Choice(name='No', value=0),
@@ -3174,7 +3186,7 @@ async def smart_pkmn_search(ctx, number: typing.Optional[int] = 1,
         Choice(name='No', value=0),
     ]
 )
-@app_commands.autocomplete(pokemon=pokemon_autocomplete)
+@app_commands.autocomplete(pokemon=pokemon_autocomplete, rank=ranks_autocomplete)
 async def smart_pkmn_search_slash(inter,
                                   number: app_commands.Range[int, 1, 6] = 1,
                                   # rank : ensure_rank = 'Base',
@@ -3205,7 +3217,7 @@ async def smart_pkmn_search_slash(inter,
         else:
             codify = False
         if rank == 'Base':
-            rank = rank_dist()
+            rank = rank_dist(version=version)
         elif rank == 'Champion':
             await inter.response.send_message('Since there are no pokemon who naturally have the '
                                               'Champion rank, a random pokemon cannot be generated from this pool.',
