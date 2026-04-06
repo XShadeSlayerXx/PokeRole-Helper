@@ -2374,7 +2374,7 @@ async def move_aggregator(poke: str, rank: str, version: str) -> dict:
         if result:
             allPokes.append(result[0])
     for pkmn in allPokes:
-        tmp = await pkmnlearnshelper(pkmn, rank)
+        tmp = await pkmnlearnshelper(pkmn, rank, version=version)
         for x, y in list(tmp.items()):
             if x in movelist:
                 for name in y:
@@ -2426,7 +2426,7 @@ async def calcStats(rank: str, attr: list, maxAttr: list,
     if version is "v2.0":
         bias_amt = rankBias[rankIndex]
     elif version is "v3.0":
-        bias_amt = rankBias[rankIndex]
+        bias_amt = rankBias_v3[rankIndex]
 
     attrWeight = [1] * len(attributes)
     socialWeight = [1] * len(socials)
@@ -2619,7 +2619,7 @@ async def pkmn_encounter(ctx, number: int, rank: str, pokelist: list,
                 foundrank = statlist[20].title()
 
         # to differentiate between naturally learned moves at an evolution
-        naturalMoves = await pkmnlearnshelper(nextpoke, rank)
+        naturalMoves = await pkmnlearnshelper(nextpoke, rank, version=version)
         # get all potential moves, up to the rank
         try:  # does the setting exist...
             setting = pokebotsettings[guild][9]
@@ -2631,10 +2631,10 @@ async def pkmn_encounter(ctx, number: int, rank: str, pokelist: list,
         if setting == 1:  # previous behaviour
             movelist = naturalMoves.copy()
         elif setting == 2:  # previous evos at lower rank
-            newrank = ranks.index(rank.title())
+            newrank = which_ranks.index(rank.title())
             if newrank != 0:
                 newrank -= 1
-            newrank = ranks[newrank]
+            newrank = which_ranks[newrank]
             movelist = await move_aggregator(nextpoke, newrank, version=version)
         naturalMoves = [item for sublist in list(naturalMoves.values()) for item in sublist]
 
@@ -2659,7 +2659,7 @@ async def pkmn_encounter(ctx, number: int, rank: str, pokelist: list,
                     break
             numMoves += 2
         else:  # generate stats randomly
-            attributes, socials, skills, _ = await calcStats(rank, attributes, maxattr)
+            attributes, socials, skills, _ = await calcStats(rank, attributes, maxattr, version=version)
             numMoves = attributes[5] + 2  # insight + 2
 
         # todo: guarantee a (attacking?) move from the pokemon's rank
@@ -2745,9 +2745,9 @@ async def pkmn_encounter(ctx, number: int, rank: str, pokelist: list,
                 tmpMoves.append(PokeImageWriter.Move(
                     move,
                     type=stf[0],
-                    acc1=(allAttr[stf[5]] if stf[5] in allAttr else None),
-                    acc2=allAttr[stf[6]],
-                    pow1=(allAttr[stf[3]] if stf[3] in allAttr else None),
+                    acc1=(allAttr[stf[5].upper()] if stf[5].upper() in allAttr else stf[5]),
+                    acc2=(allAttr[stf[6].upper()] if stf[6].upper() in allAttr else stf[6]),
+                    pow1=(allAttr[stf[3].upper()] if stf[3].upper() in allAttr else stf[3]),
                     pow2=stf[2],
                     acc_debuff=accMod,
                     effect=stf[8]

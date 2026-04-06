@@ -20,7 +20,7 @@ class Move:
         ):
         self.name = name
         self.type = type
-        self.type_color = type_colors[self.type]
+        self.type_color = type_colors[self.type.lower()]
         self.acc1 = acc1
         self.pow1 = pow1
         self.acc2 = acc2
