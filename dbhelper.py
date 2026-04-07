@@ -298,10 +298,12 @@ class Database:
                     pkmn_cursor.execute(f'INSERT OR REPLACE INTO {stat_table} values ({tmp})', stat_info)
 
                     # then the learnset
-
-                    ranks = {'Starter': 0, 'Beginner': 1, 'Amateur': 2,
-                             'Ace': 3, 'Pro': 4, 'Master': 5, 'Champion': 6,
-                             'Rookie': -1, 'Standard': -2, 'Advanced': -3, 'Expert': -4}
+                    if version == "v3.0":
+                        ranks = {'Starter': 0, 'Rookie': 1, 'Standard': 2, 'Advanced': 3,
+                                 'Expert': 4, 'Ace': 5, 'Master': 6, 'Champion': 7}
+                    else:
+                        ranks = {'Starter': 0, 'Beginner': 1, 'Amateur': 2,
+                                 'Ace': 3, 'Pro': 4, 'Master': 5, 'Champion': 6}
                     moves = [tmp_info['Number'], tmp_info['Name']]  # pokedex num and name
                     for move in tmp_info['Moves']:
                         moves.append(move['Name'])
