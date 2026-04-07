@@ -11,6 +11,7 @@ import traceback
 
 import discord
 import discord.ext.commands
+import unicodedata
 from discord.ext import commands
 from discord import app_commands, ui
 from discord.app_commands import Choice
@@ -861,6 +862,8 @@ async def move_autocomplete(
             for m_list in result
         ]
 
+def strip_accents(s):
+    return alpha_str.sub("", ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn').replace(" ", "-"))
 
 async def pokemon_autocomplete(
         interaction: discord.Interaction,
@@ -871,7 +874,7 @@ async def pokemon_autocomplete(
     else:
         guild = await getGuilds(interaction)
         version = version_converter[pokebotsettings[guild][11]]
-        query = f'SELECT name FROM pkmnStats WHERE lower(name) LIKE "%{current}%"' \
+        query = f'SELECT name FROM pkmnStats WHERE clean_name LIKE "%{strip_accents(current)}%"' \
                 f' AND generation BETWEEN 1 AND 10 LIMIT 25'
         result = [x[0] for x in database.custom_query(query, version=version)]
 
@@ -1696,10 +1699,18 @@ async def pkmnDictRanks(pokemon: list, version: str) -> dict:
         try:
             rank = (await pkmnstatshelper(poke, version=version))[20]
         except:
-            # its either nidoran or oricorio or wormadam
-            print(pkmnLists[poke.lower()])
-            tmppoke = random.choice(random.choice(pkmnLists[poke.lower()][1:])[1:])
-            rank = (await pkmnstatshelper(tmppoke, version=version))[20]
+            try:
+                # its either nidoran or oricorio or wormadam
+                # try the cleaned search first
+                tmppoke = random.choice(database.clean_query(poke, version=version))
+                rank = (await pkmnstatshelper(tmppoke, version=version))[20]
+            except:
+                try:
+                    #then check pokelists
+                    tmppoke = random.choice(random.choice(pkmnLists[poke.lower()][1:])[1:])
+                    rank = (await pkmnstatshelper(tmppoke, version=version))[20]
+                except:
+                    pass
         if rank not in level:
             level[rank] = []
         level[rank].append(poke)
@@ -1710,7 +1721,12 @@ async def pkmnRankDisplay(title: str, pokemon: typing.Union[list, dict], version
     if isinstance(pokemon, list):
         pokemon = await pkmnDictRanks(pokemon, version=version)
     output = title + '\n'
-    for rank in ranks:
+    which_ranks = None
+    if version == "v3.0":
+        which_ranks = ranks_v3
+    else:
+        which_ranks = ranks
+    for rank in which_ranks:
         if rank in pokemon:
             output += f'**{rank}**\n{"  |  ".join(pokemon[rank])}\n'
     return output
@@ -2076,7 +2092,7 @@ async def pkmnstatshelper(poke: str, version: str):
         tmp = list(database.query_table('pkmnStats', 'name', poke, version=version)[0])
     except:
         raise KeyError(poke)
-    tmp = [f'#{tmp[0]}'] + tmp[2:]
+    tmp = [f'#{tmp[0]}'] + tmp[3:]
     return tmp
 
 

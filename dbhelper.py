@@ -1,9 +1,11 @@
 import json
+import re
 import sqlite3
 from pathlib import Path
 from sqlite3 import Error
 import csv
 import os
+import unicodedata
 
 db_file_v2 = 'pokerole.db'
 db_file_v3 = 'pokerole_v3.db'
@@ -54,6 +56,11 @@ def get_generation(number : str) -> int:
         if number <= num:
             return i
     return 9
+
+
+alpha_str = re.compile(r'[^\w_, \-]+')
+def strip_accents(s):
+    return alpha_str.sub("", ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn').replace(" ", "-"))
 
 class Database:
     def __init__(self):
@@ -159,6 +166,26 @@ class Database:
         cursor.close()
         return rows
 
+    # only on pkmnStats for now
+    def clean_query(self, val, version: str = "v3.0"):
+        cursor = self.get_cursor(version)
+        clean = strip_accents(val)
+        cursor.execute(f'SELECT name FROM pkmnStats WHERE clean_name LIKE "%{clean}%"')
+        rows = cursor.fetchall()
+
+        cursor.close()
+        print(rows, [x[0] for x in rows])
+        return [x[0] for x in rows]
+
+
+    def fuzzy_query(self, tablename, val, version: str = "v3.0"):
+        cursor = self.get_cursor(version)
+        cursor.execute(f'SELECT name FROM {tablename} WHERE name LIKE "%{val}%"')
+        rows = cursor.fetchall()
+
+        cursor.close()
+        return [x[0] for x in rows]
+
     def delete_table(self, tablename):
         cursor = self.connection.cursor()
         cursor.execute(f'DROP TABLE {tablename}')
@@ -178,6 +205,7 @@ class Database:
         vals = """
         number text NOT NULL,
         name text PRIMARY KEY,
+        clean_name text,
         type1 text NOT NULL,
         type2 text,
         hp integer NOT NULL,
@@ -281,7 +309,7 @@ class Database:
                     # then stats
                     generation = get_generation(tmp_info['DexID'])
                     form = "F" in tmp_info["DexID"]
-                    stat_info = [tmp_info['Number'], tmp_info['Name'],
+                    stat_info = [tmp_info['Number'], tmp_info['Name'], tmp_info['_id'],
                                  tmp_info['Type1'], tmp_info['Type2'],
                                  tmp_info['BaseHP'],
                                  tmp_info['Strength'], tmp_info['MaxStrength'],
