@@ -119,7 +119,7 @@ class Database:
         self.instantiateMoveList(version=version)
         self.instantiateAbilityList(version=version)
 
-        self.instantiatePkmnItemList()
+        self.instantiatePkmnItemList(version=version)
         # self.instantiateItemList()
 
     def close_connection(self):
@@ -410,8 +410,8 @@ class Database:
         item_cursor.close()
         self.connection_commit(version)
 
-    def instantiatePkmnItemList(self):
-        cursor = self.get_cursor(version="v2.0")
+    def instantiatePkmnItemList(self, version: str = "v3.0"):
+        cursor = self.get_cursor(version=version)
         tblnm = table_names['pkmnItems']
         vals = """
         name text PRIMARY KEY,
@@ -445,4 +445,4 @@ class Database:
                     category = row[0]
                 row.append(('' if row[1] == '' else category))
                 cursor.execute(f'INSERT OR REPLACE INTO {tblnm} values ({tmp})', row)
-        self.connection.commit()
+        self.connection_commit(version)

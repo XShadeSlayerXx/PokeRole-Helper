@@ -862,6 +862,23 @@ async def move_autocomplete(
             for m_list in result
         ]
 
+async def item_autocomplete(
+        interaction: discord.Interaction,
+        current: str
+) -> List[Choice[str]]:
+    if len(current) < 2:
+        return {}
+    else:
+        guild = await getGuilds(interaction)
+        version = version_converter[pokebotsettings[guild][11]]
+        query = f'SELECT name FROM pkmnItems WHERE lower(name) LIKE "%{current}%"' \
+                f' LIMIT 25'
+        result = [x[0] for x in database.custom_query(query, version=version)]
+        return [
+            app_commands.Choice(name=m_list, value=m_list)
+            for m_list in result
+        ]
+
 def strip_accents(s):
     return alpha_str.sub("", ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn').replace(" ", "-"))
 
@@ -1599,7 +1616,8 @@ async def pkmnitemhelper(item):
 
 
 @bot.hybrid_command(name='item', aliases=['items', 'i'], help='List an item\'s traits. "%item" for categories.')
-async def pkmn_search_item(ctx, *, itemname: str = ''):
+@app_commands.autocomplete(itemname=item_autocomplete)
+async def pkmn_search_item(ctx, itemname: str = ''):
     global database
     itemname = pkmn_cap(itemname)
     if itemname != '':
