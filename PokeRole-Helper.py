@@ -952,6 +952,7 @@ def print_settings(guild):
             f'\n"/help settings" for help')
 
 
+@commands.has_permissions(manage_channels=True)
 @bot.command(name='settings', aliases=['setting'],
              help='/settings <setting_name> [value]\n'
                   'e.g. /settings ability_one_chance 50\n'
@@ -970,8 +971,6 @@ async def settings(ctx, setting='', value=''):
     msg = ''
     try:
         guild = ctx.guild.id
-        if guild == 245675629515767809:  # main pokerole server
-            return
     except:
         guild = ctx.user.id
     try:
@@ -1039,6 +1038,7 @@ async def settings(ctx, setting='', value=''):
     save_obj(pokebotsettings, 'pokebotsettings')
 
 
+@commands.has_permissions(manage_channels=True)
 @app_commands.command(
     name='settings',
     description='Change the settings'
@@ -1108,8 +1108,6 @@ async def settings_slash(
     await getGuilds(inter)
     try:
         guild = inter.guild.id
-        if guild == 245675629515767809:  # prevent modifications to the main pokerole server
-            return
     except:
         guild = inter.user.id
     if ability_one_chance: pokebotsettings[guild][0] = ability_one_chance
