@@ -4,7 +4,6 @@ import sqlite3
 from pathlib import Path
 from sqlite3 import Error
 import csv
-import os
 import unicodedata
 
 db_file_v2 = 'pokerole.db'
@@ -69,36 +68,29 @@ class Database:
         for version in versions:
             self.checkIntegrity(version=version)
 
-    def get_cursor(self, version : str = "v3.0"):
+    def get_cursor(self, version : str):
         if version in ["v2.0", "v2", "2"]:
+            if self.connection_old is None: self.connection_old = create_connection(db_file_v2)
             return self.connection_old.cursor()
+        if self.connection is None: self.connection = create_connection(db_file_v3)
         return self.connection.cursor()
 
-    def connection_commit(self, version : str = "v3.0"):
+    def connection_commit(self, version : str):
         if version in ["v2.0", "v2", "2"]:
             return self.connection_old.commit()
         return self.connection.commit()
 
-    def reloadLists(self, version : str = "v3.0"):
-        if version in ["v2.0", "v2", "2"]:
-            try:
-                self.connection_old.close()
-            except:
-                pass
-            finally:
-                os.remove(db_file_v2)
-                self.connection_old = create_connection(db_file_v2)
-                self.instantiateAllLists(version="v2.0")
+    def reloadLists(self, version : str):
+        self.removeAllLists(version=version)
+        self.instantiateAllLists(version=version)
 
-        else:
-            try:
-                self.connection.close()
-            except:
-                pass
-            finally:
-                os.remove(db_file_v3)
-                self.connection = create_connection(db_file_v3)
-                self.instantiateAllLists(version="v3.0")
+    def removeAllLists(self, version: str):
+        # drop all the tables in the relevant version db
+        cursor = self.get_cursor(version)
+        for table in table_names.values():
+            cursor.execute(f'DROP TABLE {table}')
+        cursor.close()
+        self.connection_commit(version)
 
     def checkIntegrity(self, version = "v3.0"):
         cursor = self.get_cursor(version=version)
@@ -113,19 +105,16 @@ class Database:
                 self.reloadLists(version=version)
                 break
 
-    def instantiateAllLists(self, version : str = "v3.0"):
+    def instantiateAllLists(self, version: str):
         self.build_tables(version=version)
         self.instantiatePokemonLists(version=version)
         self.instantiateMoveList(version=version)
         self.instantiateAbilityList(version=version)
 
-        self.instantiatePkmnItemList(version=version)
-        # self.instantiateItemList()
+        # self.instantiatePkmnItemList(version=version)
+        self.instantiateItemList(version=version)
 
-    def close_connection(self):
-        self.connection.close()
-
-    def create_table(self, name, values, version : str = "v3.0"):
+    def create_table(self, name, values, version: str):
         # values in the format
         # name type conditions, name2 type2 conditions2, etc
         cmd = f"CREATE TABLE IF NOT EXISTS {name} ( {values} );"
@@ -137,17 +126,7 @@ class Database:
         finally:
             cursor.close()
 
-    def insert_into_table(self, tablename, values):
-        cursor = self.connection.cursor()
-        tmp = ','.join('?' * len(values))
-        cursor.execute(f'INSERT INTO {tablename} values ({tmp})', values)
-
-        tmp = cursor.lastrowid
-        cursor.close()
-        self.connection.commit()
-        return tmp
-
-    def custom_query(self, query, multiple : bool = True, version : str = "v3.0"):
+    def custom_query(self, query, multiple : bool = True, version: str = "v3.0"):
         cursor = self.get_cursor(version)
         cursor.execute(query)
         if multiple:
@@ -158,7 +137,7 @@ class Database:
         cursor.close()
         return rows
 
-    def query_table(self, tablename, qtype, val, version : str = "v3.0"):
+    def query_table(self, tablename, qtype, val, version: str):
         cursor = self.get_cursor(version)
         cursor.execute(f'SELECT * FROM {tablename} WHERE {qtype}="{val}"')
         rows = cursor.fetchall()
@@ -167,7 +146,7 @@ class Database:
         return rows
 
     # only on pkmnStats for now
-    def clean_query(self, val, version: str = "v3.0"):
+    def clean_query(self, val, version: str):
         cursor = self.get_cursor(version)
         clean = strip_accents(val)
         cursor.execute(f'SELECT name FROM pkmnStats WHERE clean_name LIKE "%{clean}%"')
@@ -177,8 +156,7 @@ class Database:
         print(rows, [x[0] for x in rows])
         return [x[0] for x in rows]
 
-
-    def fuzzy_query(self, tablename, val, version: str = "v3.0"):
+    def fuzzy_query(self, tablename, val, version: str):
         cursor = self.get_cursor(version)
         cursor.execute(f'SELECT name FROM {tablename} WHERE name LIKE "%{val}%"')
         rows = cursor.fetchall()
@@ -193,7 +171,7 @@ class Database:
         cursor.close()
         self.connection.commit()
 
-    def build_tables(self, version : str = "v3.0"):
+    def build_tables(self, version: str):
         tblnm = table_names['pkmnEvo']
         vals = """
         name text PRIMARY KEY,
@@ -263,23 +241,17 @@ class Database:
         tblnm = table_names['pkmnItems']
         vals = """
         name text PRIMARY KEY,
+        clean_name text,
         description text,
-        type_bonus text,
-        value text,
-        strength text,
-        dexterity text,
-        vitality text,
-        special text,
-        insight text,
-        defense text,
-        special_defense text,
-        evasion text,
-        accuracy text,
-        specific_pokemon text,
-        heal_amount text,
-        suggested_price text,
-        pmd_price text,
-        category text
+        for_types text,
+        for_pokemon text,
+        boost text,
+        value int,
+        cures text,
+        consumable text,
+        health_restored text,
+        trainer_price text,
+        pmd_price text
         """
         self.create_table(tblnm, vals, version=version)
 
@@ -369,7 +341,7 @@ class Database:
         move_cursor.close()
         self.connection_commit(version)
 
-    def instantiateAbilityList(self, version : str = "v3.0"):
+    def instantiateAbilityList(self, version: str):
         print(f"Creating the {version} ability table...")
         ability_table = table_names['pkmnAbilities']
         ability_cursor = self.get_cursor(version)
@@ -387,7 +359,7 @@ class Database:
         ability_cursor.close()
         self.connection_commit(version)
 
-    def instantiateItemList(self, version : str = "v3.0"):
+    def instantiateItemList(self, version : str):
         print(f"Creating the {version} item table...")
         items_table = table_names['pkmnItems']
         # need a way to add custom items?
@@ -398,19 +370,20 @@ class Database:
                 try:
                     tmp_move = json.load(f)
                     # TODO: items need to be completely reworked to fit the new github format
-                #     # we can also pull Attributes, Added Effects, and _id
-                #     item_info = [tmp_move['Name'], tmp_move['Description'], tmp_move['ForTypes'],
-                #                  tmp_move['Value'], tmp_move['Damage1'], tmp_move['Damage2'],
-                #                  tmp_move['Accuracy1'], tmp_move['Accuracy2'], tmp_move['Target'],
-                #                  tmp_move['Effect'], tmp_move['Description']]
-                #     tmp = ','.join('?' * len(item_info))
-                #     item_cursor.execute(f'INSERT OR REPLACE INTO {items_table} values ({tmp})', item_info)
+                    # we can also pull Attributes, Added Effects, and _id
+                    item_info = [tmp_move.get('Name'), tmp_move.get('_id'), tmp_move.get('Description'),
+                                 tmp_move.get('ForTypes'), tmp_move.get('ForPokemon'), tmp_move.get('Boost'),
+                                 tmp_move.get('Value'), ', '.join(tmp_move.get('Cures')) if tmp_move.get('Cures') else None,
+                                 True if tmp_move.get('OneUse') == 1 else False,
+                                 tmp_move.get('HealthRestored'), tmp_move.get('TrainerPrice'), tmp_move.get('PMDPrice')]
+                    tmp = ','.join('?' * len(item_info))
+                    item_cursor.execute(f'INSERT OR REPLACE INTO {items_table} values ({tmp})', item_info)
                 except Exception as e:
                     print(raw_move, e)
         item_cursor.close()
         self.connection_commit(version)
 
-    def instantiatePkmnItemList(self, version: str = "v3.0"):
+    def instantiatePkmnItemList(self, version: str):
         cursor = self.get_cursor(version=version)
         tblnm = table_names['pkmnItems']
         vals = """

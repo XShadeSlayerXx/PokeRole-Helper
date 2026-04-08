@@ -715,7 +715,8 @@ async def reloadLists(ctx):
     # if we needed to do more than just pull the submodule i would add GitPython
     subprocess.run(["git", "submodule", "update", "--init", "--remote", "pokerole_data"])
     # we only really need to update the latest dataset
-    database.reloadLists("v3.0")
+    for version in version_converter:
+        database.reloadLists(version)
     for cog in cogs:
         await bot.load_extension(cog)
     await ctx.message.add_reaction('\N{CYCLONE}')
@@ -1607,10 +1608,10 @@ async def pkmn_filter_list(ctx, listname: str, rank: ensure_rank,
 
 #######
 
-async def pkmnitemhelper(item):
+async def pkmnitemhelper(item, version: str):
     global database
     try:
-        return list(database.query_table('pkmnItems', 'name', item)[0])[1:]
+        return list(database.query_table('pkmnItems', 'name', item, version=version)[0])[2:]
     except:
         raise KeyError(f'{item} wasn\'t recognized as an item.')
 
@@ -1619,10 +1620,12 @@ async def pkmnitemhelper(item):
 @app_commands.autocomplete(itemname=item_autocomplete)
 async def pkmn_search_item(ctx, itemname: str = ''):
     global database
+    guild = await getGuilds(ctx)
+    version = version_converter[pokebotsettings[guild][11]]
     itemname = pkmn_cap(itemname)
     if itemname != '':
         try:
-            found = await pkmnitemhelper(itemname)
+            found = await pkmnitemhelper(itemname, version=version)
         except:
             await ctx.send(f'{itemname} wasn\'t found in the item list.')
             return
@@ -1630,18 +1633,13 @@ async def pkmn_search_item(ctx, itemname: str = ''):
             output = f'__{itemname}__\n'
 
             if found[0] != '':
-                order = [0, 'Type Bonus', 'Value', 'Strength', 'Dexterity', 'Vitality', 'Special', 'Insight', 'Defense',
-                         'Special Defense', 'Evasion', 'Accuracy', 0, 'Heal Amount']
+                order = ['Description', 'For Types', 'For Pokemon', 'Boost', 'Value', 'Cures', 'Consumable',
+                         'Health Restored', 'Trainer Price', 'PMD Price']
                 # this is an actual item
-                output += f'**Price**: {found[-3] or "???"}\n'
-                if found[12] != '':
-                    output += f'**Pokemon**: {alpha_str.sub("", found[12])}\n'
+                output += f'*{found[0].capitalize()}*\n' # description should be in italics
                 for name in range(1, len(order)):
-                    if name == 12:
-                        continue
-                    if found[name] != '':
+                    if found[name] != '' and found[name] is not None:
                         output += f'**{order[name]}**: {found[name]}\n'
-                output += f'**Description**: {found[0].capitalize()}'
             else:
                 # this is a category
                 temp = database.custom_query(f'SELECT name FROM pkmnItems WHERE category="{itemname}"')
