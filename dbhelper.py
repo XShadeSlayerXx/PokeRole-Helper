@@ -14,7 +14,7 @@ data_folders = {
     'pkmn': '/Pokedex',
     'moves': '/Moves',
     'abilities': '/Abilities',
-    'items': '/items'
+    'items': '/Items'
 }
 
 table_names = {
