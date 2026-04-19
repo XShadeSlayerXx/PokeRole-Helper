@@ -1,0 +1,25 @@
+Physical,"Physical Moves are resisted with Defense. They are close range attacks by default. Some can be long range, and those are labeled as Ranged."
+Special,Special Moves are resisted with Special Defense. They are always long range.
+Support,Support Moves don't deal any direct Damage.
+Chance Dice,"The probability at which a Move's Effect is activated. The number marked on the Icon is the amount of Chance Dice you will Roll. At least one Chance Dice must come up as (6), if it does, the Effect will be triggered. Sometimes a Chance Dice Icon will be inside a Status Ailment Box to show the chance to inflict that Ailment."
+Is Never Affected/Is Always Affected,"When an effect has a (X) Icon, the target of that effect will never be affected. When an effect has a (✓) Icon, the target of that effect will always be affected.  (For example, an effect box titled 'Flinch' with a (✓) Icon)."
+Reduced Accuracy,Reduce the noted number of successes from the Move's Accuracy Roll.
+Target,Green Target Icons are used for the User or its Allies. Red Target Icons are used for Foes.
+Increase/Reduce Box,"The Move will Increase or Decrease the noted Trait. Arrow Up means the attribute is Increased. Arrow Down means the Attribute is Decreased. Blue Icons will modify the User's Traits. Red Icons will modify the Foe's Traits. 'X' represents a number, it will tell you how many points will be modified. Sometimes they are accompanied by a Chance Dice placed to their left, to signify the number of Chance Dice to roll to activate the effect."
+Modified Damage,"Some Moves and Abilities deal damage and allow to resist damage in a different way. A box titled 'Damage' with '+ Dice #' indicates to Add the noted number of dice to the Damage Pool. 'Damage' with '-X' indicates to Reduce the noted number of Damage. 'Damage' with 'X' indicates to Inflict the noted number of Damage."
+Block,The Target can't escape and can't be switched back.
+Charge,The User spends one action charging the Move. The Move is rolled with another action on its next turn.
+Fist Based,The Move requires hands or fists.
+Heal,"The Move can heal HP. Sometimes it's a fixed number, indicated by a 'X' inside the Heal Effect box. Healing moves cost 1 Will Point to activate."
+High Crit,Score a Critical Hit with 1 success less than required.
+Lethal,The Move inflicts Lethal Damage.
+Must Recharge,"After hitting with this Move, the User must rest with its first Action on the next Round."
+Never Fail,"This Move cannot be Evaded, but can be Clashed. This Move may still miss on a failed Accuracy check."
+Priority/Low Priority,"Up Arrow 'X': The Move ignores Initiative Order and acts right away. Down Arrow 'X': The Move takes effect at the End of the Round, even if it's used at the beginning."
+Rampage,"The User may use this Move up to 3 times without interruption, even during the same Round. It cannot Evade or perform another Move. After the Rampage is over, the user will be Confused."
+Recoil,"The User will be hurt by its own Move. Roll damage normally against the foe, then roll again each success you scored as damage to the User ignoring its defenses."
+Shield,"If the Pokemon performs another Shield Move during the next Round, that Move's Accuracy Roll is reduced by 2 successes."
+Sound Based,"These Moves bypass Substitute, Light Screen, Reflect, and Cover."
+Status Condition Box,The Move inflicts a Status Ailment. Each Status Ailment is described in detail through `/status`.
+Successive Actions,The Move allows you to perform Multiple Actions in succession before the Foe can act. (Up to either 2 attacks or 5 attacks based on the number of stars in the Effect box).
+Switcher Move,Only one Switcher Move may be used per Round. Switch a Pokemon in the battlefield for one of its allies still on their Pokeball.
