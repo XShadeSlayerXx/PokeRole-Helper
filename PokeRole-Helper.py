@@ -219,6 +219,7 @@ async def on_ready():
 
     if not dev_env:
         await bot.appinfo.owner.send(f'Connected Successfully')
+    bot.user_settings = pokebotsettings
     restartError = False
 
 

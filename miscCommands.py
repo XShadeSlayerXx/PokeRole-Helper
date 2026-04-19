@@ -1,3 +1,6 @@
+import string
+from typing import List
+
 import discord
 from discord.ext import commands
 from discord import app_commands
@@ -89,6 +92,8 @@ effects = [
     'Switcher Move',
 ]
 
+version_converter = ["v2.0", "v3.0"]
+
 async def send_msg(context, msg):
     if isinstance(context, discord.Interaction):
         await context.response.send_message(msg)
@@ -101,8 +106,41 @@ class Misc(commands.Cog):
         self.bot = bot
         self.weather = dict()
         self.status = dict()
+        self.status_v3 = dict()
         self.nature = dict()
         self.effects = dict()
+
+    async def getGuilds(self, ctx):
+        if hasattr(ctx, "guild") and ctx.guild:
+            guild = ctx.guild.id
+        elif hasattr(ctx, "user") and ctx.user:
+            guild = ctx.user.id
+        else:
+            guild = ctx.author.id
+        if guild not in self.bot.user_settings:
+            raise KeyError("User has no settings.")
+        return guild
+
+    async def status_autocomplete(
+            self,
+            interaction: discord.Interaction,
+            current: str
+    ) -> List[Choice[str]]:
+        guild = await self.getGuilds(interaction)
+        version = version_converter[self.bot.user_settings[guild][11]]
+        result = self.status if version == "v2.0" else self.status_v3
+        if len(result) == 0:
+            await self.instantiateStatus()
+        # if there's not enough info then don't filter
+        if len(current) < 1:
+            return [
+                app_commands.Choice(name=m_list, value=m_list)
+                for m_list in result.keys()
+            ]
+        return [
+            app_commands.Choice(name=m_list, value=m_list)
+            for m_list in result.keys() if current.lower() in m_list.lower()
+        ]
 
     async def instantiateWeather(self):
         # 0 is name, 1 is description, 2 is effect
@@ -116,6 +154,11 @@ class Misc(commands.Cog):
             reader = csv.reader(file)
             for row in reader:
                 self.status[row[0]] = row[1:]
+
+        with open('status_v3.csv', 'r', encoding = "UTF-8") as file:
+            reader = csv.reader(file)
+            for row in reader:
+                self.status_v3[row[0]] = row[1:]
 
     async def instantiateNature(self):
         with open('nature.csv', 'r', encoding = "UTF-8") as file:
@@ -160,29 +203,33 @@ class Misc(commands.Cog):
     #                   help = 'Quick reference for statuses.\n'
     #                          'Type `%status` for a list of all statuses, or'
     #                          'type `%status burn` for example for an in-depth explanation.')
-    async def status_func(self, ctx, *, status = ''):
-        if len(self.status) == 0:
+    async def status_func(self, ctx, version, *, status = ''):
+        status_dict = self.status if version == "v2.0" else self.status_v3
+        if len(status_dict) == 0:
             await self.instantiateStatus()
         output = ''
         statusrepl = '\n- '
         if status == '':
             #list all status
-            for k, v in list(self.status.items()):
+            for k, v in list(status_dict.items()):
                 output += f'**{k}**{statusrepl}*{v[0]}*\n'
         else:
             #list a single status description
-            status = status.title()
+            status = string.capwords(status)
             if status == 'Burn':
                 status += ' 1'
-            if status in self.status:
+            if status in status_dict:
                 effect = ''
-                for stat in self.status[status][1:]:
-                    effect += f'{statusrepl}__{stat.replace(":","__:", 1)}'
-                # effect = statusrepl.join(self.status[status][1:])
-                output = f'**{status}**\n*{self.status[status][0]}*{effect}'
+                for stat in status_dict[status][1:]:
+                    if ":" in stat:
+                        effect += f'{statusrepl}__{stat.replace(":","__:", 1)}'
+                    else:
+                        effect += f'{statusrepl}{stat}'
+                # effect = statusrepl.join(status_dict[status][1:])
+                output = f'**{status}**\n*{status_dict[status][0]}*{effect}'
             else:
                 output = f'`{status}` wasn\'t found in the status list:{statusrepl}' \
-                         + statusrepl.join([str(k) for k in self.status.keys()])
+                         + statusrepl.join([str(k) for k in status_dict.keys()])
         await send_msg(ctx, output)
 
 
@@ -245,13 +292,16 @@ class Misc(commands.Cog):
     @app_commands.describe(
         status = "Which status?"
     )
-    @app_commands.choices(
-        status = [
-            Choice(name = x, value = x) for x in list(statuses)
-        ]
-    )
+    # @app_commands.choices(
+    #     status = [
+    #         Choice(name = x, value = x) for x in list(statuses)
+    #     ]
+    # )
+    @app_commands.autocomplete(status=status_autocomplete)
     async def slash_status(self, inter : discord.Interaction, *, status : str):
-        await self.status_func(ctx = inter, status = status)
+        guild = await self.getGuilds(inter)
+        version = version_converter[self.bot.user_settings[guild][11]]
+        await self.status_func(ctx=inter, version=version, status=status)
 
 
     @commands.hybrid_command(
