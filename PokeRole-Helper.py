@@ -2755,7 +2755,7 @@ async def pkmn_encounter(ctx, number: int, rank: str, pokelist: list,
         # combine all the info into a dict()
 
         allAttr = {'STRENGTH': attributes[1], 'DEXTERITY': attributes[2], 'VITALITY': attributes[3],
-                   'SPECIAL': attributes[4], 'INSIGHT': attributes[5], '': None, None: None, 'WILL': 0,
+                   'SPECIAL': attributes[4], 'INSIGHT': attributes[5], '': 0, None: 0, 'WILL': 0,
                    'MISSING HAPPINESS': 0, 'MISING BEAUTY': 0, 'HAPPINESS': 0}
         for skill in skills:
             allAttr.update({skill[0].upper(): skill[1]})
@@ -2932,13 +2932,45 @@ async def pkmn_encounter(ctx, number: int, rank: str, pokelist: list,
                         numRolls = 4
 
                         try:
-                            totalDmg = (allAttr[found[3]] or 0) + (allAttr[found[4]] or 0) + int(found[2])
+                            dmgBase = allAttr[found[3].upper()] if found[3].upper() in allAttr else 0
+                            if '/' in found[3]:
+                                splitfirst = found[3][:found[3].index("/")].upper()
+                                tmp1 = allAttr[splitfirst] if splitfirst in allAttr else 0
+                                splitsecond = found[3][found[3].index("/")+1:].upper()
+                                tmp2 = allAttr[splitsecond] if splitsecond in allAttr else 0
+                                dmgBase = tmp1 if tmp1 >= tmp2 else tmp2
+
+                            dmgBase2 = allAttr[found[4].upper()] if found[4].upper() in allAttr else 0
+                            if '/' in found[4]:
+                                splitfirst = found[4][:found[4].index("/")].upper()
+                                tmp3 = allAttr[splitfirst] if splitfirst in allAttr else 0
+                                splitsecond = found[4][found[4].index("/")+1:].upper()
+                                tmp4 = allAttr[splitsecond] if splitsecond in allAttr else 0
+                                dmgBase2 = tmp3 if tmp3 >= tmp4 else tmp4
+
+                            totalDmg = dmgBase + dmgBase2 + int(found[2])
                             dmgArray = [sum([random.randint(0, 1) for _ in range(totalDmg)]) for _ in range(numRolls)]
                         except:
                             totalDmg = 0
                             dmgArray = ''
                         try:
-                            totalAcc = (allAttr[found[5]] or 0) + (allAttr[found[6]] or 0)
+                            accBase = allAttr[found[5].upper()] if found[5].upper() in allAttr else 0
+                            if '/' in found[5]:
+                                splitfirst = found[5][:found[5].index("/")].upper()
+                                tmp1 = allAttr[splitfirst] if splitfirst in allAttr else 0
+                                splitsecond = found[5][found[5].index("/")+1:].upper()
+                                tmp2 = allAttr[splitsecond] if splitsecond in allAttr else 0
+                                accBase = tmp1 if tmp1 >= tmp2 else tmp2
+
+                            accBase2 = allAttr[found[6].upper()] if found[6].upper() in allAttr else 0
+                            if '/' in found[6]:
+                                splitfirst = found[6][:found[6].index("/")].upper()
+                                tmp1 = allAttr[splitfirst] if splitfirst in allAttr else 0
+                                splitsecond = found[6][found[6].index("/")+1:].upper()
+                                tmp2 = allAttr[splitsecond] if splitsecond in allAttr else 0
+                                accBase2 = tmp1 if tmp1 >= tmp2 else tmp2
+
+                            totalAcc = accBase + accBase2
                             accArray = [sum([random.randint(0, 1) for _ in range(totalAcc)]) - accMod for _ in
                                         range(numRolls)]
                         except:
@@ -2954,8 +2986,8 @@ async def pkmn_encounter(ctx, number: int, rank: str, pokelist: list,
                             msg += f'**Dmg Dice**: None\n'
                         msg += f'**Acc Dice**: {(found[5] or "None")} + {(found[6] or "None")} = '
                         try:
-                            msg += f'({(allAttr[found[5]] or 0) + (allAttr[found[6]] or 0)}'
-                            msg += f" - {accMod} Successes)" if accMod != 0 else ")"
+                            msg += f'{totalAcc}'
+                            msg += f" - {accMod} Successes" if accMod != 0 else ""
                         except:
                             msg += '???'
                         msg += f' {accArray}\n' if pokebotsettings[guild][8] else '\n'
